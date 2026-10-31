@@ -48,4 +48,4 @@ Prérequis : Node.js 22.
 | `npm run lint` | Vérifie le code (ESLint) |
 | `npm run build` | Construit le site dans `dist/` |
 
-Mise en ligne : Cloudflare Pages, commande de build `npm run build`, dossier de sortie `dist`.
+Mise en ligne : Cloudflare Workers (site statique, voir `wrangler.jsonc`), commande de build `npm run build`, commande de déploiement `npx wrangler deploy`.
