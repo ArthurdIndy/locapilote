@@ -7,6 +7,10 @@
   "preview_urls": true,
   // Requis par « npx wrangler preview » (aperçus des branches) ; peut rester vide.
   "previews": {},
+  // Wrangler construit lui-même le site avant chaque déploiement ou aperçu.
+  "build": {
+    "command": "npm run build",
+  },
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application",
