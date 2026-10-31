@@ -2,6 +2,9 @@
 {
   "name": "locapilote",
   "compatibility_date": "2026-10-01",
+  // Site de production sur locapilote.<compte>.workers.dev, et un aperçu par branche.
+  "workers_dev": true,
+  "preview_urls": true,
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application",
