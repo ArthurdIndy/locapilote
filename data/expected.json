@@ -1,0 +1,421 @@
+{
+ "synthese": {
+  "Loyers hors charges": {
+   "2024": 7692.3,
+   "2025": 12387.89,
+   "2026": 10511.92
+  },
+  "Charges refacturées au locataire": {
+   "2024": 674.46,
+   "2025": 1315.26,
+   "2026": 920.7
+  },
+  "Autres recettes": {
+   "2024": 0,
+   "2025": 0,
+   "2026": 0
+  },
+  "Total des recettes imposables": {
+   "2024": 8366.76,
+   "2025": 13703.15,
+   "2026": 11432.62
+  },
+  "Frais de gestion (agence, comptable)": {
+   "2024": 1260.15,
+   "2025": 1611.54,
+   "2026": 1411.05
+  },
+  "Copropriété": {
+   "2024": 1177.59,
+   "2025": 2426.77,
+   "2026": 3791.6
+  },
+  "Assurances": {
+   "2024": 105.8,
+   "2025": 114.18,
+   "2026": 0
+  },
+  "Impôts et taxes": {
+   "2024": 553.35,
+   "2025": 561.72,
+   "2026": 885.36
+  },
+  "Entretien et petit équipement": {
+   "2024": 453.84,
+   "2025": 386.42,
+   "2026": 1141.67
+  },
+  "Autres charges": {
+   "2024": 0,
+   "2025": 0,
+   "2026": 0
+  },
+  "Intérêts d'emprunt (période louée)": {
+   "2024": 1035.57,
+   "2025": 1678.76,
+   "2026": 1304.71
+  },
+  "Assurance emprunteur (période louée)": {
+   "2024": 140.56,
+   "2025": 240.96,
+   "2026": 200.8
+  },
+  "Total des charges déductibles": {
+   "2024": 4726.86,
+   "2025": 7020.35,
+   "2026": 8735.19
+  },
+  "Résultat avant amortissements": {
+   "2024": 3639.9,
+   "2025": 6682.8,
+   "2026": 2697.43
+  },
+  "Dotations aux amortissements de l'année": {
+   "2024": 5751.048861,
+   "2025": 9297.336666,
+   "2026": 9388.3868
+  },
+  "Amortissements en report (début d'année)": {
+   "2024": 0,
+   "2025": 1834.69,
+   "2026": 3824.3
+  },
+  "Amortissements utilisés": {
+   "2024": 3639.9,
+   "2025": 6682.8,
+   "2026": 2697.43
+  },
+  "Amortissements en report (fin d'année, calcul de l'outil)": {
+   "2024": 2111.148861,
+   "2025": 4449.226666,
+   "2026": 10515.2568
+  },
+  "Résultat fiscal estimé": {
+   "2024": 0,
+   "2025": 0,
+   "2026": 0
+  },
+  "Dépenses à qualifier (non retenues)": {
+   "2024": 395.25,
+   "2025": 0,
+   "2026": 0
+  },
+  "Investissements de l'année (à amortir)": {
+   "2024": 1076.01,
+   "2025": 1590.11,
+   "2026": 0
+  },
+  "Stock reporté retenu par le comptable (comptes déposés)": {
+   "2024": 1834.69,
+   "2025": 3824.3,
+   "2026": null
+  },
+  "Encaissements (recettes)": {
+   "2024": 8366.76,
+   "2025": 13703.15,
+   "2026": 11432.62
+  },
+  "Dépenses payées (hors prêt)": {
+   "2024": 5021.99,
+   "2025": 6690.74,
+   "2026": 7229.68
+  },
+  "Échéances de prêt (période louée)": {
+   "2024": 5889.26,
+   "2025": 10095.91,
+   "2026": 8413.25
+  },
+  "dont capital remboursé": {
+   "2024": 4713.13,
+   "2025": 8176.19,
+   "2026": 6907.74
+  },
+  "Cash-flow": {
+   "2024": -2544.49,
+   "2025": -3083.5,
+   "2026": -4210.31
+  },
+  "Mois de location sur la période": {
+   "2024": 7.49589,
+   "2025": 12,
+   "2026": 9.994521
+  },
+  "Cash-flow mensuel moyen": {
+   "2024": -339.451334,
+   "2025": -256.958333,
+   "2026": -421.261828
+  },
+  "Enrichissement (cash-flow + capital remboursé)": {
+   "2024": 2168.64,
+   "2025": 5092.69,
+   "2026": 2697.43
+  },
+  "Coût total d'acquisition": {
+   "2024": 268158.99,
+   "2025": 268158.99,
+   "2026": 268158.99
+  },
+  "Loyers hors charges annualisés": {
+   "2024": 12314.427632,
+   "2025": 12387.89,
+   "2026": 12621.219737
+  },
+  "Rendement brut": {
+   "2024": 0.045922,
+   "2025": 0.046196,
+   "2026": 0.047066
+  },
+  "Rendement net (avant financement)": {
+   "2024": 0.028751,
+   "2025": 0.03208,
+   "2026": 0.018818
+  },
+  "Capital restant dû au 31/12": {
+   "2024": 115654.93,
+   "2025": 107478.74,
+   "2026": 99179.07
+  },
+  "Valeur estimée moins capital restant dû": {
+   "2024": 167995.07,
+   "2025": 176171.26,
+   "2026": 184470.93
+  }
+ },
+ "revente": {
+  "Prix de vente": 279000,
+  "− Frais d'agence": 0,
+  "− Frais divers de vente": -1674,
+  "− Capital restant dû à la date de vente": -94982.35,
+  "− Indemnités de remboursement anticipé": 0,
+  "Somme perçue avant impôt": 182343.65,
+  "− Impôt sur la plus-value (calcul ci-dessous)": 0,
+  "Somme nette perçue après impôt": 182343.65,
+  "Pour mémoire : apport personnel initial": 97968.99,
+  "Pour mémoire : cash-flow cumulé depuis la mise en location": -9915.98,
+  "Pour mémoire : dépôt de garantie à restituer au locataire": 2064.6,
+  "Durée de détention (années pleines)": 9,
+  "Prix de cession (prix − frais de vente)": 277326,
+  "Prix d'acquisition du logement (hors mobilier)": 231570,
+  "+ Frais d'acquisition (réels ou forfait 7,5 %, le plus élevé)": 27900,
+  "+ Forfait travaux 15 % (détention de plus de 5 ans)": 34735.5,
+  "− Amortissements déduits à réintégrer": -13921.515527,
+  "Prix d'acquisition corrigé": 280283.984473,
+  "Plus-value brute": 0,
+  "Abattement pour durée de détention (impôt sur le revenu)": 0.24,
+  "Abattement pour durée de détention (prélèvements sociaux)": 0.066,
+  "Impôt sur le revenu": 0,
+  "Prélèvements sociaux": 0,
+  "Surtaxe (plus-value imposable supérieure à 46 500 €)": 0,
+  "Impôt total sur la plus-value": 0
+ },
+ "vendre_quand": {
+  "Prix de vente": [
+   279000,
+   279000,
+   279000
+  ],
+  "− Frais d'agence": [
+   0,
+   0,
+   0
+  ],
+  "− Frais divers de vente": [
+   -1674,
+   -1674,
+   -1674
+  ],
+  "− Capital restant dû": [
+   -94982.35,
+   -86493.93,
+   -77877.34
+  ],
+  "− Indemnités de remboursement anticipé": [
+   0,
+   0,
+   0
+  ],
+  "− Impôt sur la plus-value": [
+   0,
+   -356.828385,
+   -1496.811958
+  ],
+  "Somme nette perçue": [
+   182343.65,
+   190475.241615,
+   197951.848042
+  ],
+  "− Autres dettes à rembourser": [
+   0,
+   0,
+   0
+  ],
+  "Somme disponible pour le prochain achat": [
+   182343.65,
+   190475.241615,
+   197951.848042
+  ],
+  "Durée de détention (années pleines)": [
+   9,
+   10,
+   11
+  ],
+  "Prix de cession (prix − frais de vente)": [
+   277326,
+   277326,
+   277326
+  ],
+  "Prix d'achat + frais d'acquisition + forfait travaux 15 %": [
+   294205.5,
+   294205.5,
+   294205.5
+  ],
+  "− Amortissements déduits (années avant celle de la vente)": [
+   -13921.515527,
+   -18106.515527,
+   -22291.515527
+  ],
+  "Plus-value brute": [
+   0,
+   1227.015527,
+   5412.015527
+  ],
+  "Abattement pour durée de détention (impôt sur le revenu)": [
+   0.24,
+   0.3,
+   0.36
+  ],
+  "Abattement pour durée de détention (prélèvements sociaux)": [
+   0.066,
+   0.0825,
+   0.099
+  ],
+  "Impôt sur la plus-value": [
+   0,
+   356.828385,
+   1496.811958
+  ],
+  "Condition des 4 ans pour l'exonération pour remploi": [
+   "Non",
+   "Oui",
+   "Oui"
+  ],
+  "Impôt évité si le prix est réinvesti": [
+   0,
+   356.828385,
+   1496.811958
+  ],
+  "Somme nette avec remploi": [
+   182343.65,
+   190832.07,
+   199448.66
+  ],
+  "Mois entre la mise à jour et la vente": [
+   8,
+   20,
+   32
+  ],
+  "Cash-flow à remettre de votre poche (total)": [
+   -2515.0246,
+   -5370.091819,
+   -8116.546546
+  ],
+  "Soit par mois": [
+   -314.378075,
+   -268.504591,
+   -253.64208
+  ],
+  "Capital remboursé sur la période": [
+   5588.65,
+   14077.07,
+   22693.66
+  ],
+  "Gain total depuis l'achat": [
+   61716.836394,
+   66993.360789,
+   71723.512489
+  ],
+  "TRI (rendement annuel de votre apport)": [
+   0.049883,
+   0.047655,
+   0.04544
+  ]
+ },
+ "controles": [
+  {
+   "controle": "Solde du compte agence (Journal)",
+   "calcule": 77.81,
+   "attendu": 77.81,
+   "statut": "OK"
+  },
+  {
+   "controle": "Lignes avec une catégorie inconnue",
+   "calcule": 0,
+   "attendu": 0,
+   "statut": "OK"
+  },
+  {
+   "controle": "Lignes sans catégorie",
+   "calcule": 0,
+   "attendu": 0,
+   "statut": "OK"
+  },
+  {
+   "controle": "Lignes « À qualifier »",
+   "calcule": 1,
+   "attendu": 0,
+   "statut": "À vérifier"
+  },
+  {
+   "controle": "Dotations aux amortissements 2024 (modèle)",
+   "calcule": 5751.048861,
+   "attendu": 5751.05,
+   "statut": "OK"
+  },
+  {
+   "controle": "Dotations aux amortissements 2025 (modèle)",
+   "calcule": 9297.336666,
+   "attendu": 9297.34,
+   "statut": "OK"
+  },
+  {
+   "controle": "Intérêts et assurance emprunteur 2025",
+   "calcule": 1919.72,
+   "attendu": 1919.71,
+   "statut": "OK"
+  },
+  {
+   "controle": "Recettes 2024",
+   "calcule": 8366.76,
+   "attendu": 8316,
+   "statut": "Écart expliqué"
+  },
+  {
+   "controle": "Recettes 2025",
+   "calcule": 13703.15,
+   "attendu": 14434.33,
+   "statut": "Écart expliqué"
+  },
+  {
+   "controle": "Charges hors amortissements 2024",
+   "calcule": 4726.86,
+   "attendu": 4399.83,
+   "statut": "Écart expliqué"
+  },
+  {
+   "controle": "Charges hors amortissements 2025",
+   "calcule": 7020.35,
+   "attendu": 7126.6,
+   "statut": "Écart expliqué"
+  },
+  {
+   "controle": "Vendre quand : scénario 1 identique à l'onglet Revente",
+   "calcule": 182343.65,
+   "attendu": 182343.65,
+   "statut": "OK"
+  }
+ ],
+ "meta": {
+  "note": "Valeurs calculées par l'Excel anonymisé. Tolérance conseillée : 0,01 € sur les montants, 0,0001 sur les taux.",
+  "date_donnees": "2026-10-25"
+ }
+}

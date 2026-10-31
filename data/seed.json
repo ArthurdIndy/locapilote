@@ -1,0 +1,5833 @@
+{
+ "meta": {
+  "description": "Jeu de test anonymisé : un appartement meublé en LMNP réel, loué via une agence, suivi de 2017 à 2026. Noms, adresse et références remplacés ; tous les montants multipliés par un même coefficient. Les dates et les règles de calcul sont réelles.",
+  "source": "data/jeu-de-test.xlsx (outil Excel v1.2 anonymisé, recalculé)",
+  "devise": "EUR"
+ },
+ "biens": [
+  {
+   "id": "APPART-01",
+   "nom": "Appartement exemple",
+   "adresse": "1 rue de l'Exemple",
+   "code_postal": null,
+   "ville": "Exempleville",
+   "type_location": "Meublée",
+   "regime_fiscal": "LMNP réel",
+   "date_acquisition": "2017-11-10",
+   "prix_achat_net_vendeur": 239010,
+   "dont_mobilier": 7440,
+   "frais_agence_achat": 9300,
+   "frais_notaire_garantie": 19848.99,
+   "cout_total_acquisition": 268158.99,
+   "apport": 97968.99,
+   "date_mise_en_location": "2024-05-18",
+   "valeur_estimee": 283650,
+   "surface_m2": 40.03,
+   "gestionnaire": "Agence exemple (6 % HT)",
+   "syndic": "Syndic exemple",
+   "loyer_hors_charges": 1054.89,
+   "provision_charges": 83.7,
+   "depot_garantie": 2064.6,
+   "fin_residence_principale": "2023-11-01"
+  }
+ ],
+ "categories": [
+  {
+   "nom": "Loyer hors charges",
+   "sens": "Recette",
+   "traitement_fiscal_lmnp_reel": "Imposable",
+   "groupe": "Loyers",
+   "signe_tresorerie": 1,
+   "description": "Loyer brut, avant honoraires (une remise de loyer se saisit en montant négatif)"
+  },
+  {
+   "nom": "Provisions sur charges",
+   "sens": "Recette",
+   "traitement_fiscal_lmnp_reel": "Imposable",
+   "groupe": "Charges refacturées",
+   "signe_tresorerie": 1,
+   "description": "Provisions mensuelles payées par le locataire"
+  },
+  {
+   "nom": "Régularisation de charges locataire",
+   "sens": "Recette",
+   "traitement_fiscal_lmnp_reel": "Imposable",
+   "groupe": "Charges refacturées",
+   "signe_tresorerie": 1,
+   "description": "Solde annuel réclamé (ou rendu, en négatif) au locataire"
+  },
+  {
+   "nom": "Taxe ordures ménagères refacturée",
+   "sens": "Recette",
+   "traitement_fiscal_lmnp_reel": "Imposable",
+   "groupe": "Charges refacturées",
+   "signe_tresorerie": 1,
+   "description": "TEOM refacturée au locataire"
+  },
+  {
+   "nom": "Autres recettes",
+   "sens": "Recette",
+   "traitement_fiscal_lmnp_reel": "Imposable",
+   "groupe": "Autres recettes",
+   "signe_tresorerie": 1,
+   "description": "Indemnités, refacturations diverses"
+  },
+  {
+   "nom": "Honoraires de gestion",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Frais de gestion",
+   "signe_tresorerie": -1,
+   "description": "Honoraires de l'agence, TVA comprise"
+  },
+  {
+   "nom": "Honoraires de mise en location",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Frais de gestion",
+   "signe_tresorerie": -1,
+   "description": "Recherche de locataire, état des lieux"
+  },
+  {
+   "nom": "Honoraires sur travaux",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Frais de gestion",
+   "signe_tresorerie": -1,
+   "description": "Commission de l'agence sur les travaux"
+  },
+  {
+   "nom": "Honoraires comptable",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Frais de gestion",
+   "signe_tresorerie": -1,
+   "description": "Expert-comptable, centre de gestion"
+  },
+  {
+   "nom": "Charges de copropriété",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Copropriété",
+   "signe_tresorerie": -1,
+   "description": "Appels de fonds payés au syndic (charges, travaux, fonds de travaux)"
+  },
+  {
+   "nom": "Assurance PNO",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Assurances",
+   "signe_tresorerie": -1,
+   "description": "Assurance propriétaire non occupant, loyers impayés"
+  },
+  {
+   "nom": "Taxe foncière",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Impôts et taxes",
+   "signe_tresorerie": -1,
+   "description": "Taxe foncière (TEOM incluse)"
+  },
+  {
+   "nom": "CFE",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Impôts et taxes",
+   "signe_tresorerie": -1,
+   "description": "Cotisation foncière des entreprises"
+  },
+  {
+   "nom": "Entretien et réparations",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Entretien et petit équipement",
+   "signe_tresorerie": -1,
+   "description": "Réparations, dépannages, petits travaux"
+  },
+  {
+   "nom": "Petit équipement",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Entretien et petit équipement",
+   "signe_tresorerie": -1,
+   "description": "Équipement de faible valeur passé en charge"
+  },
+  {
+   "nom": "Frais bancaires",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Autres charges",
+   "signe_tresorerie": -1,
+   "description": "Frais de compte dédié, frais de dossier"
+  },
+  {
+   "nom": "Autres charges",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "Déductible",
+   "groupe": "Autres charges",
+   "signe_tresorerie": -1,
+   "description": "Autres charges déductibles"
+  },
+  {
+   "nom": "Équipement / mobilier (à amortir)",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "À amortir",
+   "groupe": "Investissements",
+   "signe_tresorerie": -1,
+   "description": "Électroménager, mobilier : à reporter dans l'onglet Amortissements"
+  },
+  {
+   "nom": "Travaux d'amélioration (à amortir)",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "À amortir",
+   "groupe": "Investissements",
+   "signe_tresorerie": -1,
+   "description": "Travaux immobilisés : à reporter dans l'onglet Amortissements"
+  },
+  {
+   "nom": "À qualifier",
+   "sens": "Dépense",
+   "traitement_fiscal_lmnp_reel": "À valider",
+   "groupe": "À qualifier",
+   "signe_tresorerie": -1,
+   "description": "Dépense dont le traitement fiscal doit être validé avec le comptable"
+  },
+  {
+   "nom": "Transfert entrant",
+   "sens": "Transfert",
+   "traitement_fiscal_lmnp_reel": "Non fiscal",
+   "groupe": "Mouvements internes",
+   "signe_tresorerie": 1,
+   "description": "Argent reçu d'un autre compte (ex. : versement du propriétaire à l'agence)"
+  },
+  {
+   "nom": "Transfert sortant",
+   "sens": "Transfert",
+   "traitement_fiscal_lmnp_reel": "Non fiscal",
+   "groupe": "Mouvements internes",
+   "signe_tresorerie": -1,
+   "description": "Argent envoyé vers un autre compte (ex. : virement de l'agence au propriétaire)"
+  },
+  {
+   "nom": "Dépôt de garantie reçu",
+   "sens": "Neutre",
+   "traitement_fiscal_lmnp_reel": "Non fiscal",
+   "groupe": "Dépôt de garantie",
+   "signe_tresorerie": 1,
+   "description": "Somme à restituer : ni revenu, ni imposable"
+  },
+  {
+   "nom": "Dépôt de garantie restitué",
+   "sens": "Neutre",
+   "traitement_fiscal_lmnp_reel": "Non fiscal",
+   "groupe": "Dépôt de garantie",
+   "signe_tresorerie": -1,
+   "description": "Restitution au locataire"
+  }
+ ],
+ "mouvements": [
+  {
+   "date": "2024-05-14",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de mise en location",
+   "libelle": "HONORAIRES EDL",
+   "montant": 140.04,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-14",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de mise en location",
+   "libelle": "TVA HONORAIRES EDL",
+   "montant": 28,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-14",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de mise en location",
+   "libelle": "HONORAIRES LOCATION",
+   "montant": 369.86,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-14",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de mise en location",
+   "libelle": "TVA HONORAIRES LOCATION",
+   "montant": 73.97,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (18/05/2024 - 31/05/2024)",
+   "montant": 466.2,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 27.97,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 5.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (18/05/2024 - 31/05/2024)",
+   "montant": 37.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 2.27,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 0.46,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Dépôt de garantie restitué",
+   "libelle": "DEPOT DE GARANTIE LOCATAIRE - debit",
+   "montant": 2064.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Écriture de passage à l'agence (le dépôt a été versé directement au propriétaire)"
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Dépôt de garantie reçu",
+   "libelle": "DEPOT GARANTIE PROPRIETAIRE/LOCATAIRE - credit",
+   "montant": 2064.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Écriture de passage à l'agence (le dépôt a été versé directement au propriétaire)"
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Dépôt de garantie reçu",
+   "libelle": "VIR INST LOCATAIRE DEPOT DE GARANTIE LOCATAIRE",
+   "montant": 2064.6,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Dépôt de garantie versé directement par le locataire : à restituer à son départ"
+  },
+  {
+   "date": "2024-05-15",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "À qualifier",
+   "libelle": "VIR SEPA FACTURE -",
+   "montant": 395.25,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Volet du Velux refait avant la location. Non repris par le comptable en 2024 : à lui soumettre (charge ou immobilisation)"
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/06/2024 - 30/06/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/06/2024 - 30/06/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION SUR TRAVAUX 3%TTC",
+   "montant": 6.4,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION SUR TRAVAUX 3%TTC",
+   "montant": 1.27,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "ROBINET CUISINE + PORTE CHAMBRE ARTISAN D",
+   "montant": 255.75,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "reparation lave-linge ARTISAN C",
+   "montant": 109.74,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION TRAVAUX 3% TTC (ARTISAN C)",
+   "montant": 2.74,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION TRAVAUX 3% TTC (ARTISAN C)",
+   "montant": 0.55,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-06",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION TRAVAUX refrigerateur 3% TTC",
+   "montant": 29.11,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-06",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION TRAVAUX refrigerateur 3% TTC",
+   "montant": 5.82,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-06",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 480.09,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-06-07",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Équipement / mobilier (à amortir)",
+   "libelle": "VIR SEPA DEVIS FRIGO NEUF",
+   "montant": 1076.01,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Réfrigérateur, immobilisé par le comptable"
+  },
+  {
+   "date": "2024-06-07",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Petit équipement",
+   "libelle": "VIR SEPA EXEMPLEVILLE - REPARATION FR",
+   "montant": 88.35,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Passé en petit équipement par le comptable"
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/07/2024 - 31/07/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/07/2024 - 31/07/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/08/2024 - 31/08/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/08/2024 - 31/08/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-08-25",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 347.98,
+   "piece": "Bien/05_Copropriete/Appels/2024-07-02_Syndic_Appel-T3-2024.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Appel T3 2024 (637,22 €) moins le crédit de régularisation 2023 (289,24 €)"
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/09/2024 - 30/09/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/09/2024 - 30/09/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-09-24",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES T4",
+   "montant": 469.61,
+   "piece": "Bien/05_Copropriete/Appels/2024-09-24_Syndic_Appel-T4-2024.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/10/2024 - 31/10/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/10/2024 - 31/10/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-10-25",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Taxe foncière",
+   "libelle": "PRLV SEPA DGFIP IMPOT TF",
+   "montant": 553.35,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Taxe foncière 2024"
+  },
+  {
+   "date": "2024-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Taxe ordures ménagères refacturée",
+   "libelle": "ORDURES MENAGERES 2024",
+   "montant": 50.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION ORDURES MENAGERES 2024 6.00%",
+   "montant": 3.04,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION ORDURES MENAGERES 2024",
+   "montant": 0.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/11/2024 - 30/11/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/11/2024 - 30/11/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1082.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/12/2024 - 31/12/2024)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/12/2024 - 31/12/2024)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2024-12-24",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 360,
+   "piece": "Bien/05_Copropriete/Appels/2024-09-24_Syndic_Appel-travaux-oct-2024.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Travaux appelés en octobre 2024 (local vélos, refonte du règlement)"
+  },
+  {
+   "date": "2024-12-31",
+   "bien": "APPART-01",
+   "compte": "Autre compte",
+   "categorie": "Assurance PNO",
+   "libelle": "Assurance propriétaire non occupant ASSUREUR 2024",
+   "montant": 105.8,
+   "piece": "Bien/07_Comptabilite/2024_CABINET COMPTABLE_Comptes-annuels-LMNP.pdf",
+   "source": "Comptes annuels",
+   "commentaire": "Montant retenu par le comptable, payé hors compte BANQUE (date réelle inconnue)"
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/01/2025 - 31/01/2025)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/01/2025 - 31/01/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-01-08",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES 1 RUE EXEMPLE",
+   "montant": 769.08,
+   "piece": "Bien/05_Copropriete/Appels/2024-12-25_Syndic_Appel-T1-2025.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/02/2025 - 28/02/2025)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/02/2025 - 28/02/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-02-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/03/2025 - 31/03/2025)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/03/2025 - 31/03/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-03-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-01",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 857.17,
+   "piece": "Bien/05_Copropriete/Appels/2025-03-31_Syndic_Appel-T2-2025.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/04/2025 - 30/04/2025)",
+   "montant": 1032.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 61.94,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.39,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/04/2025 - 30/04/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-04-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1035.65,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/05/2025 - 31/05/2025)",
+   "montant": 1038.83,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.33,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.46,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/05/2025 - 31/05/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-05-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1041.71,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/06/2025 - 30/06/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/06/2025 - 30/06/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-06-27",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES 49 EXEMPLE",
+   "montant": 44.26,
+   "piece": "Bien/05_Copropriete/Appels/2025-06-26_Syndic_Appel-T3-2025.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/07/2025 - 31/07/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/07/2025 - 31/07/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-17",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert entrant",
+   "libelle": "VERSEMENT RECU DU PROPRIETAIRE Facture ARTISAN E",
+   "montant": 139.5,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-17",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Transfert sortant",
+   "libelle": "VIR SEPA FACTURE ARTISAN E 1 RUE LECL",
+   "montant": 139.5,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Versé à l'agence pour payer la recherche de fuite (la dépense figure côté agence)"
+  },
+  {
+   "date": "2025-07-18",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "recherche de fuite ARTISAN E F2025-07-221",
+   "montant": 139.5,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-07-23",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Honoraires comptable",
+   "libelle": "VIR SEPA COMPTABLE CABINET COMPTABLE",
+   "montant": 558,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Honoraires pour les comptes 2024"
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION SUR TRAVAUX ARTISAN E 3% TTC",
+   "montant": 3.49,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION SUR TRAVAUX ARTISAN E 3% TTC",
+   "montant": 0.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "GRATUITE DE LOYER suite REMPLACEMENT BALLON",
+   "montant": -107.46,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Remise de loyer accordée après le remplacement du ballon"
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/08/2025 - 31/08/2025) complement",
+   "montant": 107.46,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL (01/08/2025 - 31/08/2025) 6.00%",
+   "montant": 6.44,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL (01/08/2025 - 31/08/2025)",
+   "montant": 1.29,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION SUR TRAVAUX ARTISAN A 3% TTC",
+   "montant": 6.17,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION SUR TRAVAUX ARTISAN A 3% TTC",
+   "montant": 1.24,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES GESTION SUR TRAVAUX ARTISAN A 3% TTC",
+   "montant": 39.75,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES GESTION SUR TRAVAUX ARTISAN A 3% TTC",
+   "montant": 7.95,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/08/2025 - 31/08/2025)",
+   "montant": 939.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 56.36,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 11.27,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/08/2025 - 31/08/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "travaux creation vanne d'arret ARTISAN A",
+   "montant": 246.92,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert entrant",
+   "libelle": "VERSEMENT RECU DU PROPRIETAIRE POUR FACTURE ARTISAN A",
+   "montant": 954.71,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Équipement / mobilier (à amortir)",
+   "libelle": "changement ballon d'eau chaude ARTISAN A",
+   "montant": 1590.11,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Remplacement du ballon d'eau chaude, immobilisé par le comptable"
+  },
+  {
+   "date": "2025-08-04",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Transfert sortant",
+   "libelle": "VIR SEPA BALLON EAU CHAUDE - GE",
+   "montant": 954.71,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Versé à l'agence pour payer le ballon (la dépense figure côté agence)"
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/09/2025 - 30/09/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/09/2025 - 30/09/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-09-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/10/2025 - 31/10/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/10/2025 - 31/10/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-10-03",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Taxe foncière",
+   "libelle": "PRLV SEPA DGFIP IMPOT TF",
+   "montant": 561.72,
+   "piece": "Bien/06_Impots-locaux/2025-08-07_DGFIP_Taxe-fonciere-2025.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Taxe foncière 2025"
+  },
+  {
+   "date": "2025-10-06",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA APPEL DE PROVISIONS T4",
+   "montant": 466.72,
+   "piece": "Bien/05_Copropriete/Appels/2025-09-26_Syndic_Appel-T4-2025.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/11/2025 - 30/11/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/11/2025 - 30/11/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Taxe ordures ménagères refacturée",
+   "libelle": "ORDURES MENAGERES",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION ORDURES MENAGERES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION ORDURES MENAGERES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-11-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1126.74,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Régularisation de charges locataire",
+   "libelle": "RESTIT. PROV. REGULARISATION. DE CHARGES",
+   "montant": -623.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Régularisation de charges locataire",
+   "libelle": "REGULARISATION DES CHARGES - reprise provisions",
+   "montant": 623.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Régularisation de charges locataire",
+   "libelle": "REGULARISATION DES CHARGES (01/01/2024 - 31/12/2024)",
+   "montant": 227.16,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION REGULARISATION DES CHARGES 6.00%",
+   "montant": 13.63,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION REGULARISATION DES CHARGES",
+   "montant": 2.72,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/12/2025 - 31/12/2025)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/12/2025 - 31/12/2025)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1259.87,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2025-12-10",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA REGULE CHARGES 2024",
+   "montant": 289.54,
+   "piece": "Bien/05_Copropriete/Regularisations/2025-11-25_Syndic_Avis-regul-exercice-2024.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Régularisation des charges 2024"
+  },
+  {
+   "date": "2025-12-31",
+   "bien": "APPART-01",
+   "compte": "Autre compte",
+   "categorie": "Assurance PNO",
+   "libelle": "Assurance propriétaire non occupant ASSUREUR 2025",
+   "montant": 114.18,
+   "piece": "Bien/07_Comptabilite/2025_CABINET COMPTABLE_Comptes-annuels-LMNP.pdf",
+   "source": "Comptes annuels",
+   "commentaire": "Montant retenu par le comptable, payé hors compte BANQUE (date réelle inconnue)"
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/01/2026 - 31/01/2026)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/01/2026 - 31/01/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-01-14",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 508.2,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Appel T1 2026 (avis non classé)"
+  },
+  {
+   "date": "2026-01-27",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 218.08,
+   "piece": "Bien/05_Copropriete/Appels/2026-01-22_Syndic_Appel-travaux-T1-2026.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Travaux votés en AG 2025 (net du fonds de travaux mobilisé)"
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/02/2026 - 28/02/2026)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/02/2026 - 28/02/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-02-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/03/2026 - 31/03/2026)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/03/2026 - 31/03/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-03-31",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 1051.7,
+   "piece": "Bien/05_Copropriete/Appels/2026-03-25_Syndic_Appel-T2-2026.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/04/2026 - 30/04/2026)",
+   "montant": 1046.76,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 62.8,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.56,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/04/2026 - 30/04/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-04-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1049.07,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/05/2026 - 31/05/2026)",
+   "montant": 1050.43,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.03,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/05/2026 - 31/05/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-05-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1052.48,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/06/2026 - 30/06/2026)",
+   "montant": 1054.89,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.66,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/06/2026 - 30/06/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-06-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1056.61,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/07/2026 - 31/07/2026)",
+   "montant": 1054.89,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.66,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/07/2026 - 31/07/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-06",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1056.61,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-06",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO T3 2026",
+   "montant": 1006.81,
+   "piece": "Bien/05_Copropriete/Appels/2026-06-24_Syndic_Appel-T3-2026.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2026-07-21",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "CFE",
+   "libelle": "VIR SEPA IMPOTS ENTREPRISE EXEMPLEVILLE",
+   "montant": 318.99,
+   "piece": "Bien/06_Impots-locaux/2026-07-15_SIE_CFE-2025_rappel.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Rappel de CFE 2025"
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/08/2026 - 31/08/2026)",
+   "montant": 1054.89,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.66,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/08/2026 - 31/08/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-03",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-08-06",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 1056.61,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/09/2026 - 30/09/2026)",
+   "montant": 1054.89,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.66,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/09/2026 - 30/09/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "RECHERCHE DE FUITE EVACUATION EAU CHAUDE FAC-",
+   "montant": 143.22,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-04",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "TRANSFERT SOMMES VERS PROVISIONS GARDEES POUR DEVIS DEV-",
+   "montant": 659.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Somme mise de côté par l'agence pour un devis"
+  },
+  {
+   "date": "2026-09-08",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert entrant",
+   "libelle": "TRANSFERT DE SOMMES GARDEES VERS PROPRIETAIRE POUR FACTURE ARTISAN A-",
+   "montant": 659.6,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Restitution de la provision pour payer la facture"
+  },
+  {
+   "date": "2026-09-08",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES DE GESTION SUR TRAVAUX FACTURE ARTISAN A-",
+   "montant": 16.01,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-08",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES DE GESTION SUR TRAVAUX FACTURE ARTISAN A-",
+   "montant": 3.2,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-08",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "FACTURE FAC- modification evacuation pente ballon EC",
+   "montant": 640.4,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-09-24",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "TRANSFERT SOMMES VERS PROVISIONS GARDEES Devis ARTISAN B 2026-071",
+   "montant": 253.79,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Somme mise de côté par l'agence pour un devis"
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Loyer hors charges",
+   "libelle": "LOYER PRINCIPAL (01/10/2026 - 31/10/2026)",
+   "montant": 1054.89,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION LOYER PRINCIPAL 6.00%",
+   "montant": 63.3,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION LOYER PRINCIPAL",
+   "montant": 12.66,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Provisions sur charges",
+   "libelle": "PROVISIONS CHARGES (01/10/2026 - 31/10/2026)",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION PROVISIONS CHARGES 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-02",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION PROVISIONS CHARGES",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "TRANSFERT SOMMES VERS PROVISIONS GARDEES POUR DEVIS ARTISAN B 2026-071",
+   "montant": 115,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Somme mise de côté par l'agence pour un devis"
+  },
+  {
+   "date": "2026-10-05",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert sortant",
+   "libelle": "Virement de l'agence au propriétaire",
+   "montant": 941.61,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-05",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Honoraires comptable",
+   "libelle": "VIR SEPA PAIEMENT COMPTABLE CABINET COMPTABLE",
+   "montant": 558,
+   "piece": "Banque/Banque_Exempleville_Revenus-Depenses_2024-2026.xlsx",
+   "source": "Relevé BANQUE",
+   "commentaire": "Honoraires pour les comptes 2025"
+  },
+  {
+   "date": "2026-10-15",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Taxe foncière",
+   "libelle": "Paiement en ligne validé",
+   "montant": 566.37,
+   "piece": "Bien/06_Impots-locaux/2026-08-06_DGFIP_Taxe-fonciere-2026.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": "Taxe foncière 2026 : débit à confirmer sur le relevé"
+  },
+  {
+   "date": "2026-10-16",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Transfert entrant",
+   "libelle": "TRANSFERT DE SOMMES GARDEES VERS PROPRIETAIRE POUR FACTURE ARTISAN B 2026-061",
+   "montant": 368.79,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": "Restitution de la provision pour payer la facture"
+  },
+  {
+   "date": "2026-10-16",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Entretien et réparations",
+   "libelle": "Facture ARTISAN B 2026-061",
+   "montant": 358.05,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-16",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "HONORAIRES DE GESTION SUR TRAVAUX POUR FACTURE ARTISAN B 2026-061",
+   "montant": 8.96,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-16",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires sur travaux",
+   "libelle": "TVA HONORAIRES DE GESTION SUR TRAVAUX POUR FACTURE ARTISAN B 2026-061",
+   "montant": 1.79,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-10-19",
+   "bien": "APPART-01",
+   "compte": "Banque",
+   "categorie": "Charges de copropriété",
+   "libelle": "VIR SEPA CHARGES COPRO",
+   "montant": 1006.81,
+   "piece": "Bien/05_Copropriete/Appels/2026-09-25_Syndic_Appel-T4-2026.pdf",
+   "source": "Relevé BANQUE",
+   "commentaire": null
+  },
+  {
+   "date": "2026-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Taxe ordures ménagères refacturée",
+   "libelle": "ORDURES MENAGERES 2026",
+   "montant": 83.7,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "HONORAIRES GESTION ORDURES MENAGERES 2026 6.00%",
+   "montant": 5.02,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  },
+  {
+   "date": "2026-11-01",
+   "bien": "APPART-01",
+   "compte": "Agence",
+   "categorie": "Honoraires de gestion",
+   "libelle": "TVA HONORAIRES GESTION ORDURES MENAGERES 2026",
+   "montant": 1,
+   "piece": "Bien/04_Agence/2024-05_2026-11_AGENCE_Grand-livre-proprietaire.pdf",
+   "source": "Grand livre agence",
+   "commentaire": null
+  }
+ ],
+ "prets": [
+  {
+   "id": "P1",
+   "bien": "APPART-01",
+   "banque": "BANQUE",
+   "libelle": "Prêt immobilier amortissable",
+   "montant": 170190,
+   "taux_annuel": 0.015,
+   "duree_mois": 240,
+   "premiere_echeance": "2017-12-05",
+   "derniere_echeance": "2037-11-05",
+   "assurance_mensuelle": 20.08
+  }
+ ],
+ "echeances_pret": [
+  {
+   "pret": "P1",
+   "numero": 1,
+   "date": "2017-12-05",
+   "capital_du_avant": 170190,
+   "capital": 608.51,
+   "interets": 196.31,
+   "assurance": 18.75
+  },
+  {
+   "pret": "P1",
+   "numero": 2,
+   "date": "2018-01-05",
+   "capital_du_avant": 169581.49,
+   "capital": 609.27,
+   "interets": 211.97,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 3,
+   "date": "2018-02-05",
+   "capital_du_avant": 168972.22,
+   "capital": 610.03,
+   "interets": 211.21,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 4,
+   "date": "2018-03-05",
+   "capital_du_avant": 168362.19,
+   "capital": 610.8,
+   "interets": 210.45,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 5,
+   "date": "2018-04-05",
+   "capital_du_avant": 167751.39,
+   "capital": 611.56,
+   "interets": 209.69,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 6,
+   "date": "2018-05-05",
+   "capital_du_avant": 167139.83,
+   "capital": 612.32,
+   "interets": 208.92,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 7,
+   "date": "2018-06-05",
+   "capital_du_avant": 166527.51,
+   "capital": 613.08,
+   "interets": 208.16,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 8,
+   "date": "2018-07-05",
+   "capital_du_avant": 165914.43,
+   "capital": 613.86,
+   "interets": 207.39,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 9,
+   "date": "2018-08-05",
+   "capital_du_avant": 165300.57,
+   "capital": 614.62,
+   "interets": 206.63,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 10,
+   "date": "2018-09-05",
+   "capital_du_avant": 164685.95,
+   "capital": 615.39,
+   "interets": 205.86,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 11,
+   "date": "2018-10-05",
+   "capital_du_avant": 164070.56,
+   "capital": 616.16,
+   "interets": 205.08,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 12,
+   "date": "2018-11-05",
+   "capital_du_avant": 163454.4,
+   "capital": 616.92,
+   "interets": 204.32,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 13,
+   "date": "2018-12-05",
+   "capital_du_avant": 162837.48,
+   "capital": 617.7,
+   "interets": 203.55,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 14,
+   "date": "2019-01-05",
+   "capital_du_avant": 162219.78,
+   "capital": 618.47,
+   "interets": 202.78,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 15,
+   "date": "2019-02-05",
+   "capital_du_avant": 161601.31,
+   "capital": 619.24,
+   "interets": 202.01,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 16,
+   "date": "2019-03-05",
+   "capital_du_avant": 160982.07,
+   "capital": 620.02,
+   "interets": 201.22,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 17,
+   "date": "2019-04-05",
+   "capital_du_avant": 160362.05,
+   "capital": 620.79,
+   "interets": 200.45,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 18,
+   "date": "2019-05-05",
+   "capital_du_avant": 159741.25,
+   "capital": 621.57,
+   "interets": 199.68,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 19,
+   "date": "2019-06-05",
+   "capital_du_avant": 159119.69,
+   "capital": 622.35,
+   "interets": 198.9,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 20,
+   "date": "2019-07-05",
+   "capital_du_avant": 158497.34,
+   "capital": 623.13,
+   "interets": 198.12,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 21,
+   "date": "2019-08-05",
+   "capital_du_avant": 157874.21,
+   "capital": 623.9,
+   "interets": 197.35,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 22,
+   "date": "2019-09-05",
+   "capital_du_avant": 157250.31,
+   "capital": 624.68,
+   "interets": 196.56,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 23,
+   "date": "2019-10-05",
+   "capital_du_avant": 156625.63,
+   "capital": 625.46,
+   "interets": 195.78,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 24,
+   "date": "2019-11-05",
+   "capital_du_avant": 156000.17,
+   "capital": 626.24,
+   "interets": 195,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 25,
+   "date": "2019-12-05",
+   "capital_du_avant": 155373.93,
+   "capital": 627.02,
+   "interets": 194.22,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 26,
+   "date": "2020-01-05",
+   "capital_du_avant": 154746.9,
+   "capital": 627.82,
+   "interets": 193.43,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 27,
+   "date": "2020-02-05",
+   "capital_du_avant": 154119.09,
+   "capital": 628.6,
+   "interets": 192.65,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 28,
+   "date": "2020-03-05",
+   "capital_du_avant": 153490.49,
+   "capital": 629.39,
+   "interets": 191.86,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 29,
+   "date": "2020-04-05",
+   "capital_du_avant": 152861.11,
+   "capital": 630.17,
+   "interets": 191.08,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 30,
+   "date": "2020-05-05",
+   "capital_du_avant": 152230.94,
+   "capital": 630.96,
+   "interets": 190.29,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 31,
+   "date": "2020-06-05",
+   "capital_du_avant": 151599.98,
+   "capital": 631.75,
+   "interets": 189.5,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 32,
+   "date": "2020-07-05",
+   "capital_du_avant": 150968.23,
+   "capital": 632.54,
+   "interets": 188.71,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 33,
+   "date": "2020-08-05",
+   "capital_du_avant": 150335.69,
+   "capital": 633.33,
+   "interets": 187.92,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 34,
+   "date": "2020-09-05",
+   "capital_du_avant": 149702.36,
+   "capital": 634.12,
+   "interets": 187.13,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 35,
+   "date": "2020-10-05",
+   "capital_du_avant": 149068.24,
+   "capital": 634.91,
+   "interets": 186.33,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 36,
+   "date": "2020-11-05",
+   "capital_du_avant": 148433.33,
+   "capital": 635.7,
+   "interets": 185.54,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 37,
+   "date": "2020-12-05",
+   "capital_du_avant": 147797.63,
+   "capital": 636.5,
+   "interets": 184.74,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 38,
+   "date": "2021-01-05",
+   "capital_du_avant": 147161.13,
+   "capital": 637.29,
+   "interets": 183.95,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 39,
+   "date": "2021-02-05",
+   "capital_du_avant": 146523.83,
+   "capital": 638.09,
+   "interets": 183.15,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 40,
+   "date": "2021-03-05",
+   "capital_du_avant": 145885.74,
+   "capital": 638.89,
+   "interets": 182.35,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 41,
+   "date": "2021-04-05",
+   "capital_du_avant": 145246.85,
+   "capital": 639.69,
+   "interets": 181.55,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 42,
+   "date": "2021-05-05",
+   "capital_du_avant": 144607.16,
+   "capital": 640.49,
+   "interets": 180.75,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 43,
+   "date": "2021-06-05",
+   "capital_du_avant": 143966.67,
+   "capital": 641.29,
+   "interets": 179.96,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 44,
+   "date": "2021-07-05",
+   "capital_du_avant": 143325.38,
+   "capital": 642.09,
+   "interets": 179.16,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 45,
+   "date": "2021-08-05",
+   "capital_du_avant": 142683.29,
+   "capital": 642.89,
+   "interets": 178.36,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 46,
+   "date": "2021-09-05",
+   "capital_du_avant": 142040.4,
+   "capital": 643.7,
+   "interets": 177.55,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 47,
+   "date": "2021-10-05",
+   "capital_du_avant": 141396.7,
+   "capital": 644.5,
+   "interets": 176.75,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 48,
+   "date": "2021-11-05",
+   "capital_du_avant": 140752.2,
+   "capital": 645.31,
+   "interets": 175.94,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 49,
+   "date": "2021-12-05",
+   "capital_du_avant": 140106.89,
+   "capital": 646.11,
+   "interets": 175.14,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 50,
+   "date": "2022-01-05",
+   "capital_du_avant": 139460.78,
+   "capital": 646.92,
+   "interets": 174.33,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 51,
+   "date": "2022-02-05",
+   "capital_du_avant": 138813.86,
+   "capital": 647.73,
+   "interets": 173.52,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 52,
+   "date": "2022-03-05",
+   "capital_du_avant": 138166.14,
+   "capital": 648.54,
+   "interets": 172.71,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 53,
+   "date": "2022-04-05",
+   "capital_du_avant": 137517.6,
+   "capital": 649.34,
+   "interets": 171.9,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 54,
+   "date": "2022-05-05",
+   "capital_du_avant": 136868.26,
+   "capital": 650.16,
+   "interets": 171.08,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 55,
+   "date": "2022-06-05",
+   "capital_du_avant": 136218.1,
+   "capital": 650.97,
+   "interets": 170.27,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 56,
+   "date": "2022-07-05",
+   "capital_du_avant": 135567.12,
+   "capital": 651.79,
+   "interets": 169.46,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 57,
+   "date": "2022-08-05",
+   "capital_du_avant": 134915.33,
+   "capital": 652.6,
+   "interets": 168.65,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 58,
+   "date": "2022-09-05",
+   "capital_du_avant": 134262.73,
+   "capital": 653.42,
+   "interets": 167.83,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 59,
+   "date": "2022-10-05",
+   "capital_du_avant": 133609.31,
+   "capital": 654.24,
+   "interets": 167.01,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 60,
+   "date": "2022-11-05",
+   "capital_du_avant": 132955.08,
+   "capital": 655.05,
+   "interets": 166.19,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 61,
+   "date": "2022-12-05",
+   "capital_du_avant": 132300.02,
+   "capital": 655.87,
+   "interets": 165.37,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 62,
+   "date": "2023-01-05",
+   "capital_du_avant": 131644.15,
+   "capital": 656.69,
+   "interets": 164.55,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 63,
+   "date": "2023-02-05",
+   "capital_du_avant": 130987.46,
+   "capital": 657.51,
+   "interets": 163.74,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 64,
+   "date": "2023-03-05",
+   "capital_du_avant": 130329.95,
+   "capital": 658.34,
+   "interets": 162.91,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 65,
+   "date": "2023-04-05",
+   "capital_du_avant": 129671.61,
+   "capital": 659.16,
+   "interets": 162.09,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 66,
+   "date": "2023-05-05",
+   "capital_du_avant": 129012.46,
+   "capital": 659.98,
+   "interets": 161.26,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 67,
+   "date": "2023-06-05",
+   "capital_du_avant": 128352.47,
+   "capital": 660.8,
+   "interets": 160.44,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 68,
+   "date": "2023-07-05",
+   "capital_du_avant": 127691.67,
+   "capital": 661.63,
+   "interets": 159.62,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 69,
+   "date": "2023-08-05",
+   "capital_du_avant": 127030.04,
+   "capital": 662.46,
+   "interets": 158.79,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 70,
+   "date": "2023-09-05",
+   "capital_du_avant": 126367.58,
+   "capital": 663.29,
+   "interets": 157.96,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 71,
+   "date": "2023-10-05",
+   "capital_du_avant": 125704.3,
+   "capital": 664.11,
+   "interets": 157.13,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 72,
+   "date": "2023-11-05",
+   "capital_du_avant": 125040.18,
+   "capital": 664.95,
+   "interets": 156.3,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 73,
+   "date": "2023-12-05",
+   "capital_du_avant": 124375.23,
+   "capital": 665.78,
+   "interets": 155.47,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 74,
+   "date": "2024-01-05",
+   "capital_du_avant": 123709.46,
+   "capital": 666.61,
+   "interets": 154.64,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 75,
+   "date": "2024-02-05",
+   "capital_du_avant": 123042.85,
+   "capital": 667.44,
+   "interets": 153.8,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 76,
+   "date": "2024-03-05",
+   "capital_du_avant": 122375.41,
+   "capital": 668.28,
+   "interets": 152.97,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 77,
+   "date": "2024-04-05",
+   "capital_du_avant": 121707.13,
+   "capital": 669.12,
+   "interets": 152.13,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 78,
+   "date": "2024-05-05",
+   "capital_du_avant": 121038.01,
+   "capital": 669.94,
+   "interets": 151.3,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 79,
+   "date": "2024-06-05",
+   "capital_du_avant": 120368.07,
+   "capital": 670.78,
+   "interets": 150.46,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 80,
+   "date": "2024-07-05",
+   "capital_du_avant": 119697.29,
+   "capital": 671.63,
+   "interets": 149.62,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 81,
+   "date": "2024-08-05",
+   "capital_du_avant": 119025.66,
+   "capital": 672.46,
+   "interets": 148.78,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 82,
+   "date": "2024-09-05",
+   "capital_du_avant": 118353.2,
+   "capital": 673.3,
+   "interets": 147.94,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 83,
+   "date": "2024-10-05",
+   "capital_du_avant": 117679.89,
+   "capital": 674.15,
+   "interets": 147.1,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 84,
+   "date": "2024-11-05",
+   "capital_du_avant": 117005.75,
+   "capital": 674.98,
+   "interets": 146.26,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 85,
+   "date": "2024-12-05",
+   "capital_du_avant": 116330.76,
+   "capital": 675.83,
+   "interets": 145.41,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 86,
+   "date": "2025-01-05",
+   "capital_du_avant": 115654.93,
+   "capital": 676.68,
+   "interets": 144.57,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 87,
+   "date": "2025-02-05",
+   "capital_du_avant": 114978.25,
+   "capital": 677.52,
+   "interets": 143.72,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 88,
+   "date": "2025-03-05",
+   "capital_du_avant": 114300.73,
+   "capital": 678.37,
+   "interets": 142.88,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 89,
+   "date": "2025-04-05",
+   "capital_du_avant": 113622.36,
+   "capital": 679.22,
+   "interets": 142.03,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 90,
+   "date": "2025-05-05",
+   "capital_du_avant": 112943.14,
+   "capital": 680.06,
+   "interets": 141.18,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 91,
+   "date": "2025-06-05",
+   "capital_du_avant": 112263.08,
+   "capital": 680.92,
+   "interets": 140.33,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 92,
+   "date": "2025-07-05",
+   "capital_du_avant": 111582.16,
+   "capital": 681.76,
+   "interets": 139.48,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 93,
+   "date": "2025-08-05",
+   "capital_du_avant": 110900.4,
+   "capital": 682.62,
+   "interets": 138.63,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 94,
+   "date": "2025-09-05",
+   "capital_du_avant": 110217.78,
+   "capital": 683.48,
+   "interets": 137.77,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 95,
+   "date": "2025-10-05",
+   "capital_du_avant": 109534.3,
+   "capital": 684.33,
+   "interets": 136.91,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 96,
+   "date": "2025-11-05",
+   "capital_du_avant": 108849.97,
+   "capital": 685.19,
+   "interets": 136.06,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 97,
+   "date": "2025-12-05",
+   "capital_du_avant": 108164.78,
+   "capital": 686.04,
+   "interets": 135.2,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 98,
+   "date": "2026-01-05",
+   "capital_du_avant": 107478.74,
+   "capital": 686.9,
+   "interets": 134.35,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 99,
+   "date": "2026-02-05",
+   "capital_du_avant": 106791.84,
+   "capital": 687.75,
+   "interets": 133.49,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 100,
+   "date": "2026-03-05",
+   "capital_du_avant": 106104.09,
+   "capital": 688.62,
+   "interets": 132.63,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 101,
+   "date": "2026-04-05",
+   "capital_du_avant": 105415.47,
+   "capital": 689.47,
+   "interets": 131.77,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 102,
+   "date": "2026-05-05",
+   "capital_du_avant": 104726,
+   "capital": 690.34,
+   "interets": 130.91,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 103,
+   "date": "2026-06-05",
+   "capital_du_avant": 104035.66,
+   "capital": 691.2,
+   "interets": 130.04,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 104,
+   "date": "2026-07-05",
+   "capital_du_avant": 103344.46,
+   "capital": 692.07,
+   "interets": 129.18,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 105,
+   "date": "2026-08-05",
+   "capital_du_avant": 102652.39,
+   "capital": 692.93,
+   "interets": 128.31,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 106,
+   "date": "2026-09-05",
+   "capital_du_avant": 101959.45,
+   "capital": 693.8,
+   "interets": 127.45,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 107,
+   "date": "2026-10-05",
+   "capital_du_avant": 101265.65,
+   "capital": 694.66,
+   "interets": 126.58,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 108,
+   "date": "2026-11-05",
+   "capital_du_avant": 100570.99,
+   "capital": 695.53,
+   "interets": 125.72,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 109,
+   "date": "2026-12-05",
+   "capital_du_avant": 99875.46,
+   "capital": 696.4,
+   "interets": 124.84,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 110,
+   "date": "2027-01-05",
+   "capital_du_avant": 99179.06,
+   "capital": 697.27,
+   "interets": 123.98,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 111,
+   "date": "2027-02-05",
+   "capital_du_avant": 98481.79,
+   "capital": 698.14,
+   "interets": 123.1,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 112,
+   "date": "2027-03-05",
+   "capital_du_avant": 97783.65,
+   "capital": 699.02,
+   "interets": 122.23,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 113,
+   "date": "2027-04-05",
+   "capital_du_avant": 97084.63,
+   "capital": 699.89,
+   "interets": 121.36,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 114,
+   "date": "2027-05-05",
+   "capital_du_avant": 96384.74,
+   "capital": 700.76,
+   "interets": 120.48,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 115,
+   "date": "2027-06-05",
+   "capital_du_avant": 95683.98,
+   "capital": 701.64,
+   "interets": 119.61,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 116,
+   "date": "2027-07-05",
+   "capital_du_avant": 94982.34,
+   "capital": 702.52,
+   "interets": 118.72,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 117,
+   "date": "2027-08-05",
+   "capital_du_avant": 94279.82,
+   "capital": 703.4,
+   "interets": 117.85,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 118,
+   "date": "2027-09-05",
+   "capital_du_avant": 93576.42,
+   "capital": 704.28,
+   "interets": 116.97,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 119,
+   "date": "2027-10-05",
+   "capital_du_avant": 92872.14,
+   "capital": 705.15,
+   "interets": 116.09,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 120,
+   "date": "2027-11-05",
+   "capital_du_avant": 92166.99,
+   "capital": 706.04,
+   "interets": 115.21,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 121,
+   "date": "2027-12-05",
+   "capital_du_avant": 91460.95,
+   "capital": 706.92,
+   "interets": 114.32,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 122,
+   "date": "2028-01-05",
+   "capital_du_avant": 90754.03,
+   "capital": 707.8,
+   "interets": 113.44,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 123,
+   "date": "2028-02-05",
+   "capital_du_avant": 90046.23,
+   "capital": 708.69,
+   "interets": 112.56,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 124,
+   "date": "2028-03-05",
+   "capital_du_avant": 89337.54,
+   "capital": 709.57,
+   "interets": 111.67,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 125,
+   "date": "2028-04-05",
+   "capital_du_avant": 88627.97,
+   "capital": 710.46,
+   "interets": 110.78,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 126,
+   "date": "2028-05-05",
+   "capital_du_avant": 87917.5,
+   "capital": 711.35,
+   "interets": 109.9,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 127,
+   "date": "2028-06-05",
+   "capital_du_avant": 87206.16,
+   "capital": 712.24,
+   "interets": 109.01,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 128,
+   "date": "2028-07-05",
+   "capital_du_avant": 86493.92,
+   "capital": 713.12,
+   "interets": 108.12,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 129,
+   "date": "2028-08-05",
+   "capital_du_avant": 85780.79,
+   "capital": 714.02,
+   "interets": 107.23,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 130,
+   "date": "2028-09-05",
+   "capital_du_avant": 85066.77,
+   "capital": 714.91,
+   "interets": 106.34,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 131,
+   "date": "2028-10-05",
+   "capital_du_avant": 84351.86,
+   "capital": 715.8,
+   "interets": 105.44,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 132,
+   "date": "2028-11-05",
+   "capital_du_avant": 83636.06,
+   "capital": 716.7,
+   "interets": 104.54,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 133,
+   "date": "2028-12-05",
+   "capital_du_avant": 82919.36,
+   "capital": 717.6,
+   "interets": 103.65,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 134,
+   "date": "2029-01-05",
+   "capital_du_avant": 82201.76,
+   "capital": 718.49,
+   "interets": 102.76,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 135,
+   "date": "2029-02-05",
+   "capital_du_avant": 81483.27,
+   "capital": 719.39,
+   "interets": 101.85,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 136,
+   "date": "2029-03-05",
+   "capital_du_avant": 80763.88,
+   "capital": 720.29,
+   "interets": 100.95,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 137,
+   "date": "2029-04-05",
+   "capital_du_avant": 80043.58,
+   "capital": 721.19,
+   "interets": 100.06,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 138,
+   "date": "2029-05-05",
+   "capital_du_avant": 79322.4,
+   "capital": 722.09,
+   "interets": 99.16,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 139,
+   "date": "2029-06-05",
+   "capital_du_avant": 78600.31,
+   "capital": 722.99,
+   "interets": 98.25,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 140,
+   "date": "2029-07-05",
+   "capital_du_avant": 77877.32,
+   "capital": 723.9,
+   "interets": 97.34,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 141,
+   "date": "2029-08-05",
+   "capital_du_avant": 77153.41,
+   "capital": 724.8,
+   "interets": 96.44,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 142,
+   "date": "2029-09-05",
+   "capital_du_avant": 76428.61,
+   "capital": 725.71,
+   "interets": 95.54,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 143,
+   "date": "2029-10-05",
+   "capital_du_avant": 75702.9,
+   "capital": 726.62,
+   "interets": 94.63,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 144,
+   "date": "2029-11-05",
+   "capital_du_avant": 74976.28,
+   "capital": 727.53,
+   "interets": 93.72,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 145,
+   "date": "2029-12-05",
+   "capital_du_avant": 74248.75,
+   "capital": 728.43,
+   "interets": 92.81,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 146,
+   "date": "2030-01-05",
+   "capital_du_avant": 73520.32,
+   "capital": 729.34,
+   "interets": 91.9,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 147,
+   "date": "2030-02-05",
+   "capital_du_avant": 72790.98,
+   "capital": 730.25,
+   "interets": 90.99,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 148,
+   "date": "2030-03-05",
+   "capital_du_avant": 72060.72,
+   "capital": 731.17,
+   "interets": 90.08,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 149,
+   "date": "2030-04-05",
+   "capital_du_avant": 71329.56,
+   "capital": 732.09,
+   "interets": 89.16,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 150,
+   "date": "2030-05-05",
+   "capital_du_avant": 70597.47,
+   "capital": 733,
+   "interets": 88.25,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 151,
+   "date": "2030-06-05",
+   "capital_du_avant": 69864.47,
+   "capital": 733.92,
+   "interets": 87.33,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 152,
+   "date": "2030-07-05",
+   "capital_du_avant": 69130.55,
+   "capital": 734.83,
+   "interets": 86.42,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 153,
+   "date": "2030-08-05",
+   "capital_du_avant": 68395.72,
+   "capital": 735.75,
+   "interets": 85.49,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 154,
+   "date": "2030-09-05",
+   "capital_du_avant": 67659.97,
+   "capital": 736.67,
+   "interets": 84.57,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 155,
+   "date": "2030-10-05",
+   "capital_du_avant": 66923.3,
+   "capital": 737.59,
+   "interets": 83.65,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 156,
+   "date": "2030-11-05",
+   "capital_du_avant": 66185.71,
+   "capital": 738.51,
+   "interets": 82.73,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 157,
+   "date": "2030-12-05",
+   "capital_du_avant": 65447.2,
+   "capital": 739.43,
+   "interets": 81.81,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 158,
+   "date": "2031-01-05",
+   "capital_du_avant": 64707.76,
+   "capital": 740.36,
+   "interets": 80.88,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 159,
+   "date": "2031-02-05",
+   "capital_du_avant": 63967.4,
+   "capital": 741.28,
+   "interets": 79.96,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 160,
+   "date": "2031-03-05",
+   "capital_du_avant": 63226.12,
+   "capital": 742.21,
+   "interets": 79.03,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 161,
+   "date": "2031-04-05",
+   "capital_du_avant": 62483.9,
+   "capital": 743.14,
+   "interets": 78.1,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 162,
+   "date": "2031-05-05",
+   "capital_du_avant": 61740.76,
+   "capital": 744.07,
+   "interets": 77.17,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 163,
+   "date": "2031-06-05",
+   "capital_du_avant": 60996.68,
+   "capital": 745,
+   "interets": 76.24,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 164,
+   "date": "2031-07-05",
+   "capital_du_avant": 60251.68,
+   "capital": 745.93,
+   "interets": 75.31,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 165,
+   "date": "2031-08-05",
+   "capital_du_avant": 59505.74,
+   "capital": 746.86,
+   "interets": 74.38,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 166,
+   "date": "2031-09-05",
+   "capital_du_avant": 58758.88,
+   "capital": 747.79,
+   "interets": 73.45,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 167,
+   "date": "2031-10-05",
+   "capital_du_avant": 58011.08,
+   "capital": 748.73,
+   "interets": 72.51,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 168,
+   "date": "2031-11-05",
+   "capital_du_avant": 57262.35,
+   "capital": 749.66,
+   "interets": 71.58,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 169,
+   "date": "2031-12-05",
+   "capital_du_avant": 56512.69,
+   "capital": 750.6,
+   "interets": 70.64,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 170,
+   "date": "2032-01-05",
+   "capital_du_avant": 55762.08,
+   "capital": 751.54,
+   "interets": 69.7,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 171,
+   "date": "2032-02-05",
+   "capital_du_avant": 55010.54,
+   "capital": 752.48,
+   "interets": 68.76,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 172,
+   "date": "2032-03-05",
+   "capital_du_avant": 54258.06,
+   "capital": 753.42,
+   "interets": 67.82,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 173,
+   "date": "2032-04-05",
+   "capital_du_avant": 53504.64,
+   "capital": 754.37,
+   "interets": 66.88,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 174,
+   "date": "2032-05-05",
+   "capital_du_avant": 52750.27,
+   "capital": 755.31,
+   "interets": 65.94,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 175,
+   "date": "2032-06-05",
+   "capital_du_avant": 51994.96,
+   "capital": 756.25,
+   "interets": 65,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 176,
+   "date": "2032-07-05",
+   "capital_du_avant": 51238.71,
+   "capital": 757.2,
+   "interets": 64.05,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 177,
+   "date": "2032-08-05",
+   "capital_du_avant": 50481.52,
+   "capital": 758.15,
+   "interets": 63.1,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 178,
+   "date": "2032-09-05",
+   "capital_du_avant": 49723.37,
+   "capital": 759.09,
+   "interets": 62.15,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 179,
+   "date": "2032-10-05",
+   "capital_du_avant": 48964.28,
+   "capital": 760.04,
+   "interets": 61.2,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 180,
+   "date": "2032-11-05",
+   "capital_du_avant": 48204.23,
+   "capital": 760.99,
+   "interets": 60.25,
+   "assurance": 20.08
+  },
+  {
+   "pret": "P1",
+   "numero": 181,
+   "date": "2032-12-05",
+   "capital_du_avant": 47443.24,
+   "capital": 761.94,
+   "interets": 59.31,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 182,
+   "date": "2033-01-05",
+   "capital_du_avant": 46681.3,
+   "capital": 762.9,
+   "interets": 58.35,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 183,
+   "date": "2033-02-05",
+   "capital_du_avant": 45918.41,
+   "capital": 763.85,
+   "interets": 57.4,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 184,
+   "date": "2033-03-05",
+   "capital_du_avant": 45154.56,
+   "capital": 764.8,
+   "interets": 56.44,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 185,
+   "date": "2033-04-05",
+   "capital_du_avant": 44389.76,
+   "capital": 765.76,
+   "interets": 55.48,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 186,
+   "date": "2033-05-05",
+   "capital_du_avant": 43623.99,
+   "capital": 766.72,
+   "interets": 54.53,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 187,
+   "date": "2033-06-05",
+   "capital_du_avant": 42857.27,
+   "capital": 767.68,
+   "interets": 53.57,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 188,
+   "date": "2033-07-05",
+   "capital_du_avant": 42089.6,
+   "capital": 768.64,
+   "interets": 52.61,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 189,
+   "date": "2033-08-05",
+   "capital_du_avant": 41320.96,
+   "capital": 769.59,
+   "interets": 51.65,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 190,
+   "date": "2033-09-05",
+   "capital_du_avant": 40551.37,
+   "capital": 770.56,
+   "interets": 50.69,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 191,
+   "date": "2033-10-05",
+   "capital_du_avant": 39780.81,
+   "capital": 771.52,
+   "interets": 49.73,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 192,
+   "date": "2033-11-05",
+   "capital_du_avant": 39009.29,
+   "capital": 772.49,
+   "interets": 48.76,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 193,
+   "date": "2033-12-05",
+   "capital_du_avant": 38236.8,
+   "capital": 773.45,
+   "interets": 47.79,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 194,
+   "date": "2034-01-05",
+   "capital_du_avant": 37463.35,
+   "capital": 774.42,
+   "interets": 46.83,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 195,
+   "date": "2034-02-05",
+   "capital_du_avant": 36688.93,
+   "capital": 775.39,
+   "interets": 45.86,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 196,
+   "date": "2034-03-05",
+   "capital_du_avant": 35913.54,
+   "capital": 776.35,
+   "interets": 44.89,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 197,
+   "date": "2034-04-05",
+   "capital_du_avant": 35137.19,
+   "capital": 777.32,
+   "interets": 43.92,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 198,
+   "date": "2034-05-05",
+   "capital_du_avant": 34359.86,
+   "capital": 778.3,
+   "interets": 42.95,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 199,
+   "date": "2034-06-05",
+   "capital_du_avant": 33581.57,
+   "capital": 779.27,
+   "interets": 41.98,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 200,
+   "date": "2034-07-05",
+   "capital_du_avant": 32802.3,
+   "capital": 780.24,
+   "interets": 41,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 201,
+   "date": "2034-08-05",
+   "capital_du_avant": 32022.06,
+   "capital": 781.22,
+   "interets": 40.03,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 202,
+   "date": "2034-09-05",
+   "capital_du_avant": 31240.84,
+   "capital": 782.2,
+   "interets": 39.05,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 203,
+   "date": "2034-10-05",
+   "capital_du_avant": 30458.64,
+   "capital": 783.17,
+   "interets": 38.07,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 204,
+   "date": "2034-11-05",
+   "capital_du_avant": 29675.47,
+   "capital": 784.15,
+   "interets": 37.1,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 205,
+   "date": "2034-12-05",
+   "capital_du_avant": 28891.32,
+   "capital": 785.13,
+   "interets": 36.11,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 206,
+   "date": "2035-01-05",
+   "capital_du_avant": 28106.19,
+   "capital": 786.11,
+   "interets": 35.14,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 207,
+   "date": "2035-02-05",
+   "capital_du_avant": 27320.08,
+   "capital": 787.1,
+   "interets": 34.15,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 208,
+   "date": "2035-03-05",
+   "capital_du_avant": 26532.98,
+   "capital": 788.08,
+   "interets": 33.16,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 209,
+   "date": "2035-04-05",
+   "capital_du_avant": 25744.9,
+   "capital": 789.07,
+   "interets": 32.18,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 210,
+   "date": "2035-05-05",
+   "capital_du_avant": 24955.83,
+   "capital": 790.05,
+   "interets": 31.19,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 211,
+   "date": "2035-06-05",
+   "capital_du_avant": 24165.78,
+   "capital": 791.04,
+   "interets": 30.21,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 212,
+   "date": "2035-07-05",
+   "capital_du_avant": 23374.74,
+   "capital": 792.03,
+   "interets": 29.22,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 213,
+   "date": "2035-08-05",
+   "capital_du_avant": 22582.72,
+   "capital": 793.02,
+   "interets": 28.23,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 214,
+   "date": "2035-09-05",
+   "capital_du_avant": 21789.7,
+   "capital": 794.01,
+   "interets": 27.24,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 215,
+   "date": "2035-10-05",
+   "capital_du_avant": 20995.69,
+   "capital": 795,
+   "interets": 26.24,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 216,
+   "date": "2035-11-05",
+   "capital_du_avant": 20200.69,
+   "capital": 796,
+   "interets": 25.25,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 217,
+   "date": "2035-12-05",
+   "capital_du_avant": 19404.69,
+   "capital": 796.99,
+   "interets": 24.25,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 218,
+   "date": "2036-01-05",
+   "capital_du_avant": 18607.7,
+   "capital": 797.99,
+   "interets": 23.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 219,
+   "date": "2036-02-05",
+   "capital_du_avant": 17809.71,
+   "capital": 798.98,
+   "interets": 22.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 220,
+   "date": "2036-03-05",
+   "capital_du_avant": 17010.73,
+   "capital": 799.99,
+   "interets": 21.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 221,
+   "date": "2036-04-05",
+   "capital_du_avant": 16210.75,
+   "capital": 800.98,
+   "interets": 20.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 222,
+   "date": "2036-05-05",
+   "capital_du_avant": 15409.77,
+   "capital": 801.99,
+   "interets": 19.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 223,
+   "date": "2036-06-05",
+   "capital_du_avant": 14607.78,
+   "capital": 802.99,
+   "interets": 18.26,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 224,
+   "date": "2036-07-05",
+   "capital_du_avant": 13804.79,
+   "capital": 803.99,
+   "interets": 17.25,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 225,
+   "date": "2036-08-05",
+   "capital_du_avant": 13000.8,
+   "capital": 805,
+   "interets": 16.25,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 226,
+   "date": "2036-09-05",
+   "capital_du_avant": 12195.8,
+   "capital": 806,
+   "interets": 15.24,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 227,
+   "date": "2036-10-05",
+   "capital_du_avant": 11389.79,
+   "capital": 807.01,
+   "interets": 14.24,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 228,
+   "date": "2036-11-05",
+   "capital_du_avant": 10582.79,
+   "capital": 808.02,
+   "interets": 13.22,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 229,
+   "date": "2036-12-05",
+   "capital_du_avant": 9774.77,
+   "capital": 809.03,
+   "interets": 12.22,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 230,
+   "date": "2037-01-05",
+   "capital_du_avant": 8965.74,
+   "capital": 810.04,
+   "interets": 11.21,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 231,
+   "date": "2037-02-05",
+   "capital_du_avant": 8155.7,
+   "capital": 811.05,
+   "interets": 10.19,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 232,
+   "date": "2037-03-05",
+   "capital_du_avant": 7344.65,
+   "capital": 812.07,
+   "interets": 9.18,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 233,
+   "date": "2037-04-05",
+   "capital_du_avant": 6532.58,
+   "capital": 813.08,
+   "interets": 8.17,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 234,
+   "date": "2037-05-05",
+   "capital_du_avant": 5719.5,
+   "capital": 814.09,
+   "interets": 7.15,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 235,
+   "date": "2037-06-05",
+   "capital_du_avant": 4905.41,
+   "capital": 815.12,
+   "interets": 6.13,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 236,
+   "date": "2037-07-05",
+   "capital_du_avant": 4090.29,
+   "capital": 816.13,
+   "interets": 5.12,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 237,
+   "date": "2037-08-05",
+   "capital_du_avant": 3274.16,
+   "capital": 817.15,
+   "interets": 4.09,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 238,
+   "date": "2037-09-05",
+   "capital_du_avant": 2457,
+   "capital": 818.18,
+   "interets": 3.07,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 239,
+   "date": "2037-10-05",
+   "capital_du_avant": 1638.83,
+   "capital": 819.2,
+   "interets": 2.05,
+   "assurance": 11.27
+  },
+  {
+   "pret": "P1",
+   "numero": 240,
+   "date": "2037-11-05",
+   "capital_du_avant": 819.63,
+   "capital": 819.63,
+   "interets": 1.02,
+   "assurance": 11.27
+  }
+ ],
+ "immobilisations": [
+  {
+   "bien": "APPART-01",
+   "composant": "Terrain",
+   "mise_en_service": "2024-05-18",
+   "valeur": 86490,
+   "duree_annees": 0
+  },
+  {
+   "bien": "APPART-01",
+   "composant": "Bâtiment",
+   "mise_en_service": "2024-05-18",
+   "valeur": 201810,
+   "duree_annees": 22.388075
+  },
+  {
+   "bien": "APPART-01",
+   "composant": "Réfrigérateur",
+   "mise_en_service": "2024-06-11",
+   "valeur": 1076.01,
+   "duree_annees": 5
+  },
+  {
+   "bien": "APPART-01",
+   "composant": "Ballon d'eau chaude",
+   "mise_en_service": "2025-07-29",
+   "valeur": 1590.11,
+   "duree_annees": 10
+  },
+  {
+   "bien": "APPART-01",
+   "composant": "Mobilier acquis en 2017 (acte de vente)",
+   "mise_en_service": "2017-11-10",
+   "valeur": 7440,
+   "duree_annees": 0
+  }
+ ],
+ "stocks_amortissements_comptable": [
+  {
+   "bien": "APPART-01",
+   "annee": 2024,
+   "stock_reporte": 1834.69
+  },
+  {
+   "bien": "APPART-01",
+   "annee": 2025,
+   "stock_reporte": 3824.3
+  }
+ ],
+ "depenses_avant_location": [
+  {
+   "libelle": "Taxe foncière 2017 (prorata remboursé au vendeur)",
+   "date": "2017-11-10",
+   "montant": 59.38,
+   "bien": "APPART-01",
+   "nature_source": "Réel : acte de vente"
+  },
+  {
+   "libelle": "Copropriété 2017 (10/11 au 31/12)",
+   "date": "2017-12-15",
+   "montant": 278.07,
+   "bien": "APPART-01",
+   "nature_source": "Estimation : 1 953 € par an au prorata"
+  },
+  {
+   "libelle": "Copropriété 2018",
+   "date": "2018-07-01",
+   "montant": 1953,
+   "bien": "APPART-01",
+   "nature_source": "Estimation (décomptes annuels non retrouvés)"
+  },
+  {
+   "libelle": "Taxe foncière 2018",
+   "date": "2018-10-15",
+   "montant": 430.59,
+   "bien": "APPART-01",
+   "nature_source": "Estimation"
+  },
+  {
+   "libelle": "Copropriété 2019",
+   "date": "2019-07-01",
+   "montant": 1953,
+   "bien": "APPART-01",
+   "nature_source": "Estimation (décomptes annuels non retrouvés)"
+  },
+  {
+   "libelle": "Taxe foncière 2019",
+   "date": "2019-10-15",
+   "montant": 440.82,
+   "bien": "APPART-01",
+   "nature_source": "Estimation"
+  },
+  {
+   "libelle": "Copropriété 2020",
+   "date": "2020-07-01",
+   "montant": 1953,
+   "bien": "APPART-01",
+   "nature_source": "Estimation (décomptes annuels non retrouvés)"
+  },
+  {
+   "libelle": "Taxe foncière 2020",
+   "date": "2020-10-15",
+   "montant": 445.47,
+   "bien": "APPART-01",
+   "nature_source": "Estimation"
+  },
+  {
+   "libelle": "Copropriété 2021",
+   "date": "2021-07-01",
+   "montant": 1953,
+   "bien": "APPART-01",
+   "nature_source": "Estimation (décomptes annuels non retrouvés)"
+  },
+  {
+   "libelle": "Taxe foncière 2021",
+   "date": "2021-10-15",
+   "montant": 446.4,
+   "bien": "APPART-01",
+   "nature_source": "Estimation"
+  },
+  {
+   "libelle": "Copropriété 2022",
+   "date": "2022-07-01",
+   "montant": 1953,
+   "bien": "APPART-01",
+   "nature_source": "Estimation (décomptes annuels non retrouvés)"
+  },
+  {
+   "libelle": "Taxe foncière 2022",
+   "date": "2022-10-15",
+   "montant": 462.21,
+   "bien": "APPART-01",
+   "nature_source": "Réel : avis 2022 (06_Impots-locaux)"
+  },
+  {
+   "libelle": "Copropriété : appel T1 2023",
+   "date": "2022-12-25",
+   "montant": 696.94,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : appel T2 2023",
+   "date": "2023-03-27",
+   "montant": 631,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : travaux contrôle d'accès 3/3",
+   "date": "2023-04-17",
+   "montant": 197.85,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : appel T3 2023",
+   "date": "2023-06-28",
+   "montant": 433.14,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : travaux de façade",
+   "date": "2023-09-26",
+   "montant": 253.29,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : appel T4 2023",
+   "date": "2023-10-02",
+   "montant": 802.29,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Taxe foncière 2023",
+   "date": "2023-10-15",
+   "montant": 495.69,
+   "bien": "APPART-01",
+   "nature_source": "Réel : avis 2023 (06_Impots-locaux)"
+  },
+  {
+   "libelle": "Copropriété : DTG 1/2",
+   "date": "2023-11-01",
+   "montant": 181.35,
+   "bien": "APPART-01",
+   "nature_source": "Réel : appel du syndic (05_Copropriete/Appels)"
+  },
+  {
+   "libelle": "Copropriété : appel T1 2024",
+   "date": "2024-02-13",
+   "montant": 796.96,
+   "bien": "APPART-01",
+   "nature_source": "Réel : relevé BANQUE (appel de 675,30 € + 121,66 € non identifiés)"
+  },
+  {
+   "libelle": "Copropriété : DTG 2/2",
+   "date": "2024-03-18",
+   "montant": 181.35,
+   "bien": "APPART-01",
+   "nature_source": "Réel : relevé BANQUE"
+  },
+  {
+   "libelle": "Copropriété : appel T2 2024",
+   "date": "2024-04-10",
+   "montant": 752.3,
+   "bien": "APPART-01",
+   "nature_source": "Réel : relevé BANQUE"
+  }
+ ],
+ "hypotheses": {
+  "revente": {
+   "frais_agence_pct_prix": 0,
+   "frais_divers_vente": 1674,
+   "indemnites_remboursement_anticipe": 0,
+   "frais_acquisition_reels": 27900,
+   "taux_ir_plus_value": 0.19,
+   "taux_ps_plus_value": 0.172
+  },
+  "projection": {
+   "loyer_evite_mensuel_a_l_achat": 976.5,
+   "indexation_loyer_evite": 0.0178,
+   "loyer_net_agence_mensuel": 1056.61,
+   "depenses_annuelles_hors_pret": 5598.6,
+   "evolution_annuelle": 0.015,
+   "amortissements_deduits_par_an": 4185,
+   "frais_annee_de_vente": 558,
+   "part_prix_reinvestie_rp": 1,
+   "autres_dettes": 0
+  },
+  "scenarios_vente": [
+   {
+    "date": "2027-06-30",
+    "prix": 279000
+   },
+   {
+    "date": "2028-06-30",
+    "prix": 279000
+   },
+   {
+    "date": "2029-06-30",
+    "prix": 279000
+   }
+  ],
+  "date_donnees": "2026-10-25"
+ }
+}
