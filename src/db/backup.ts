@@ -10,7 +10,7 @@
  *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
-import { TAX_REGIMES, type Dataset } from '../engine/types';
+import { isTaxRegimeCompatible, RENTAL_TYPES, TAX_REGIMES, type Dataset } from '../engine/types';
 import { SCHEMA_VERSION } from './database';
 
 export const BACKUP_APPLICATION = 'locapilote';
@@ -116,8 +116,9 @@ function checkDataset(data: Dataset): void {
   for (const p of data.properties) {
     if (!isString(p.id) || !isString(p.name)) fail('un bien n’a pas d’identifiant ou de nom.');
     if (!TAX_REGIMES.includes(p.taxRegime)) fail(`régime fiscal inconnu pour « ${p.name} ».`);
-    if (p.rentalType !== 'furnished' && p.rentalType !== 'unfurnished') {
-      fail(`type de location inconnu pour « ${p.name} ».`);
+    if (!RENTAL_TYPES.includes(p.rentalType)) fail(`type de location inconnu pour « ${p.name} ».`);
+    if (!isTaxRegimeCompatible(p.rentalType, p.taxRegime)) {
+      fail(`le régime fiscal de « ${p.name} » n’est pas compatible avec son type de location.`);
     }
     if (!isDate(p.acquisitionDate)) fail(`date d’acquisition invalide pour « ${p.name} ».`);
   }

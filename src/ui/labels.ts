@@ -1,14 +1,16 @@
 import type { Category, CategoryDirection, RentalType, TaxRegime } from '../engine/types';
 
 export const REGIME_LABELS: Record<TaxRegime, string> = {
-  'lmnp-reel': 'LMNP au réel',
   'lmnp-micro-bic': 'LMNP micro-BIC',
+  'lmnp-reel': 'LMNP au réel',
+  'lmp-reel': 'LMP au réel',
   'micro-foncier': 'Micro-foncier',
   'reel-foncier': 'Réel foncier',
 };
 
 export const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
   furnished: 'Meublée',
+  seasonal: 'Saisonnière',
   unfurnished: 'Nue',
 };
 

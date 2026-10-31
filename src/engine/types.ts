@@ -16,14 +16,32 @@ export type IsoDate = string;
 
 /** Régimes fiscaux. Le calcul fiscal de chacun vit dans `src/engine/tax/`. */
 export const TAX_REGIMES = [
-  'lmnp-reel',
   'lmnp-micro-bic',
+  'lmnp-reel',
+  'lmp-reel',
   'micro-foncier',
   'reel-foncier',
 ] as const;
 export type TaxRegime = (typeof TAX_REGIMES)[number];
 
-export type RentalType = 'furnished' | 'unfurnished';
+export const RENTAL_TYPES = ['furnished', 'seasonal', 'unfurnished'] as const;
+/** Meublée, saisonnière (meublé de tourisme) ou nue. */
+export type RentalType = (typeof RENTAL_TYPES)[number];
+
+/**
+ * Régimes possibles pour chaque type de location : une location meublée ou saisonnière relève
+ * des BIC (LMNP, LMP), une location nue des revenus fonciers.
+ * Voir docs/regles-de-calcul.md § 7.
+ */
+export const COMPATIBLE_TAX_REGIMES: Record<RentalType, readonly TaxRegime[]> = {
+  furnished: ['lmnp-micro-bic', 'lmnp-reel', 'lmp-reel'],
+  seasonal: ['lmnp-micro-bic', 'lmnp-reel', 'lmp-reel'],
+  unfurnished: ['micro-foncier', 'reel-foncier'],
+};
+
+export function isTaxRegimeCompatible(rentalType: RentalType, taxRegime: TaxRegime): boolean {
+  return COMPATIBLE_TAX_REGIMES[rentalType].includes(taxRegime);
+}
 
 export interface Property {
   id: string;
