@@ -35,3 +35,17 @@ Locapilote produit des estimations à des fins de suivi. Ce n'est pas un conseil
 ## Licence
 
 MIT
+
+## Développement
+
+Prérequis : Node.js 22.
+
+| Commande | Rôle |
+| --- | --- |
+| `npm install` | Installe les dépendances |
+| `npm run dev` | Lance l'application en local |
+| `npm test` | Lance les tests (Vitest) |
+| `npm run lint` | Vérifie le code (ESLint) |
+| `npm run build` | Construit le site dans `dist/` |
+
+Mise en ligne : Cloudflare Pages, commande de build `npm run build`, dossier de sortie `dist`.
