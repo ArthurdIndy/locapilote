@@ -1,0 +1,18 @@
+// Configuration Cloudflare Workers : sert le site statique construit dans dist/.
+{
+  "name": "locapilote",
+  "compatibility_date": "2026-10-01",
+  // Site de production sur locapilote.<compte>.workers.dev, et un aperçu par branche.
+  "workers_dev": true,
+  "preview_urls": true,
+  // Requis par « npx wrangler preview » (aperçus des branches) ; peut rester vide.
+  "previews": {},
+  // Wrangler construit lui-même le site avant chaque déploiement ou aperçu.
+  "build": {
+    "command": "npm run build",
+  },
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
+}
