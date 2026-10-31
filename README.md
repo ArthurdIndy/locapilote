@@ -28,6 +28,8 @@ Application web sans serveur : Vite, React, TypeScript, stockage dans le navigat
 
 `data/` contient un jeu de test anonymisé (noms, adresses et références remplacés, montants multipliés par un même coefficient) et les résultats attendus. Aucune donnée personnelle réelle n'est publiée.
 
+Dans l'application, les données sont stockées dans le navigateur (IndexedDB) et ne quittent jamais l'appareil. La page « Données » permet de tout exporter en JSON (et de le réimporter) et d'exporter les mouvements en CSV pour Excel.
+
 ## Avertissement
 
 Locapilote produit des estimations à des fins de suivi. Ce n'est pas un conseil fiscal : faites confirmer les règles par un expert-comptable ou sur impots.gouv.fr.
