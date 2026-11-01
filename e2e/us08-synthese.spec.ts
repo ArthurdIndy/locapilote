@@ -117,11 +117,14 @@ test('changer la date : les années suivantes disparaissent, les échéances son
   await expect(page.getByLabel('Données à jour au')).toHaveValue('2025-06-30');
 });
 
-test('la partie fiscale suit la synthèse, avec l’avertissement', async ({ page }) => {
-  // Depuis US09 : le récapitulatif LMNP réel (voir e2e/us09-fiscalite-lmnp-reel.spec.ts).
-  const tax = page.getByRole('region', { name: 'Résultat fiscal LMNP au réel' });
-  await expect(tax).toContainText('pas un conseil fiscal');
-  await expect(tax.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
+test('la partie fiscale se limite au résultat fiscal estimé, avec un lien', async ({ page }) => {
+  // Depuis US09 : le détail est sur la page Fiscalité (voir e2e/us09-fiscalite-lmnp-reel.spec.ts).
+  await expect(
+    page.getByText('Résultat fiscal estimé').filter({ visible: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Voir le détail fiscal' }).filter({ visible: true }).first(),
+  ).toBeVisible();
 });
 
 test('sur téléphone, la synthèse s’affiche année par année', async ({ page }, testInfo) => {

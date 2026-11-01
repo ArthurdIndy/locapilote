@@ -177,7 +177,7 @@ h3 {
 }
 
 .nav a {
-  padding: 10px 14px;
+  padding: 10px 11px;
   text-decoration: none;
   color: var(--muted);
   font-weight: 600;
@@ -573,16 +573,31 @@ details summary {
     justify-content: flex-end;
   }
 
-  /* Six onglets ne tiennent pas sur une ligne : ils passent sur deux, tous visibles. */
+  /*
+   * Huit onglets ne tiennent pas sur une ligne : le menu défile horizontalement, sur une
+   * seule ligne. L'onglet actif est ramené au centre (App.tsx) ; le dégradé à droite
+   * signale qu'il y en a d'autres.
+   */
   .nav {
     gap: 0;
-    flex-wrap: wrap;
-    overflow-x: visible;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
   }
 
   .nav a {
-    padding: 8px 8px;
+    padding: 10px 10px;
     font-size: 0.95rem;
+  }
+
+  .nav a:last-child {
+    padding-right: 40px;
   }
 }
 
@@ -679,6 +694,35 @@ ul.warning {
 }
 
 /* ---------- Synthèse ---------- */
+
+.data-as-of-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.data-as-of-bar .data-as-of {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.data-as-of-bar input {
+  width: auto;
+  min-height: 40px;
+  padding: 6px 8px;
+}
+
+.section-link {
+  float: right;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
 
 .data-as-of input {
   max-width: 220px;

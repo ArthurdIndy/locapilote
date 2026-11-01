@@ -7,6 +7,7 @@ export const ROUTES = [
   { id: 'pret', label: 'Prêt' },
   { id: 'immobilisations', label: 'Immobilisations' },
   { id: 'synthese', label: 'Synthèse' },
+  { id: 'fiscalite', label: 'Fiscalité' },
   { id: 'donnees', label: 'Données' },
 ] as const;
 

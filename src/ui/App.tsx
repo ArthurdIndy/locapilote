@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
@@ -9,6 +9,7 @@ import { DataPage } from './pages/DataPage';
 import { HomePage } from './pages/HomePage';
 import { LoansPage } from './pages/LoansPage';
 import { SynthesisPage } from './pages/SynthesisPage';
+import { TaxPage } from './pages/TaxPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
@@ -102,6 +103,7 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
       {route === 'pret' && <LoansPage data={data} property={current} today={today} />}
       {route === 'immobilisations' && <AssetsPage data={data} property={current} today={today} />}
       {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
+      {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
       {route === 'donnees' && <DataPage data={data} today={today} />}
     </Layout>
   );
@@ -114,6 +116,17 @@ interface LayoutProps {
 }
 
 function Layout({ route, propertySelector, children }: LayoutProps) {
+  const nav = useRef<HTMLElement>(null);
+  // Sur téléphone, le menu défile horizontalement : l'onglet actif est ramené au centre.
+  useEffect(() => {
+    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav.current || !active) return;
+    nav.current.scrollLeft =
+      active.offsetLeft -
+      nav.current.offsetLeft -
+      (nav.current.clientWidth - active.offsetWidth) / 2;
+  }, [route]);
+
   return (
     <div className="page">
       <header className="header">
@@ -125,7 +138,7 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
           {propertySelector}
         </div>
         {route && (
-          <nav className="nav" aria-label="Navigation principale">
+          <nav className="nav" aria-label="Navigation principale" ref={nav}>
             {ROUTES.map((r) => (
               <a
                 key={r.id}

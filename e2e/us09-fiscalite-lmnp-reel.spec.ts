@@ -73,9 +73,27 @@ const reconciliation = (page: Page) =>
 const reconciliationLine = (page: Page, label: string) =>
   reconciliation(page).getByRole('listitem', { name: label, exact: true });
 
-async function openSynthesis(page: Page) {
-  await goTo(page, 'Synthèse');
+async function openTax(page: Page) {
+  await goTo(page, 'Fiscalité');
+  await expect(
+    page.getByRole('heading', { name: 'Fiscalité · Appartement exemple' }),
+  ).toBeVisible();
   await expect(taxRegion(page)).toBeVisible();
+}
+
+/** « Résultat fiscal estimé » d'une année, dans la Synthèse. */
+function synthesisTaxResult(page: Page, phone: boolean, year: string): Locator {
+  if (phone) {
+    return page
+      .getByRole('region', { name: `Année ${year}` })
+      .locator('.year-lines > div')
+      .filter({ has: page.locator('dt').getByText('Résultat fiscal estimé', { exact: true }) })
+      .locator('dd');
+  }
+  return page
+    .locator('table[aria-label="Synthèse annuelle"] tr')
+    .filter({ has: page.getByRole('rowheader', { name: 'Résultat fiscal estimé', exact: true }) })
+    .locator(`td:nth-child(${YEARS.indexOf(year) + 2})`);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -85,7 +103,7 @@ test.beforeEach(async ({ page }) => {
 test('le récapitulatif LMNP réel 2024 à 2026 retombe sur expected.json', async ({
   page,
 }, testInfo) => {
-  await openSynthesis(page);
+  await openTax(page);
   const phone = isPhone(testInfo);
   for (const year of YEARS) {
     for (const [label, key] of CHECKS) {
@@ -101,7 +119,7 @@ test('le récapitulatif LMNP réel 2024 à 2026 retombe sur expected.json', asyn
 test('chaque écran fiscal porte l’avertissement et renvoie vers impots.gouv.fr', async ({
   page,
 }) => {
-  await openSynthesis(page);
+  await openTax(page);
   await expect(taxRegion(page)).toContainText('pas un conseil fiscal');
   await expect(taxRegion(page)).toContainText('expert-comptable');
   await expect(taxRegion(page).getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
@@ -110,21 +128,26 @@ test('chaque écran fiscal porte l’avertissement et renvoie vers impots.gouv.f
   await expect(page.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
 });
 
-test('un autre régime affiche « pas encore disponible »', async ({ page }) => {
+test('un autre régime affiche « pas encore disponible »', async ({ page }, testInfo) => {
   await goTo(page, 'Biens');
   await page.getByRole('button', { name: 'Modifier' }).click();
   await page.getByLabel('Régime fiscal').selectOption({ label: 'LMNP micro-BIC' });
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Bien « Appartement exemple » modifié.')).toBeVisible();
-  await goTo(page, 'Synthèse');
+  await goTo(page, 'Fiscalité');
   const tax = page.getByRole('region', { name: 'Résultat fiscal', exact: true });
   await expect(tax).toContainText('pas encore disponible pour ce régime (LMNP micro-BIC)');
   await expect(tax.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
   await expect(taxRegion(page)).toHaveCount(0);
+  // Dans la Synthèse, la ligne du résultat fiscal affiche « non disponible ».
+  await goTo(page, 'Synthèse');
+  for (const year of YEARS) {
+    await expect(synthesisTaxResult(page, isPhone(testInfo), year)).toHaveText('non disponible');
+  }
 });
 
 test('les mouvements « À valider » sont signalés, avec un lien vers eux', async ({ page }) => {
-  await openSynthesis(page);
+  await openTax(page);
   const warning = taxRegion(page).getByText(/2024 : 1 mouvement « À valider »/);
   await expect(warning).toContainText('395,25');
   await expect(warning).toContainText('non retenu dans le résultat fiscal');
@@ -190,7 +213,7 @@ test('immobilisations : ajout, modification et suppression, répercutés sur le 
   await expect(page.getByText('Immobilisation « Canapé » ajoutée.')).toBeVisible();
 
   // 2026 : 9 388,39 € + 200 € de dotation.
-  await goTo(page, 'Synthèse');
+  await goTo(page, 'Fiscalité');
   await expect(cell(page, phone, 'Dotations aux amortissements de l’année', '2026')).toHaveText(
     eur(9588.39),
   );
@@ -202,7 +225,7 @@ test('immobilisations : ajout, modification et suppression, répercutés sur le 
   await expect(page.getByText('Non amorti', { exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Immobilisation « Canapé » modifiée.')).toBeVisible();
-  await goTo(page, 'Synthèse');
+  await goTo(page, 'Fiscalité');
   await expect(cell(page, phone, 'Dotations aux amortissements de l’année', '2026')).toHaveText(
     eur(9388.39),
   );
@@ -227,7 +250,7 @@ test('immobilisation : la saisie est vérifiée', async ({ page }) => {
 test('rapprochement : les écarts expliqués du jeu de test (contrôles de expected.json)', async ({
   page,
 }, testInfo) => {
-  await openSynthesis(page);
+  await openTax(page);
   const controls = expected.controles.filter((c) => c.statut === 'Écart expliqué');
   for (const control of controls) {
     const year = control.controle.slice(-4);
@@ -264,7 +287,7 @@ test('rapprochement : les écarts expliqués du jeu de test (contrôles de expec
 test('rapprochement : saisir les comptes, un écart sans explication est « à expliquer »', async ({
   page,
 }) => {
-  await openSynthesis(page);
+  await openTax(page);
   await reconciliation(page).getByRole('button', { name: '2026', exact: true }).click();
   await expect(reconciliationLine(page, 'Recettes').locator('.rl-status')).toHaveText('Non saisi');
   await reconciliation(page).getByRole('button', { name: 'Saisir les comptes 2026' }).click();
@@ -288,7 +311,7 @@ test('le stock reporté du comptable se saisit depuis le récapitulatif et fait 
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
-  await openSynthesis(page);
+  await openTax(page);
   await reconciliation(page).getByRole('button', { name: '2025', exact: true }).click();
   await reconciliation(page).getByRole('button', { name: 'Modifier les comptes 2025' }).click();
   const stock = page
@@ -317,7 +340,7 @@ test('le stock reporté du comptable se saisit depuis le récapitulatif et fait 
 });
 
 test('export CSV du récapitulatif, à envoyer au comptable', async ({ page }) => {
-  await openSynthesis(page);
+  await openTax(page);
   const download = page.waitForEvent('download');
   await taxRegion(page).getByRole('button', { name: 'Exporter en CSV' }).click();
   const file = await download;
@@ -329,7 +352,7 @@ test('export CSV du récapitulatif, à envoyer au comptable', async ({ page }) =
 });
 
 test('version imprimable : seul le récapitulatif est imprimé', async ({ page }, testInfo) => {
-  await openSynthesis(page);
+  await openTax(page);
   // On remplace la boîte de dialogue d'impression par un simple marqueur.
   await page.evaluate(() => {
     window.print = () => document.body.setAttribute('data-printed', 'oui');
@@ -351,9 +374,85 @@ test('sur téléphone, le récapitulatif s’affiche année par année, sans dé
   page,
 }, testInfo) => {
   test.skip(!isPhone(testInfo), 'téléphone seulement');
-  await openSynthesis(page);
+  await openTax(page);
   const cards = page.getByRole('region', { name: /^Fiscalité / });
   await expect(cards).toHaveCount(3);
   await expect(cards.first().getByRole('heading', { level: 3 })).toHaveText('2026');
   await expectNoHorizontalScroll(page);
+});
+
+test('la Synthèse ne garde que le résultat fiscal estimé, avec un lien vers le détail', async ({
+  page,
+}, testInfo) => {
+  const phone = isPhone(testInfo);
+  await goTo(page, 'Synthèse');
+  for (const year of YEARS) {
+    await expect(synthesisTaxResult(page, phone, year)).toHaveText(
+      eur(line('Résultat fiscal estimé')[year]!),
+    );
+  }
+  // Le détail (récapitulatif, rapprochement, export) n'est plus sur la Synthèse.
+  await expect(taxRegion(page)).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Rapprochement avec le comptable' })).toHaveCount(
+    0,
+  );
+  await capture(page, testInfo, 'us09-synthese');
+  await page.getByRole('link', { name: 'Voir le détail fiscal' }).first().click();
+  await expect(
+    page.getByRole('heading', { name: 'Fiscalité · Appartement exemple' }),
+  ).toBeVisible();
+  await expect(taxRegion(page)).toBeVisible();
+});
+
+test('« Données à jour au » : une ligne en haut de page, même date en Synthèse et en Fiscalité', async ({
+  page,
+}) => {
+  await goTo(page, 'Synthèse');
+  const date = page.getByLabel('Données à jour au');
+  await expect(date).toHaveValue('2026-10-25');
+  await date.fill('2025-12-31');
+  await goTo(page, 'Fiscalité');
+  await expect(page.getByLabel('Données à jour au')).toHaveValue('2025-12-31');
+  // Les années suivantes disparaissent aussi du récapitulatif fiscal.
+  await expect(page.locator('table[aria-label="Récapitulatif LMNP réel"] thead th')).toHaveText([
+    'Rubrique',
+    '2024',
+    '2025',
+  ]);
+  await page.getByLabel('Données à jour au').fill('2026-10-25');
+  await goTo(page, 'Synthèse');
+  await expect(page.getByLabel('Données à jour au')).toHaveValue('2026-10-25');
+});
+
+test('menu : 8 onglets, utilisables sur téléphone (une ligne qui défile)', async ({
+  page,
+}, testInfo) => {
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  await expect(nav.getByRole('link')).toHaveText([
+    'Accueil',
+    'Biens',
+    'Mouvements',
+    'Prêt',
+    'Immobilisations',
+    'Synthèse',
+    'Fiscalité',
+    'Données',
+  ]);
+  // Une seule ligne d'onglets, sur ordinateur comme sur téléphone.
+  const box = await nav.boundingBox();
+  expect(box!.height).toBeLessThan(60);
+  for (const [label, heading] of [
+    ['Données', /^Données/],
+    ['Accueil', /Appartement exemple/],
+    ['Fiscalité', /^Fiscalité/],
+  ] as const) {
+    await goTo(page, label);
+    await expect(page.getByRole('heading', { level: 2, name: heading }).first()).toBeVisible();
+    // L'onglet actif est visible à l'écran, sans défilement manuel.
+    const active = nav.locator('[aria-current="page"]');
+    await expect(active).toHaveText(label);
+    await expect(active).toBeInViewport({ ratio: 1 });
+  }
+  await expectNoHorizontalScroll(page);
+  if (isPhone(testInfo)) await capture(page, testInfo, 'us09-menu');
 });

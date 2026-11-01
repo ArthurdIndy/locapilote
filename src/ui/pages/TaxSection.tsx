@@ -29,7 +29,7 @@ interface Props {
   dataAsOf: IsoDate;
 }
 
-/** Bloc fiscal affiché sous la synthèse : celui du régime du bien. */
+/** Bloc fiscal de la page Fiscalité : celui du régime du bien. */
 export function TaxSection({ data, property, dataAsOf }: Props) {
   if (property.taxRegime !== 'lmnp-reel') {
     return (

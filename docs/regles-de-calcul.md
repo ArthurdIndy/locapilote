@@ -66,7 +66,7 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 - Rendement brut = loyers annualisés / coût total d'acquisition.
 - Loyers hors charges = mouvements des catégories du groupe « Loyers ».
 - Rendement net = (recettes − charges hors intérêts et assurance emprunteur), annualisé, / coût total d'acquisition. Les charges sont les dépenses payées hors investissements (« À amortir ») et hors dépenses à qualifier (« À valider ») ; tant que seul le LMNP réel est paramétré, c'est son traitement qui sert de référence.
-- Années affichées : de l'année de mise en location à celle de la date de mise à jour des données (réglable dans la synthèse ; la date du jour par défaut).
+- Années affichées : de l'année de mise en location à celle de la date de mise à jour des données (réglable en haut des pages Synthèse et Fiscalité, même date pour les deux ; la date du jour par défaut).
 
 ## 4. Amortissements (Amortissements)
 
