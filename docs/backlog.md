@@ -10,6 +10,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 |
 | Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 |
+| Impôt estimé et cash-flow après impôt | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
 
 ## Synthèse : détail des recettes et des dépenses
 
@@ -34,6 +35,19 @@ Critères d'acceptation :
 - les groupes viennent des catégories paramétrées : un nouveau groupe apparaît sans modification du code ;
 - ce détail montre ce qui a été payé ; il ne remplace pas le récapitulatif fiscal (ce qui est déductible) ;
 - lisible sur téléphone, dans la carte de chaque année.
+
+## Impôt estimé et cash-flow après impôt
+
+« En tant que propriétaire, je veux savoir combien d'impôt me coûte ma location et ce qu'il me reste après impôt, pour relier le résultat fiscal à mon argent. »
+
+Le résultat fiscal (US09) n'est pas de l'argent : c'est la base de l'impôt. Pour un LMNP au réel avec un résultat nul, l'impôt est nul ; pour un bien en micro-BIC ou un résultat positif, c'est souvent le premier poste de dépense.
+
+- Paramètre du foyer (pas du bien) : tranche marginale d'imposition (0, 11, 30, 41 ou 45 %), saisie par l'utilisateur.
+- **Impôt estimé** de l'année = résultat fiscal positif × (tranche marginale + prélèvements sociaux).
+- **Cash-flow après impôt** = cash-flow − impôt estimé, dans la synthèse ; mensualisé comme le cash-flow.
+- Calcul simplifié, signalé comme tel : pas de calcul complet du barème, ni de quotient familial.
+
+À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (17,2 %, ou taux relevé par une loi de finances récente), barème en vigueur, imputation d'un déficit.
 
 ## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
 
