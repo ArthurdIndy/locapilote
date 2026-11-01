@@ -424,6 +424,39 @@ test('« Données à jour au » : une ligne en haut de page, même date en Synth
   await expect(page.getByLabel('Données à jour au')).toHaveValue('2026-10-25');
 });
 
+/**
+ * L'onglet actif est entièrement visible dans le menu et dans l'écran. On attend d'abord la
+ * fin du défilement du menu (position stable), puis on compare les bords à ±1 px près : les
+ * positions au sous-pixel près (ratio 0,9996) ne doivent pas faire échouer le test.
+ */
+async function expectActiveTabFullyVisible(nav: Locator): Promise<void> {
+  let previous = -1;
+  await expect
+    .poll(
+      async () => {
+        const current = await nav.evaluate((el) => el.scrollLeft);
+        const stable = current === previous;
+        previous = current;
+        return stable;
+      },
+      { intervals: [100, 100, 200, 200, 500], timeout: 5000 },
+    )
+    .toBe(true);
+  const edges = await nav.evaluate((el) => {
+    const tab = el.querySelector('[aria-current="page"]')!.getBoundingClientRect();
+    const menu = el.getBoundingClientRect();
+    return {
+      tabLeft: tab.left,
+      tabRight: tab.right,
+      left: Math.max(menu.left, 0),
+      right: Math.min(menu.right, document.documentElement.clientWidth),
+    };
+  });
+  const TOLERANCE = 1; // px
+  expect(edges.tabLeft).toBeGreaterThanOrEqual(edges.left - TOLERANCE);
+  expect(edges.tabRight).toBeLessThanOrEqual(edges.right + TOLERANCE);
+}
+
 test('menu : 8 onglets, utilisables sur téléphone (une ligne qui défile)', async ({
   page,
 }, testInfo) => {
@@ -451,7 +484,7 @@ test('menu : 8 onglets, utilisables sur téléphone (une ligne qui défile)', as
     // L'onglet actif est visible à l'écran, sans défilement manuel.
     const active = nav.locator('[aria-current="page"]');
     await expect(active).toHaveText(label);
-    await expect(active).toBeInViewport({ ratio: 1 });
+    await expectActiveTabFullyVisible(nav);
   }
   await expectNoHorizontalScroll(page);
   if (isPhone(testInfo)) await capture(page, testInfo, 'us09-menu');
