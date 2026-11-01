@@ -36,3 +36,26 @@ Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute
 
 À vérifier au moment de la construire : les offres Claude qui permettent d'ajouter un connecteur personnalisé.
 
+## US21 : tableau de bord d'accueil (itération 5)
+
+« En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où en est mon bien cette année. »
+
+Indicateurs de l'année en cours, pour le bien courant :
+
+| Indicateur | Source |
+| --- | --- |
+| Cash-flow mensuel moyen | Synthèse (US08) |
+| Enrichissement de l'année | Synthèse (US08) |
+| Capital restant dû à la date du jour | Prêt (US07) |
+| Rendement net | Synthèse (US08) |
+| Résultat fiscal estimé | Fiscalité (US09) |
+| Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
+
+Critères d'acceptation :
+
+- chaque indicateur affiche la comparaison avec l'année précédente (« −421 €/mois, contre −257 € en 2025 ») et mène à son détail en un clic ;
+- la somme nette précise sur quelle valeur elle repose (« sur la base d'une valeur de 305 000 €, estimée le … ») ;
+- cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien (mini-simulation) ;
+- la fiche du bien enregistre la date de l'estimation ; au-delà de 6 mois, l'accueil propose de la mettre à jour ;
+- lisible sur téléphone (indicateurs empilés).
+
