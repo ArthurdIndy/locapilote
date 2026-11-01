@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatEuros, todayIso } from './format';
+import {
+  centsToInput,
+  formatDate,
+  formatEuros,
+  normalizeForSearch,
+  parseEurosInput,
+  todayIso,
+} from './format';
 
 describe('formatage', () => {
   it('affiche les euros à la française', () => {
@@ -12,5 +19,31 @@ describe('formatage', () => {
 
   it('donne la date du jour locale au format ISO', () => {
     expect(todayIso(new Date(2026, 9, 31, 23, 59))).toBe('2026-10-31');
+  });
+
+  it('lit un montant saisi en euros', () => {
+    expect(parseEurosInput('1 054,89')).toBe(105489);
+    expect(parseEurosInput('1054.89')).toBe(105489);
+    expect(parseEurosInput('12')).toBe(1200);
+    expect(parseEurosInput('12,5 €')).toBe(1250);
+    expect(parseEurosInput('-107,46')).toBe(-10746);
+    expect(parseEurosInput('0,1')).toBe(10);
+    expect(parseEurosInput('')).toBeNull();
+    expect(parseEurosInput('12,345')).toBeNull();
+    expect(parseEurosInput('abc')).toBeNull();
+  });
+
+  it('prépare un montant pour un champ de saisie', () => {
+    expect(centsToInput(105489)).toBe('1054,89');
+    expect(centsToInput(1200)).toBe('12');
+    expect(centsToInput(-10746)).toBe('-107,46');
+    expect(centsToInput(5)).toBe('0,05');
+    for (const cents of [0, 1, 99, 105489, -10746]) {
+      expect(parseEurosInput(centsToInput(cents))).toBe(cents);
+    }
+  });
+
+  it('cherche sans tenir compte des accents', () => {
+    expect(normalizeForSearch('Équipement')).toBe('equipement');
   });
 });

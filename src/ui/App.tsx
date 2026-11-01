@@ -1,104 +1,135 @@
-import { outstandingPrincipal } from '../engine/core/loan';
-import type { Dataset, Property, TaxRegime } from '../engine/types';
-import { loadTestDataset } from '../db/testDataset';
-import { formatDate, formatEuros, todayIso } from './format';
+import { useLiveQuery } from 'dexie-react-hooks';
+import type { ReactNode } from 'react';
+import type { Dataset } from '../engine/types';
+import { db } from '../db/database';
+import { useCurrentProperty } from './currentProperty';
+import { todayIso } from './format';
+import { DataPage } from './pages/DataPage';
+import { HomePage } from './pages/HomePage';
+import { PropertiesPage } from './pages/PropertiesPage';
+import { TransactionsPage } from './pages/TransactionsPage';
+import { WelcomePage } from './pages/WelcomePage';
+import { ROUTES, routeHref, useRoute, type RouteId } from './router';
 
-const REGIME_LABELS: Record<TaxRegime, string> = {
-  'lmnp-reel': 'LMNP au réel',
-  'lmnp-micro-bic': 'LMNP micro-BIC',
-  'micro-foncier': 'Micro-foncier',
-  'reel-foncier': 'Réel foncier',
-};
+type LoadState =
+  { status: 'ready'; initialized: boolean; data: Dataset } | { status: 'error'; message: string };
 
-// Jeu de test chargé une fois au démarrage (le stockage IndexedDB arrive avec US01/US03).
-const dataset = loadTestDataset();
+async function load(): Promise<LoadState> {
+  try {
+    const initialized = await db.isInitialized();
+    const data = await db.readAll();
+    // Biens affichés par ordre alphabétique, partout.
+    data.properties.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    return { status: 'ready', initialized, data };
+  } catch (error) {
+    return { status: 'error', message: error instanceof Error ? error.message : String(error) };
+  }
+}
 
 export function App() {
+  // Relue automatiquement à chaque modification de la base : toutes les vues restent à jour.
+  const state = useLiveQuery(load);
+  const route = useRoute();
+
+  if (state === undefined) {
+    return (
+      <Layout>
+        <p className="muted">Chargement…</p>
+      </Layout>
+    );
+  }
+  if (state.status === 'error') {
+    return (
+      <Layout>
+        <div className="card error">
+          <h2>Impossible d’ouvrir les données</h2>
+          <p>
+            Ce navigateur bloque le stockage local (navigation privée, ou cookies désactivés pour ce
+            site). Essaie dans une fenêtre normale.
+          </p>
+          <p className="muted small">Détail : {state.message}</p>
+        </div>
+      </Layout>
+    );
+  }
+  if (!state.initialized) {
+    return (
+      <Layout>
+        <WelcomePage />
+      </Layout>
+    );
+  }
+  return <MainApp data={state.data} route={route} />;
+}
+
+function MainApp({ data, route }: { data: Dataset; route: RouteId }) {
+  const { current, setCurrentId } = useCurrentProperty(data.properties);
   const today = todayIso();
 
   return (
+    <Layout
+      route={route}
+      propertySelector={
+        data.properties.length > 1 && current ? (
+          <label className="current-property">
+            <span>Bien courant</span>
+            <select value={current.id} onChange={(e) => setCurrentId(e.target.value)}>
+              {data.properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null
+      }
+    >
+      {route === 'accueil' && <HomePage data={data} today={today} />}
+      {route === 'biens' && <PropertiesPage data={data} onCreated={setCurrentId} />}
+      {route === 'mouvements' && (
+        <TransactionsPage data={data} currentPropertyId={current?.id ?? null} today={today} />
+      )}
+      {route === 'donnees' && <DataPage data={data} today={today} />}
+    </Layout>
+  );
+}
+
+interface LayoutProps {
+  route?: RouteId;
+  propertySelector?: ReactNode;
+  children: ReactNode;
+}
+
+function Layout({ route, propertySelector, children }: LayoutProps) {
+  return (
     <div className="page">
       <header className="header">
-        <h1>Locapilote</h1>
-        <p className="tagline">Piloter un logement en location</p>
-      </header>
-      <main>
-        <p className="notice">Données du jeu de test anonymisé (lecture seule).</p>
-        {dataset.properties.map((property) => (
-          <PropertyCard key={property.id} property={property} dataset={dataset} today={today} />
-        ))}
-      </main>
-    </div>
-  );
-}
-
-interface PropertyCardProps {
-  property: Property;
-  dataset: Dataset;
-  today: string;
-}
-
-function PropertyCard({ property, dataset, today }: PropertyCardProps) {
-  const loans = dataset.loans.filter((l) => l.propertyId === property.id);
-  const transactionCount = dataset.transactions.filter((t) => t.propertyId === property.id).length;
-  const outstanding = loans.reduce(
-    (sum, loan) => sum + outstandingPrincipal(loan, dataset.loanInstallments, today),
-    0,
-  );
-
-  return (
-    <section className="card" aria-labelledby={`bien-${property.id}`}>
-      <h2 id={`bien-${property.id}`}>{property.name}</h2>
-      <p className="address">
-        {property.address}, {property.postalCode ? `${property.postalCode} ` : ''}
-        {property.city}
-      </p>
-
-      {loans.length > 0 && (
-        <div className="highlight">
-          <span className="highlight-label">Capital restant dû au {formatDate(today)}</span>
-          <span className="highlight-value">{formatEuros(outstanding)}</span>
-        </div>
-      )}
-
-      <dl className="facts">
-        <div>
-          <dt>Location</dt>
-          <dd>{property.rentalType === 'furnished' ? 'Meublée' : 'Nue'}</dd>
-        </div>
-        <div>
-          <dt>Régime fiscal</dt>
-          <dd>{REGIME_LABELS[property.taxRegime]}</dd>
-        </div>
-        <div>
-          <dt>Acheté le</dt>
-          <dd>{formatDate(property.acquisitionDate)}</dd>
-        </div>
-        <div>
-          <dt>Loué depuis le</dt>
-          <dd>{property.rentalStartDate ? formatDate(property.rentalStartDate) : '—'}</dd>
-        </div>
-        <div>
-          <dt>Coût total d'acquisition</dt>
-          <dd>{formatEuros(property.totalAcquisitionCost)}</dd>
-        </div>
-        <div>
-          <dt>Loyer hors charges</dt>
-          <dd>{formatEuros(property.rentExcludingCharges)} / mois</dd>
-        </div>
-        <div>
-          <dt>Mouvements saisis</dt>
-          <dd>{transactionCount}</dd>
-        </div>
-        {loans.map((loan) => (
-          <div key={loan.id}>
-            <dt>Prêt</dt>
-            <dd>
-              {formatEuros(loan.principal)} sur {loan.durationMonths / 12} ans
-            </dd>
+        <div className="header-top">
+          <div>
+            <h1>Locapilote</h1>
+            <p className="tagline">Piloter un logement en location</p>
           </div>
-        ))}
-      </dl>
-    </section>
+          {propertySelector}
+        </div>
+        {route && (
+          <nav className="nav" aria-label="Navigation principale">
+            {ROUTES.map((r) => (
+              <a
+                key={r.id}
+                href={routeHref(r.id)}
+                aria-current={r.id === route ? 'page' : undefined}
+              >
+                {r.label}
+              </a>
+            ))}
+          </nav>
+        )}
+      </header>
+      <main>{children}</main>
+      <footer className="footer">
+        Tes données restent dans ce navigateur, sur cet appareil. Pense à les exporter régulièrement
+        depuis la page <a href={routeHref('donnees')}>Données</a>.
+      </footer>
+    </div>
   );
 }
