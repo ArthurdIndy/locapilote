@@ -2,13 +2,13 @@
 import type { Locator, Page } from '@playwright/test';
 import {
   capture,
-  dec,
   eur,
   expect,
   expected,
   expectNoHorizontalScroll,
   goTo,
   isPhone,
+  months,
   openDetail,
   pct,
   seed,
@@ -28,7 +28,7 @@ const CHECKS: [string, (year: string) => string][] = [
   ['dont intérêts', (y) => eur(line("Intérêts d'emprunt (période louée)")[y]!)],
   ['dont assurance', (y) => eur(line('Assurance emprunteur (période louée)')[y]!)],
   ['Cash-flow', (y) => eur(line('Cash-flow')[y]!)],
-  ['Mois de location', (y) => dec(line('Mois de location sur la période')[y]!)],
+  ['Mois de location', (y) => months(line('Mois de location sur la période')[y]!)],
   ['Cash-flow mensuel moyen', (y) => eur(line('Cash-flow mensuel moyen')[y]!)],
   ['Capital remboursé', (y) => eur(line('dont capital remboursé')[y]!)],
   [

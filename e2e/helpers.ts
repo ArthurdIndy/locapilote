@@ -145,7 +145,10 @@ const percentFormat = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const decimalFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+const monthsFormat = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 /** 1234.5 → « 1 234,50 € », comme à l'écran. */
 export function eur(value: number): string {
@@ -157,9 +160,9 @@ export function pct(value: number): string {
   return percentFormat.format(value);
 }
 
-/** 7.49589 → « 7,5 » */
-export function dec(value: number): string {
-  return decimalFormat.format(value);
+/** Mois de location, toujours deux décimales : 7.49589 → « 7,50 » */
+export function months(value: number): string {
+  return monthsFormat.format(value);
 }
 
 /** Le tableau de la banque du jeu de test, tel qu'on le copie depuis Excel (tabulations). */

@@ -10,7 +10,7 @@ import {
 } from '../../engine/core/synthesis';
 import { lmnpReelSummary } from '../../engine/tax/lmnp-reel';
 import type { Category, Dataset, Property } from '../../engine/types';
-import { formatDate, formatDecimal, formatEuros, formatPercent } from '../format';
+import { formatDate, formatEuros, formatMonths, formatPercent } from '../format';
 import { propertyHref, routeHref } from '../router';
 import { useOpenDetails } from '../openDetails';
 import { DataAsOfBar } from './DataAsOfBar';
@@ -108,7 +108,7 @@ function buildSections(groups: Groups, propertyId: string): Section[] {
           strong: true,
           signed: (y) => y.cashFlow,
         },
-        { label: 'Mois de location', value: (y) => formatDecimal(y.rentalMonths) },
+        { label: 'Mois de location', value: (y) => formatMonths(y.rentalMonths) },
         {
           label: 'Cash-flow mensuel moyen',
           value: (y) => euros(y.monthlyCashFlow),

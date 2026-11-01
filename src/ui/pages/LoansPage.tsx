@@ -7,7 +7,8 @@ import {
   outstandingPrincipal,
 } from '../../engine/core/loan';
 import type { Dataset, Loan, Property } from '../../engine/types';
-import { formatDate, formatEuros, formatPercent } from '../format';
+import { formatDate, formatEuros, formatMonthYear, formatPercent } from '../format';
+import { loanInsurance } from '../loanInsurance';
 import { propertyHref } from '../router';
 import { LoanForm } from './LoanForm';
 import { ScheduleImport } from './ScheduleImport';
@@ -125,6 +126,8 @@ function LoanCard({
   const years = loanYears(loan, data.loanInstallments);
   const estimated = loan.scheduleSource === 'estimated';
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(atDate);
+  // L'assurance peut changer en cours de prêt : on lit celle de l'échéance en cours.
+  const insurance = loanInsurance(installments, today);
 
   const generate = async () => {
     if (
@@ -164,10 +167,25 @@ function LoanCard({
             {formatEuros(loan.principal)} à {formatPercent(loan.annualRate)} sur{' '}
             {loan.durationMonths} mois, du {formatDate(loan.firstInstallmentDate)} au{' '}
             {formatDate(loan.lastInstallmentDate)}
-            {loan.monthlyInsurance > 0
-              ? ` · assurance ${formatEuros(loan.monthlyInsurance)} / mois`
-              : ''}
+            {insurance
+              ? ` · assurance actuelle ${formatEuros(insurance.current)} / mois`
+              : loan.monthlyInsurance > 0
+                ? ` · assurance ${formatEuros(loan.monthlyInsurance)} / mois`
+                : ''}
           </p>
+          {insurance && insurance.upcomingChanges.length > 0 && (
+            <p className="small insurance-change">
+              L’assurance change en cours de prêt :{' '}
+              {insurance.upcomingChanges.map((c, index) => (
+                <span key={c.date}>
+                  {index > 0 && ', puis '}
+                  <strong>{formatEuros(c.insurance)} / mois</strong> à partir de{' '}
+                  {formatMonthYear(c.date)} (échéance du {formatDate(c.date)})
+                </span>
+              ))}
+              .
+            </p>
+          )}
         </div>
         {installments.length === 0 ? (
           <span className="badge">Pas d’échéancier</span>
