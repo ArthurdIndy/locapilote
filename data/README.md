@@ -5,7 +5,7 @@ Un appartement meublé en LMNP réel, acheté en novembre 2017, occupé comme r�
 | Fichier | Contenu |
 | --- | --- |
 | `jeu-de-test.xlsx` | L'outil Excel de référence (v1.2), anonymisé et recalculé. Il fait foi pour les calculs. |
-| `seed.json` | Les données d'entrée : bien, catégories, 289 mouvements, prêt et 240 échéances, immobilisations, stocks d'amortissement du comptable, dépenses avant la location, hypothèses de vente. |
+| `seed.json` | Les données d'entrée : bien, catégories, 289 mouvements, prêt et 240 échéances, immobilisations, stocks d'amortissement du comptable, comptes déposés par le comptable (montants et explication des écarts, repris de l'onglet Contrôles), dépenses avant la location, hypothèses de vente. |
 | `expected.json` | Les résultats attendus : synthèse 2024-2026, revente, trois scénarios de vente, contrôles. |
 
 **Anonymisation** : noms, adresse, références bancaires et numéros de facture remplacés ; tous les montants multipliés par un même coefficient (les rapports entre montants et les règles de calcul sont donc conservés) ; dates réelles.

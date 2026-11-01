@@ -177,7 +177,7 @@ h3 {
 }
 
 .nav a {
-  padding: 10px 14px;
+  padding: 10px 11px;
   text-decoration: none;
   color: var(--muted);
   font-weight: 600;
@@ -573,16 +573,31 @@ details summary {
     justify-content: flex-end;
   }
 
-  /* Six onglets ne tiennent pas sur une ligne : ils passent sur deux, tous visibles. */
+  /*
+   * Huit onglets ne tiennent pas sur une ligne : le menu défile horizontalement, sur une
+   * seule ligne. L'onglet actif est ramené au centre (App.tsx) ; le dégradé à droite
+   * signale qu'il y en a d'autres.
+   */
   .nav {
     gap: 0;
-    flex-wrap: wrap;
-    overflow-x: visible;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
   }
 
   .nav a {
-    padding: 8px 8px;
+    padding: 10px 10px;
     font-size: 0.95rem;
+  }
+
+  .nav a:last-child {
+    padding-right: 40px;
   }
 }
 
@@ -679,6 +694,35 @@ ul.warning {
 }
 
 /* ---------- Synthèse ---------- */
+
+.data-as-of-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.data-as-of-bar .data-as-of {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.data-as-of-bar input {
+  width: auto;
+  min-height: 40px;
+  padding: 6px 8px;
+}
+
+.section-link {
+  float: right;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
 
 .data-as-of input {
   max-width: 220px;
@@ -806,4 +850,180 @@ ul.warning {
   .responsive-table .hide-narrow {
     display: none;
   }
+}
+
+/* ---------- Fiscalité (US09) ---------- */
+
+.tax-section > .toolbar h3 {
+  margin: 0;
+}
+
+.tax-disclaimer {
+  margin: 0;
+}
+
+.synthesis-table tr.info th,
+.synthesis-table tr.info td,
+.year-lines .info dt,
+.year-lines .info dd {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.notes {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.year-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reconciliation-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reconciliation-head,
+.reconciliation-line {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 8.5rem;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
+.reconciliation-head {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.reconciliation-head > span:not(:first-child),
+.rl-tool,
+.rl-accountant,
+.rl-gap {
+  text-align: right;
+}
+
+.rl-status {
+  justify-self: end;
+}
+
+.rl-comment {
+  grid-column: 1 / -1;
+}
+
+.badge.status-ok {
+  background: var(--success-soft);
+}
+
+.badge.status-explained {
+  background: var(--accent-soft);
+}
+
+.badge.status-to-explain {
+  background: var(--warning-soft);
+}
+
+.filing-field {
+  margin: 0;
+}
+
+.print-only {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .reconciliation-head {
+    display: none;
+  }
+
+  .reconciliation-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rl-label {
+    grid-column: 1;
+  }
+
+  .rl-status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .rl-tool,
+  .rl-accountant,
+  .rl-gap {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .rl-tool::before,
+  .rl-accountant::before,
+  .rl-gap::before {
+    content: attr(data-label);
+    color: var(--muted);
+  }
+}
+
+/* Version imprimable du récapitulatif fiscal : seul le bloc fiscal est imprimé. */
+@media print {
+  body.print-tax .header,
+  body.print-tax .footer,
+  body.print-tax main > .stack > :not(.tax-section),
+  body.print-tax .no-print {
+    display: none !important;
+  }
+
+  body.print-tax .print-only {
+    display: block;
+  }
+
+  body.print-tax .synthesis-wide {
+    display: block !important;
+    border: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  body.print-tax .synthesis-narrow {
+    display: none !important;
+  }
+
+  body.print-tax .reconciliation-head {
+    display: grid !important;
+  }
+
+  body.print-tax .reconciliation-line {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 8.5rem;
+  }
+
+  body.print-tax .rl-tool::before,
+  body.print-tax .rl-accountant::before,
+  body.print-tax .rl-gap::before {
+    content: none;
+  }
+}
+
+.assets-table th[scope='row'] {
+  min-width: 140px;
+}
+
+.assets-table thead th {
+  white-space: normal;
+}
+
+.assets-table thead th:first-child {
+  text-align: left;
+}
+
+.assets-table .tx-actions {
+  margin-top: 4px;
 }

@@ -18,6 +18,7 @@ export function startEmpty(db: LocapiloteDb): Promise<void> {
     loanInstallments: [],
     assets: [],
     accountantCarryforwards: [],
+    accountantFilings: [],
     preRentalExpenses: [],
     assumptions: [],
   };

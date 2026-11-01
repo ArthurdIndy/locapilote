@@ -12,7 +12,12 @@ interface Props {
   data: Dataset;
   currentPropertyId: string | null;
   today: string;
+  /** Filtres reçus dans l'adresse : `bien`, `annee`, `fiscal=a-valider`. */
+  params?: URLSearchParams;
 }
+
+/** Valeur de `fiscal` dans l'adresse : mouvements « À valider » (non retenus au résultat fiscal). */
+export const TO_REVIEW_FILTER = 'a-valider';
 
 /** Montant signé pour l'affichage : + pour une recette, − pour une dépense. */
 function signedAmount(t: Transaction, category: Category | undefined): string {
@@ -24,12 +29,18 @@ function signedAmount(t: Transaction, category: Category | undefined): string {
   return amount;
 }
 
-export function TransactionsPage({ data, currentPropertyId, today }: Props) {
+export function TransactionsPage({ data, currentPropertyId, today, params }: Props) {
   const [editing, setEditing] = useState<Editing>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [propertyFilter, setPropertyFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
+  const [propertyFilter, setPropertyFilter] = useState(() => {
+    const id = params?.get('bien') ?? '';
+    return data.properties.some((p) => p.id === id) ? id : '';
+  });
+  const [yearFilter, setYearFilter] = useState(() => params?.get('annee') ?? '');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [toReviewOnly, setToReviewOnly] = useState(
+    () => params?.get('fiscal') === TO_REVIEW_FILTER,
+  );
 
   const categories = useMemo(
     () => new Map(data.categories.map((c) => [c.id, c])),
@@ -51,11 +62,13 @@ export function TransactionsPage({ data, currentPropertyId, today }: Props) {
           (t) =>
             (!propertyFilter || t.propertyId === propertyFilter) &&
             (!yearFilter || t.date.startsWith(yearFilter)) &&
-            (!categoryFilter || t.categoryId === categoryFilter),
+            (!categoryFilter || t.categoryId === categoryFilter) &&
+            (!toReviewOnly ||
+              categories.get(t.categoryId)?.taxTreatment['lmnp-reel'] === 'to-review'),
         )
         // Du plus récent au plus ancien.
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
-    [data.transactions, propertyFilter, yearFilter, categoryFilter],
+    [data.transactions, categories, propertyFilter, yearFilter, categoryFilter, toReviewOnly],
   );
 
   const totals = useMemo(() => {
@@ -92,7 +105,7 @@ export function TransactionsPage({ data, currentPropertyId, today }: Props) {
     setMessage('Mouvement supprimé.');
   };
 
-  const hasFilter = Boolean(propertyFilter || yearFilter || categoryFilter);
+  const hasFilter = Boolean(propertyFilter || yearFilter || categoryFilter || toReviewOnly);
 
   return (
     <div className="stack">
@@ -174,12 +187,24 @@ export function TransactionsPage({ data, currentPropertyId, today }: Props) {
               setPropertyFilter('');
               setYearFilter('');
               setCategoryFilter('');
+              setToReviewOnly(false);
             }}
           >
             Effacer les filtres
           </button>
         )}
       </section>
+
+      {toReviewOnly && (
+        <p className="warning" role="status">
+          Seuls les mouvements « À valider » sont affichés : ils ne sont pas retenus dans le
+          résultat fiscal tant qu’ils ne sont pas qualifiés (charge déductible ou investissement à
+          amortir). Modifie leur catégorie une fois la réponse du comptable obtenue.{' '}
+          <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
+            Voir tous les mouvements
+          </button>
+        </p>
+      )}
 
       <p className="muted summary">
         {filtered.length} mouvement{filtered.length > 1 ? 's' : ''} · recettes{' '}

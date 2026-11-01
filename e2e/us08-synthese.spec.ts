@@ -58,7 +58,7 @@ function cell(page: Page, phone: boolean, label: string, year: string): Locator 
   }
   const column = YEARS.indexOf(year) + 2; // 1re colonne = libellé
   return page
-    .locator('.synthesis-table tr')
+    .locator('table[aria-label="Synthèse annuelle"] tr')
     .filter({ has: page.getByRole('rowheader', { name: label, exact: true }) })
     .locator(`td:nth-child(${column})`);
 }
@@ -97,7 +97,7 @@ test('changer la date : les années suivantes disparaissent, les échéances son
   if (phone) {
     await expect(page.getByRole('region', { name: /^Année / })).toHaveCount(2);
   } else {
-    await expect(page.locator('.synthesis-table thead th')).toHaveText([
+    await expect(page.locator('table[aria-label="Synthèse annuelle"] thead th')).toHaveText([
       'Indicateur',
       '2024',
       '2025',
@@ -117,15 +117,19 @@ test('changer la date : les années suivantes disparaissent, les échéances son
   await expect(page.getByLabel('Données à jour au')).toHaveValue('2025-06-30');
 });
 
-test('la partie fiscale est annoncée, avec l’avertissement', async ({ page }) => {
-  const tax = page.getByRole('region', { name: 'Résultat fiscal' });
-  await expect(tax).toContainText('arrive à la prochaine itération');
-  await expect(tax.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
+test('la partie fiscale se limite au résultat fiscal estimé, avec un lien', async ({ page }) => {
+  // Depuis US09 : le détail est sur la page Fiscalité (voir e2e/us09-fiscalite-lmnp-reel.spec.ts).
+  await expect(
+    page.getByText('Résultat fiscal estimé').filter({ visible: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Voir le détail fiscal' }).filter({ visible: true }).first(),
+  ).toBeVisible();
 });
 
 test('sur téléphone, la synthèse s’affiche année par année', async ({ page }, testInfo) => {
   test.skip(!isPhone(testInfo), 'téléphone seulement');
-  await expect(page.locator('.synthesis-table')).toBeHidden();
+  await expect(page.locator('table[aria-label="Synthèse annuelle"]')).toBeHidden();
   const cards = page.getByRole('region', { name: /^Année / });
   await expect(cards).toHaveCount(3);
   // La plus récente en premier.
@@ -137,6 +141,6 @@ test('sur ordinateur, la synthèse est un tableau, une colonne par année', asyn
   page,
 }, testInfo) => {
   test.skip(isPhone(testInfo), 'ordinateur seulement');
-  await expect(page.locator('.synthesis-table')).toBeVisible();
+  await expect(page.locator('table[aria-label="Synthèse annuelle"]')).toBeVisible();
   await expect(page.getByRole('region', { name: /^Année / }).first()).toBeHidden();
 });

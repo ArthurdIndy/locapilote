@@ -3,10 +3,14 @@
  *
  * {
  *   "application": "locapilote",
- *   "formatVersion": 1,          // = version du schéma de la base au moment de l'export
+ *   "formatVersion": 2,          // = version du schéma de la base au moment de l'export
  *   "exportedAt": "2026-10-31T17:00:00.000Z",
  *   "data": { properties: [...], categories: [...], transactions: [...], ... }
  * }
+ *
+ * Version 1 → 2 (US09) : les immobilisations reçoivent un identifiant, et la liste
+ * `accountantFilings` (comptes déposés par le comptable) apparaît. Une sauvegarde en
+ * version 1 reste lisible : elle est complétée à la lecture.
  *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
@@ -46,6 +50,7 @@ const DATASET_KEYS = [
   'loanInstallments',
   'assets',
   'accountantCarryforwards',
+  'accountantFilings',
   'preRentalExpenses',
   'assumptions',
 ] as const satisfies readonly (keyof Dataset)[];
@@ -81,7 +86,7 @@ export function parseBackup(text: string): Backup {
       'Cette sauvegarde vient d’une version plus récente de Locapilote. Rechargez la page et réessayez.',
     );
   }
-  const data = json.data;
+  const data = version < 2 ? upgradeFromV1(json.data) : json.data;
   for (const key of DATASET_KEYS) {
     const table = data[key];
     if (!Array.isArray(table) || !table.every(isRow)) {
@@ -96,6 +101,16 @@ export function parseBackup(text: string): Backup {
     exportedAt: typeof json.exportedAt === 'string' ? json.exportedAt : '',
     data: dataset,
   };
+}
+
+/** Sauvegarde en version 1 : identifiant des immobilisations, comptes déposés vides. */
+function upgradeFromV1(data: Row): Row {
+  const assets = Array.isArray(data.assets)
+    ? data.assets.map((a: unknown, index) =>
+        isRow(a) && typeof a.id !== 'string' ? { ...a, id: `immo-${index + 1}` } : a,
+      )
+    : data.assets;
+  return { ...data, assets, accountantFilings: data.accountantFilings ?? [] };
 }
 
 /** Contrôles de cohérence : types des champs essentiels et références entre données. */
@@ -172,9 +187,27 @@ function checkDataset(data: Dataset): void {
       fail(`montant invalide pour l’échéance ${e.number} du prêt ${e.loanId}.`);
     }
   }
+  for (const a of data.assets) {
+    if (!isString(a.id)) fail('une immobilisation n’a pas d’identifiant.');
+    if (!isDate(a.inServiceDate)) fail(`date de mise en service invalide pour « ${a.component} ».`);
+    if (!isCents(a.value)) fail(`valeur invalide pour « ${a.component} ».`);
+    if (typeof a.durationYears !== 'number' || !(a.durationYears >= 0)) {
+      fail(`durée d’amortissement invalide pour « ${a.component} ».`);
+    }
+  }
+  unique(
+    data.assets.map((a) => a.id),
+    'les immobilisations',
+  );
+  for (const f of data.accountantFilings) {
+    if (!isRow(f.amounts) || !isRow(f.comments)) fail(`comptes déposés ${f.year} invalides.`);
+    if (!Object.values(f.amounts).every(isCents))
+      fail(`montant invalide dans les comptes ${f.year}.`);
+  }
   for (const row of [
     ...data.assets,
     ...data.accountantCarryforwards,
+    ...data.accountantFilings,
     ...data.preRentalExpenses,
     ...data.assumptions,
   ]) {

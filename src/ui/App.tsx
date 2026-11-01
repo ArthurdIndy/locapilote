@@ -1,17 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
 import { todayIso } from './format';
+import { AssetsPage } from './pages/AssetsPage';
 import { DataPage } from './pages/DataPage';
 import { HomePage } from './pages/HomePage';
 import { LoansPage } from './pages/LoansPage';
 import { SynthesisPage } from './pages/SynthesisPage';
+import { TaxPage } from './pages/TaxPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
-import { ROUTES, routeHref, useRoute, type RouteId } from './router';
+import { ROUTES, routeHref, useLocation, type Location, type RouteId } from './router';
 
 type LoadState =
   { status: 'ready'; initialized: boolean; data: Dataset } | { status: 'error'; message: string };
@@ -31,7 +33,7 @@ async function load(): Promise<LoadState> {
 export function App() {
   // Relue automatiquement à chaque modification de la base : toutes les vues restent à jour.
   const state = useLiveQuery(load);
-  const route = useRoute();
+  const location = useLocation();
 
   if (state === undefined) {
     return (
@@ -61,10 +63,11 @@ export function App() {
       </Layout>
     );
   }
-  return <MainApp data={state.data} route={route} />;
+  return <MainApp data={state.data} location={location} />;
 }
 
-function MainApp({ data, route }: { data: Dataset; route: RouteId }) {
+function MainApp({ data, location }: { data: Dataset; location: Location }) {
+  const { route, params } = location;
   const { current, setCurrentId } = useCurrentProperty(data.properties);
   const today = todayIso();
 
@@ -89,10 +92,18 @@ function MainApp({ data, route }: { data: Dataset; route: RouteId }) {
       {route === 'accueil' && <HomePage data={data} today={today} />}
       {route === 'biens' && <PropertiesPage data={data} onCreated={setCurrentId} />}
       {route === 'mouvements' && (
-        <TransactionsPage data={data} currentPropertyId={current?.id ?? null} today={today} />
+        <TransactionsPage
+          key={location.key}
+          data={data}
+          currentPropertyId={current?.id ?? null}
+          today={today}
+          params={params}
+        />
       )}
       {route === 'pret' && <LoansPage data={data} property={current} today={today} />}
+      {route === 'immobilisations' && <AssetsPage data={data} property={current} today={today} />}
       {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
+      {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
       {route === 'donnees' && <DataPage data={data} today={today} />}
     </Layout>
   );
@@ -105,6 +116,17 @@ interface LayoutProps {
 }
 
 function Layout({ route, propertySelector, children }: LayoutProps) {
+  const nav = useRef<HTMLElement>(null);
+  // Sur téléphone, le menu défile horizontalement : l'onglet actif est ramené au centre.
+  useEffect(() => {
+    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav.current || !active) return;
+    nav.current.scrollLeft =
+      active.offsetLeft -
+      nav.current.offsetLeft -
+      (nav.current.clientWidth - active.offsetWidth) / 2;
+  }, [route]);
+
   return (
     <div className="page">
       <header className="header">
@@ -116,7 +138,7 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
           {propertySelector}
         </div>
         {route && (
-          <nav className="nav" aria-label="Navigation principale">
+          <nav className="nav" aria-label="Navigation principale" ref={nav}>
             {ROUTES.map((r) => (
               <a
                 key={r.id}

@@ -146,6 +146,7 @@ export interface LoanInstallment {
 
 /** Immobilisation amortissable (ou non, si la durée vaut 0). */
 export interface Asset {
+  id: string;
   propertyId: string;
   component: string;
   inServiceDate: IsoDate;
@@ -159,6 +160,24 @@ export interface AccountantCarryforward {
   propertyId: string;
   year: number;
   carriedForward: Cents;
+}
+
+/** Lignes des comptes déposés par le comptable, rapprochées du calcul de Locapilote. */
+export const FILING_LINES = ['income', 'expenses', 'depreciation', 'result'] as const;
+/** Recettes, charges hors amortissements, dotations aux amortissements, résultat fiscal. */
+export type FilingLine = (typeof FILING_LINES)[number];
+
+/**
+ * Comptes déposés par le comptable pour une année : montants retenus et explication des
+ * écarts avec le calcul de Locapilote. Le stock d'amortissements reporté est à part
+ * (`AccountantCarryforward`), car il sert aussi au calcul de l'année suivante.
+ */
+export interface AccountantFiling {
+  propertyId: string;
+  year: number;
+  amounts: Partial<Record<FilingLine, Cents>>;
+  /** Explication de l'écart, par ligne ; `carryforward` pour le stock reporté. */
+  comments: Partial<Record<FilingLine | 'carryforward', string>>;
 }
 
 /** Dépense payée avant la mise en location (pour le bilan depuis l'achat). */
@@ -215,6 +234,7 @@ export interface Dataset {
   loanInstallments: LoanInstallment[];
   assets: Asset[];
   accountantCarryforwards: AccountantCarryforward[];
+  accountantFilings: AccountantFiling[];
   preRentalExpenses: PreRentalExpense[];
   assumptions: PropertyAssumptions[];
 }
