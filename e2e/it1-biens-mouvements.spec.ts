@@ -24,13 +24,14 @@ test.describe('Premier lancement', () => {
     await capture(page, testInfo, 'it1-bienvenue');
   });
 
-  test('avec le jeu de test, l’accueil affiche le bien, son prêt et ses 289 mouvements', async ({
-    page,
-  }) => {
+  test('avec le jeu de test, l’accueil affiche la carte du bien', async ({ page }) => {
     await startWithTestData(page);
-    await expect(page.getByText('Capital restant dû au 01/11/2026')).toBeVisible();
-    await expect(page.getByText('100 571,00 €')).toBeVisible();
-    await expect(page.getByRole('link', { name: '289' })).toBeVisible();
+    const card = page.getByRole('link', { name: /Appartement exemple/ });
+    await expect(card).toContainText('Meublée · LMNP au réel');
+    await card.click();
+    await expect(
+      page.getByRole('heading', { name: 'Synthèse · Appartement exemple' }),
+    ).toBeVisible();
   });
 });
 

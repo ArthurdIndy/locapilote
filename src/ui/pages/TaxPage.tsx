@@ -3,6 +3,7 @@ import type { Dataset, Property } from '../../engine/types';
 import { propertyHref } from '../router';
 import { DataAsOfBar } from './DataAsOfBar';
 import { TaxSection } from './TaxSection';
+import { PropertyTitle } from '../components/PropertyTitle';
 
 interface Props {
   data: Dataset;
@@ -31,7 +32,7 @@ export function TaxPage({ data, property, today }: Props) {
 
   return (
     <div className="stack">
-      <h2>Fiscalité · {property.name}</h2>
+      <PropertyTitle title="Fiscalité" />
       <DataAsOfBar propertyId={property.id} date={asOf.date} isDefault={asOf.isDefault} />
       {property.taxRegime === 'lmnp-reel' && !property.rentalStartDate ? (
         <p className="card">

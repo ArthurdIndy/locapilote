@@ -161,13 +161,6 @@ h3 {
   flex-wrap: wrap;
 }
 
-.current-property {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 .nav {
   display: flex;
   gap: 4px;
@@ -655,43 +648,32 @@ details summary {
   }
 
   /*
-   * Téléphone : les 5 entrées les plus utilisées dans une barre fixe en bas de l'écran ;
-   * « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite.
+   * Téléphone : les 5 entrées les plus utilisées sur une seule ligne d'onglets, sous l'en-tête,
+   * qui défile du doigt. L'onglet actif est ramené au centre (App.tsx) ; le dégradé à droite
+   * signale qu'il y en a d'autres. « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite.
    */
-  .with-nav {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  .nav {
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, #000 85%, transparent);
   }
 
-  .nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 20;
-    margin: 0;
-    gap: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-bottom: none;
-    box-shadow: 0 -2px 8px rgb(0 0 0 / 0.06);
+  .nav::-webkit-scrollbar {
+    display: none;
   }
 
   .nav a {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 14px 1px 12px;
-    font-size: 0.7rem;
-    letter-spacing: -0.01em;
-    text-align: center;
-    border-bottom: none;
-    border-top: 3px solid transparent;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 10px 10px;
+    font-size: 0.95rem;
   }
 
-  .nav a[aria-current='page'] {
-    border-top-color: var(--accent);
+  /* Espace en fin de ligne : le dernier onglet n'est pas caché par le dégradé. */
+  .nav::after {
+    content: '';
+    flex: 0 0 32px;
   }
 
   .nav a.nav-secondary,
@@ -1165,4 +1147,60 @@ ul.warning {
 .disclosure:hover .disclosure-sign,
 .disclosure:focus-visible .disclosure-sign {
   text-decoration: underline;
+}
+
+/* ---------- Accueil : une carte par bien ---------- */
+
+.property-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.property-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.property-card h3 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.property-card:hover,
+.property-card:focus-visible {
+  border-color: var(--accent);
+}
+
+.property-card-facts {
+  font-weight: 600;
+}
+
+.property-card-action {
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ---------- Titre-sélecteur : le nom du bien courant, au choix ---------- */
+
+.title-selector select {
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }

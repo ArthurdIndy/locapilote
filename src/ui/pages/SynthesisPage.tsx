@@ -14,6 +14,7 @@ import { formatDate, formatEuros, formatMonths, formatPercent } from '../format'
 import { propertyHref, routeHref } from '../router';
 import { useOpenDetails } from '../openDetails';
 import { DataAsOfBar } from './DataAsOfBar';
+import { PropertyTitle } from '../components/PropertyTitle';
 
 interface Props {
   data: Dataset;
@@ -227,7 +228,7 @@ export function SynthesisPage({ data, property, today }: Props) {
 
   return (
     <div className="stack">
-      <h2>Synthèse · {property.name}</h2>
+      <PropertyTitle title="Synthèse" />
 
       <DataAsOfBar propertyId={property.id} date={asOf.date} isDefault={asOf.isDefault} />
 

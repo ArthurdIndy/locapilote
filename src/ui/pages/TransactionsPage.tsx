@@ -5,6 +5,7 @@ import { formatDate, formatEuros } from '../format';
 import { sortCategories } from '../labels';
 import { propertyHref } from '../router';
 import { TransactionForm } from './TransactionForm';
+import { PropertyTitle } from '../components/PropertyTitle';
 
 type Editing = { mode: 'new' } | { mode: 'edit'; transaction: Transaction } | null;
 
@@ -12,7 +13,10 @@ interface Props {
   data: Dataset;
   currentPropertyId: string | null;
   today: string;
-  /** Filtres reçus dans l'adresse : `bien`, `annee`, `groupe`, `fiscal=a-valider`. */
+  /**
+   * Filtres reçus dans l'adresse : `annee`, `groupe`, `fiscal=a-valider`. Le paramètre `bien`
+   * rend ce bien courant (App.tsx) : la page ne montre que les mouvements du bien courant.
+   */
   params?: URLSearchParams;
 }
 
@@ -32,10 +36,6 @@ function signedAmount(t: Transaction, category: Category | undefined): string {
 export function TransactionsPage({ data, currentPropertyId, today, params }: Props) {
   const [editing, setEditing] = useState<Editing>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [propertyFilter, setPropertyFilter] = useState(() => {
-    const id = params?.get('bien') ?? '';
-    return data.properties.some((p) => p.id === id) ? id : '';
-  });
   const [yearFilter, setYearFilter] = useState(() => params?.get('annee') ?? '');
   const [groupFilter, setGroupFilter] = useState(() => params?.get('groupe') ?? '');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -47,18 +47,23 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     () => new Map(data.categories.map((c) => [c.id, c])),
     [data.categories],
   );
-  const properties = useMemo(
-    () => new Map(data.properties.map((p) => [p.id, p])),
-    [data.properties],
-  );
   // Groupes de synthèse des catégories paramétrées (Loyers, Copropriété…), dans leur ordre.
   const groups = useMemo(
     () => [...new Set(data.categories.map((c) => c.group))],
     [data.categories],
   );
   const years = useMemo(
-    () => [...new Set(data.transactions.map((t) => t.date.slice(0, 4)))].sort().reverse(),
-    [data.transactions],
+    () =>
+      [
+        ...new Set(
+          data.transactions
+            .filter((t) => t.propertyId === currentPropertyId)
+            .map((t) => t.date.slice(0, 4)),
+        ),
+      ]
+        .sort()
+        .reverse(),
+    [data.transactions, currentPropertyId],
   );
 
   const filtered = useMemo(
@@ -66,7 +71,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
       data.transactions
         .filter(
           (t) =>
-            (!propertyFilter || t.propertyId === propertyFilter) &&
+            t.propertyId === currentPropertyId &&
             (!yearFilter || t.date.startsWith(yearFilter)) &&
             (!groupFilter || categories.get(t.categoryId)?.group === groupFilter) &&
             (!categoryFilter || t.categoryId === categoryFilter) &&
@@ -78,7 +83,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     [
       data.transactions,
       categories,
-      propertyFilter,
+      currentPropertyId,
       yearFilter,
       groupFilter,
       categoryFilter,
@@ -120,14 +125,12 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     setMessage('Mouvement supprimé.');
   };
 
-  const hasFilter = Boolean(
-    propertyFilter || yearFilter || groupFilter || categoryFilter || toReviewOnly,
-  );
+  const hasFilter = Boolean(yearFilter || groupFilter || categoryFilter || toReviewOnly);
 
   return (
     <div className="stack">
       <div className="toolbar">
-        <h2>Mouvements</h2>
+        <PropertyTitle title="Mouvements" />
         {!editing && (
           <button
             type="button"
@@ -161,19 +164,6 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
       )}
 
       <section className="card filters" aria-label="Filtres">
-        {data.properties.length > 1 && (
-          <label className="field">
-            <span>Bien</span>
-            <select value={propertyFilter} onChange={(e) => setPropertyFilter(e.target.value)}>
-              <option value="">Tous les biens</option>
-              {data.properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
         <label className="field">
           <span>Année</span>
           <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
@@ -220,7 +210,6 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
             type="button"
             className="button link"
             onClick={() => {
-              setPropertyFilter('');
               setYearFilter('');
               setGroupFilter('');
               setCategoryFilter('');
@@ -250,7 +239,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
 
       {filtered.length === 0 ? (
         <p className="card muted">
-          {data.transactions.length === 0
+          {!data.transactions.some((t) => t.propertyId === currentPropertyId)
             ? 'Aucun mouvement pour l’instant. Clique sur « Nouveau mouvement ».'
             : 'Aucun mouvement ne correspond aux filtres.'}
         </p>
@@ -265,13 +254,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
                 <span className="tx-main">
                   <strong>{category?.name ?? t.categoryId}</strong>
                   <span className="muted small">
-                    {[
-                      t.label,
-                      t.account,
-                      data.properties.length > 1 ? properties.get(t.propertyId)?.name : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    {[t.label, t.account].filter(Boolean).join(' · ')}
                   </span>
                 </span>
                 <span className={`tx-amount ${direction}`}>{signedAmount(t, category)}</span>

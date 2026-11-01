@@ -126,16 +126,7 @@ export async function capture(
   const fullPage = options.fullPage ?? true;
   const path = join('e2e-captures', testInfo.project.name, `${name}.png`);
   mkdirSync(dirname(path), { recursive: true });
-  // Page entière : la barre fixe du bas (téléphone) est placée en bas de la page, comme en fin
-  // de défilement, au lieu d'apparaître au milieu de la capture.
-  const style = fullPage
-    ? await page.addStyleTag({
-        content:
-          '@media (max-width: 600px) { body { position: relative; } .nav { position: absolute !important; } }',
-      })
-    : null;
   const body = await page.screenshot({ path, fullPage });
-  await style?.evaluate((el) => (el as Element).remove());
   await testInfo.attach(name, { body, contentType: 'image/png' });
 }
 

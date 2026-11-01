@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
+import { CurrentPropertyContext } from './propertyContext';
 import { todayIso } from './format';
 import { HomePage } from './pages/HomePage';
 import { MyPropertyPage } from './pages/MyPropertyPage';
@@ -70,54 +71,47 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
   const { current, setCurrentId } = useCurrentProperty(data.properties);
   const today = todayIso();
 
+  // Un lien vers les mouvements d'un bien (#/mouvements?bien=…) rend ce bien courant.
+  const requestedId = params.get('bien');
+  useEffect(() => {
+    if (requestedId && data.properties.some((p) => p.id === requestedId)) {
+      setCurrentId(requestedId);
+    }
+  }, [requestedId, data.properties, setCurrentId]);
+
   return (
-    <Layout
-      route={route}
-      propertySelector={
-        data.properties.length > 1 && current ? (
-          <label className="current-property">
-            <span>Bien courant</span>
-            <select value={current.id} onChange={(e) => setCurrentId(e.target.value)}>
-              {data.properties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null
-      }
-    >
-      {route === 'accueil' && <HomePage data={data} today={today} />}
-      {route === 'mouvements' && (
-        <TransactionsPage
-          key={location.key}
-          data={data}
-          currentPropertyId={current?.id ?? null}
-          today={today}
-          params={params}
-        />
-      )}
-      {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
-      {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
-      {route === 'simulations' && <SimulationsPage />}
-      {route === 'mon-bien' && (
-        <MyPropertyPage
-          data={data}
-          property={current}
-          today={today}
-          params={params}
-          onCreated={setCurrentId}
-        />
-      )}
-      {route === 'parametres' && <SettingsPage data={data} today={today} />}
-    </Layout>
+    <CurrentPropertyContext.Provider value={{ properties: data.properties, current, setCurrentId }}>
+      <Layout route={route}>
+        {route === 'accueil' && <HomePage data={data} onOpen={setCurrentId} />}
+        {route === 'mouvements' && (
+          <TransactionsPage
+            key={location.key}
+            data={data}
+            currentPropertyId={current?.id ?? null}
+            today={today}
+            params={params}
+          />
+        )}
+        {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
+        {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
+        {route === 'simulations' && <SimulationsPage />}
+        {route === 'mon-bien' && (
+          <MyPropertyPage
+            data={data}
+            property={current}
+            today={today}
+            params={params}
+            onCreated={setCurrentId}
+          />
+        )}
+        {route === 'parametres' && <SettingsPage data={data} today={today} />}
+      </Layout>
+    </CurrentPropertyContext.Provider>
   );
 }
 
 interface LayoutProps {
   route?: RouteId;
-  propertySelector?: ReactNode;
   children: ReactNode;
 }
 
@@ -127,8 +121,19 @@ const PHONE_MENU: readonly { id: RouteId; label: string }[] = [
   { id: 'parametres', label: '⚙ Paramètres' },
 ];
 
-function Layout({ route, propertySelector, children }: LayoutProps) {
+function Layout({ route, children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const nav = useRef<HTMLElement>(null);
+
+  // Sur téléphone, la ligne d'onglets défile : l'onglet actif est ramené au centre.
+  useEffect(() => {
+    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav.current || !active || active.offsetParent === null) return;
+    nav.current.scrollLeft =
+      active.offsetLeft -
+      nav.current.offsetLeft -
+      (nav.current.clientWidth - active.offsetWidth) / 2;
+  }, [route]);
 
   // Le menu ☰ se referme avec Échap.
   useEffect(() => {
@@ -143,7 +148,7 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
   const inPhoneMenu = PHONE_MENU.some((r) => r.id === route);
 
   return (
-    <div className={route ? 'page with-nav' : 'page'}>
+    <div className="page">
       <header className="header">
         <div className="header-top">
           <div>
@@ -151,7 +156,6 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
             <p className="tagline">Piloter un logement en location</p>
           </div>
           <div className="header-tools">
-            {propertySelector}
             {route && (
               <>
                 <a
@@ -192,7 +196,7 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
           </nav>
         )}
         {route && (
-          <nav className="nav" aria-label="Navigation principale">
+          <nav className="nav" aria-label="Navigation principale" ref={nav}>
             {MAIN_NAV.map((r) => (
               <a
                 key={r.id}

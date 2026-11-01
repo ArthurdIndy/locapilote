@@ -4,6 +4,7 @@ import { PROPERTY_SECTIONS, propertyHref, type PropertySectionId } from '../rout
 import { AssetsPage } from './AssetsPage';
 import { LoansPage } from './LoansPage';
 import { PropertyInfoSection } from './PropertiesPage';
+import { PropertyTitle } from '../components/PropertyTitle';
 
 interface Props {
   data: Dataset;
@@ -37,7 +38,7 @@ export function MyPropertyPage({ data, property, today, params, onCreated }: Pro
 
   return (
     <div className="stack">
-      <h2>Mon bien · {property.name}</h2>
+      <PropertyTitle title="Mon bien" />
       <nav className="tabs" aria-label="Sections du bien">
         {PROPERTY_SECTIONS.map((s) => (
           <a

@@ -15,9 +15,10 @@ import {
   startWithTestData,
   test,
 } from './helpers';
+import type { Locator } from '@playwright/test';
 
 const ENTRIES = ['Accueil', 'Mouvements', 'Synthèse', 'Fiscalité', 'Simulations', 'Mon bien'];
-const BOTTOM_BAR = ENTRIES.slice(0, 5);
+const PHONE_TABS = ENTRIES.slice(0, 5);
 
 test.beforeEach(async ({ page }) => {
   await startWithTestData(page);
@@ -42,45 +43,87 @@ test('ordinateur : les 6 entrées tiennent sur une ligne, plus l’icône ⚙', 
   await capture(page, testInfo, 'it3bis-menu');
 });
 
-test('téléphone : 5 entrées dans une barre fixe en bas, « Mon bien » et ⚙ dans le menu ☰', async ({
+test('téléphone : une ligne d’onglets en haut qui défile ; « Mon bien » et ⚙ dans le menu ☰', async ({
   page,
 }, testInfo) => {
   test.skip(!isPhone(testInfo), 'téléphone seulement');
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
-  await expect(nav.getByRole('link')).toHaveText(BOTTOM_BAR);
+  await expect(nav.getByRole('link').filter({ visible: true })).toHaveText(PHONE_TABS);
   await expect(page.getByRole('link', { name: 'Paramètres', exact: true })).toBeHidden();
 
-  // La barre reste collée en bas de l'écran, même après défilement.
-  const viewport = page.viewportSize()!;
-  await goTo(page, 'Synthèse');
-  await page.mouse.wheel(0, 2000);
-  await expect
-    .poll(async () => {
-      const box = await nav.boundingBox();
-      return Math.round(box!.y + box!.height);
-    })
-    .toBe(viewport.height);
+  // Une seule ligne, sous l'en-tête, en haut de la page (pas de barre fixe en bas).
+  const box = await nav.boundingBox();
+  expect(box!.height).toBeLessThan(60);
+  expect(box!.y).toBeLessThan(200);
+  expect(await nav.evaluate((el) => getComputedStyle(el).position)).toBe('static');
+
+  // Elle défile du doigt ; l'onglet actif est ramené dans l'écran.
+  expect(await nav.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  for (const label of ['Simulations', 'Fiscalité', 'Accueil']) {
+    await goTo(page, label);
+    await expect(nav.locator('[aria-current="page"]')).toHaveText(label);
+    await expectActiveTabFullyVisible(nav);
+  }
+  await goTo(page, 'Simulations');
+  await expectActiveTabFullyVisible(nav);
   await expectNoHorizontalScroll(page);
-  await capture(page, testInfo, 'it3bis-barre-du-bas', { fullPage: false });
+  await capture(page, testInfo, 'it3bis-onglets', { fullPage: false });
+
+  // Le bas de page n'est plus masqué : le pied de page est visible en fin de défilement.
+  await goTo(page, 'Synthèse');
+  await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+  await expect(page.getByRole('contentinfo')).toBeInViewport();
 
   await openPhoneMenu(page);
   const menu = page.getByRole('navigation', { name: 'Menu' });
   await expect(menu.getByRole('link')).toHaveText(['Mon bien', '⚙ Paramètres']);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await capture(page, testInfo, 'it3bis-menu', { fullPage: false });
   await menu.getByRole('link', { name: 'Mon bien' }).click();
   await expect(page.getByRole('heading', { name: 'Mon bien · Appartement exemple' })).toBeVisible();
   await expect(menu).toBeHidden();
 });
 
+/**
+ * L'onglet actif est entièrement visible dans la ligne d'onglets et dans l'écran. On attend la
+ * fin du défilement (position stable), puis on compare les bords à ±1 px près.
+ */
+async function expectActiveTabFullyVisible(nav: Locator): Promise<void> {
+  let previous = -1;
+  await expect
+    .poll(
+      async () => {
+        const current = await nav.evaluate((el) => el.scrollLeft);
+        const stable = current === previous;
+        previous = current;
+        return stable;
+      },
+      { intervals: [100, 100, 200, 200, 500], timeout: 5000 },
+    )
+    .toBe(true);
+  const edges = await nav.evaluate((el) => {
+    const tab = el.querySelector('[aria-current="page"]')!.getBoundingClientRect();
+    const menu = el.getBoundingClientRect();
+    return {
+      tabLeft: tab.left,
+      tabRight: tab.right,
+      left: Math.max(menu.left, 0),
+      right: Math.min(menu.right, document.documentElement.clientWidth),
+    };
+  });
+  expect(edges.tabLeft).toBeGreaterThanOrEqual(edges.left - 1);
+  expect(edges.tabRight).toBeLessThanOrEqual(edges.right + 1);
+}
+
 test('chaque entrée ouvre sa page', async ({ page }) => {
   for (const [label, heading] of [
-    ['Mouvements', 'Mouvements'],
+    ['Mouvements', 'Mouvements · Appartement exemple'],
     ['Synthèse', 'Synthèse · Appartement exemple'],
     ['Fiscalité', 'Fiscalité · Appartement exemple'],
     ['Simulations', 'Simulations'],
     ['Mon bien', 'Mon bien · Appartement exemple'],
     ['Paramètres', 'Paramètres'],
-    ['Accueil', 'Appartement exemple'],
+    ['Accueil', 'Mes biens'],
   ] as const) {
     await goTo(page, label);
     await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible();
@@ -110,21 +153,82 @@ test('Mon bien : informations, prêt et immobilisations du bien', async ({ page 
   await expectNoHorizontalScroll(page);
 });
 
-test('Mon bien : avec plusieurs biens, on choisit le bien avec « Bien courant »', async ({
-  page,
-}) => {
-  await goTo(page, 'Mon bien');
-  await page.getByRole('button', { name: 'Ajouter un bien' }).click();
-  await createProperty(page, 'Studio second');
-  await expect(page.getByRole('heading', { name: 'Mon bien · Studio second' })).toBeVisible();
-  const selector = page.getByLabel('Bien courant');
-  await expect(selector).toBeVisible();
-  await selector.selectOption({ label: 'Appartement exemple' });
-  await expect(page.getByRole('heading', { name: 'Mon bien · Appartement exemple' })).toBeVisible();
-  await goToProperty(page, 'Prêt');
-  await expect(page.getByRole('region', { name: 'Prêt BANQUE' })).toBeVisible();
-  await selector.selectOption({ label: 'Studio second' });
-  await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
+test.describe('règle multi-biens', () => {
+  test.beforeEach(async ({ page }) => {
+    await goTo(page, 'Mon bien');
+    await page.getByRole('button', { name: 'Ajouter un bien' }).click();
+    await createProperty(page, 'Studio second');
+  });
+
+  test('l’Accueil montre une carte par bien ; un clic la rend courante et ouvre sa Synthèse', async ({
+    page,
+  }, testInfo) => {
+    await goTo(page, 'Accueil');
+    const cards = page.getByRole('main').getByRole('link', { name: /Voir la synthèse/ });
+    await expect(cards).toHaveCount(2);
+    await expect(cards.nth(0)).toContainText('Appartement exemple');
+    await expect(cards.nth(0)).toContainText('Meublée · LMNP au réel');
+    await expect(cards.nth(1)).toContainText('Studio second');
+    await expectNoHorizontalScroll(page);
+    await capture(page, testInfo, 'it3bis-accueil-biens');
+
+    await cards.nth(0).click();
+    await expect(page).toHaveURL(/#\/synthese$/);
+    const title = page.getByRole('heading', { level: 2 }).filter({ hasText: 'Synthèse' });
+    await expect(title.getByLabel('Bien courant')).toHaveValue(/.+/);
+    await expect(title.getByLabel('Bien courant').locator('option:checked')).toHaveText(
+      'Appartement exemple',
+    );
+
+    await goTo(page, 'Accueil');
+    await page
+      .getByRole('main')
+      .getByRole('link', { name: /Studio second/ })
+      .click();
+    await expect(page.getByLabel('Bien courant').locator('option:checked')).toHaveText(
+      'Studio second',
+    );
+  });
+
+  test('les autres pages montrent le bien courant, choisi dans le titre', async ({
+    page,
+  }, testInfo) => {
+    const selector = page.getByLabel('Bien courant');
+    // Le titre-sélecteur est dans le titre de chaque page d'un bien ; plus de sélecteur en en-tête.
+    for (const [label, title] of [
+      ['Mouvements', 'Mouvements'],
+      ['Synthèse', 'Synthèse'],
+      ['Fiscalité', 'Fiscalité'],
+      ['Mon bien', 'Mon bien'],
+    ] as const) {
+      await goTo(page, label);
+      const heading = page.getByRole('heading', { level: 2 }).filter({ hasText: title });
+      await expect(heading.getByLabel('Bien courant')).toBeVisible();
+      await expect(page.getByRole('banner').getByLabel('Bien courant')).toHaveCount(0);
+    }
+
+    // Mon bien : le bien courant, et son prêt.
+    await selector.selectOption({ label: 'Appartement exemple' });
+    await goToProperty(page, 'Prêt');
+    await expect(page.getByRole('region', { name: 'Prêt BANQUE' })).toBeVisible();
+    await selector.selectOption({ label: 'Studio second' });
+    await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
+
+    // Mouvements : seulement ceux du bien courant ; plus de filtre « Bien ».
+    await goTo(page, 'Mouvements');
+    await expect(page.getByRole('region', { name: 'Filtres' }).getByLabel('Bien')).toHaveCount(0);
+    await expect(page.getByText(/^0 mouvement · /)).toBeVisible();
+    await selector.selectOption({ label: 'Appartement exemple' });
+    await expect(page.getByText(/^289 mouvements · /)).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await capture(page, testInfo, 'it3bis-titre-selecteur', { fullPage: false });
+
+    // Un lien vers les mouvements d'un bien rend ce bien courant.
+    await selector.selectOption({ label: 'Studio second' });
+    await page.goto('/#/mouvements?bien=APPART-01&annee=2024&fiscal=a-valider');
+    await expect(selector.locator('option:checked')).toHaveText('Appartement exemple');
+    await expect(page.locator('.transaction')).toHaveCount(1);
+  });
 });
 
 test('Simulations : page d’attente qui annonce la vente et le budget', async ({
