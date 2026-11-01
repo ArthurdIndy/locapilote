@@ -5,6 +5,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Sujet | Description | Origine |
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
+| Rentabilité réelle : TRI et comparaison à un placement | Voir le détail ci-dessous ; à intégrer à l'itération 4 avec US11 | Demande d'Arthur, 01/11/2026 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
@@ -49,6 +50,31 @@ Le résultat fiscal (US09) n'est pas de l'argent : c'est la base de l'impôt. Po
 - Calcul simplifié, signalé comme tel : pas de calcul complet du barème, ni de quotient familial.
 
 À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (17,2 %, ou taux relevé par une loi de finances récente), barème en vigueur, imputation d'un déficit.
+
+## Rentabilité réelle : TRI et comparaison à un placement (itération 4, avec US11)
+
+« En tant que propriétaire, je veux savoir si mon investissement vaut le coup, c'est-à-dire s'il rapporte plus que mon argent placé ailleurs. »
+
+Les rendements brut et net de la synthèse rapportent les loyers au prix du bien, comme s'il avait été payé comptant. Ils ignorent le crédit (effet de levier), la plus-value et l'argent remis chaque mois (cash-flow négatif). L'indicateur qui y répond est le TRI de l'argent investi par le propriétaire, déjà calculé par l'onglet « Vendre quand » de l'Excel (§ 6 de `docs/regles-de-calcul.md`), comparé à un placement de référence.
+
+| Indicateur | Définition |
+| --- | --- |
+| TRI si je vends aujourd'hui | TRI des flux du propriétaire depuis l'achat (apport, loyer évité pendant l'occupation, échéances, mouvements, somme nette de la vente à la date du jour), § 6 |
+| Placement de référence | Taux annuel saisi par l'utilisateur (paramètre du foyer, dans ⚙), avec un libellé libre (« fonds euros », « ETF »…) |
+| Gain par rapport au placement | Valeur finale des flux du propriétaire − valeur qu'auraient atteinte les mêmes flux placés au taux de référence, en euros, à la date du jour |
+
+Où les afficher :
+
+- Synthèse, bloc Rentabilité : « TRI si je vends aujourd'hui » et « Gain par rapport au placement (taux X %) », avec une phrase d'aide (« ton argent t'a rapporté X % par an, contre Y % pour le placement de référence »).
+- Simulations › Vente : les mêmes indicateurs pour chaque scénario de vente (date et prix).
+- Accueil (US21) : le gain par rapport au placement peut remplacer ou compléter un des trois indicateurs, à décider à l'itération 5.
+
+Critères d'acceptation :
+
+- le TRI retombe sur ceux de l'onglet « Vendre quand » de `data/expected.json` pour les trois scénarios de vente (0,0001 près) ;
+- avec un taux de référence égal au TRI, le gain par rapport au placement vaut 0 € (à l'arrondi près) : test automatique ;
+- le taux de référence n'a pas de valeur imposée ; tant qu'il n'est pas saisi, la comparaison invite à le renseigner ;
+- mention : estimation de suivi, hors fiscalité personnelle du placement de référence, pas un conseil en investissement.
 
 ## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
 
