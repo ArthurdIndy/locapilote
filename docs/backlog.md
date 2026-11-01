@@ -7,6 +7,8 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
+| Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 |
+| Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 |
 
 ## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
 
