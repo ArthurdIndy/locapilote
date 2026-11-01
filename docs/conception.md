@@ -58,10 +58,11 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US18 | Partage | Exporter toutes mes données | Rien n'est perdu si j'arrête l'outil | Must |
 | US19 | Locataire | Quittances, révision IRL, régularisation des charges | À préciser | Won't (pour l'instant) |
 | US20 | Assistant | Mettre à jour toutes mes données en langage naturel, à l'oral ou en déposant un document (relevé d'agence, export bancaire, avis d'impôt, nouvel échéancier de prêt…), avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; toujours un récapitulatif à confirmer avant enregistrement, doublons écartés ; la saisie manuelle reste disponible | Should (après le MVP) |
+| US21 | Suivi | Voir sur l'accueil un tableau de bord de l'année en cours : cash-flow mensuel, enrichissement, capital restant dû, rendement net, résultat fiscal estimé, somme nette si je vends aujourd'hui | Chaque indicateur comparé à l'année précédente et cliquable vers son détail ; la somme nette indique la valeur estimée et sa date, et cette valeur se modifie depuis l'accueil | Must (itération 5) |
 
 ## MVP
 
-Les 9 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18. Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
+Les 10 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18, US21. Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
 
 Le MVP est terminé quand :
 
@@ -99,5 +100,5 @@ Pourquoi le web plutôt qu'une application de bureau : partage par simple lien, 
 | 2 · Prêt et synthèse | US07, US08 | 16 au 20 novembre |
 | 3 · Fiscalité LMNP réel | US09, contrôle sur l'Excel | 23 au 27 novembre |
 | 4 · Simulations | US11, US12 | 30 novembre au 4 décembre |
-| 5 · Partage | US17, MVP livré | 7 et 8 décembre |
+| 5 · Partage et tableau de bord | US17, US21, MVP livré | 7 et 8 décembre |
 | Version 2 | Base en ligne et comptes, import CSV, simulateur d'achat | À partir du 9 décembre |
