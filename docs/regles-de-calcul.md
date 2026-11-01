@@ -43,6 +43,14 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 - Report en fin d'année = report de début + dotation − utilisés.
 - Report du début d'année = stock retenu par le comptable pour l'année précédente s'il est saisi (il fait foi), sinon le report de fin calculé par l'outil.
 - Résultat fiscal = résultat avant amortissements − amortissements utilisés.
+- Si le résultat avant amortissements est négatif, c'est un **déficit** : il est affiché (résultat fiscal négatif), aucun amortissement n'est utilisé, mais son report sur les années suivantes n'est pas géré (hors périmètre de US09).
+- Pour information, hors résultat : **dépenses à qualifier** (catégories « À valider », non retenues tant qu'elles ne sont pas qualifiées, avec un lien vers les mouvements concernés) et **investissements de l'année** (catégories « À amortir », à reporter dans les immobilisations).
+- Recettes et charges : mouvements de l'année civile entière (comme la trésorerie). Groupes affichés : loyers d'abord, groupes « Autres… » en dernier, les autres par ordre alphabétique.
+- Le module ne s'applique qu'aux biens au régime LMNP réel ; pour les autres régimes, l'écran indique que le calcul n'est pas encore disponible.
+
+**Rapprochement avec le comptable** (par année) : on saisit les montants des comptes déposés (recettes, charges hors amortissements, dotations, résultat fiscal) et le stock d'amortissements reporté. Écart = calcul de Locapilote − montant du comptable. Statut : « OK » si l'écart ne dépasse pas 1 centime (arrondis), « Écart expliqué » si une explication est saisie, « À expliquer » sinon. Le stock de fin d'année est comparé au report de fin calculé par l'outil.
+
+**Export** : le récapitulatif s'exporte en CSV (point-virgule, virgule décimale, UTF-8 avec BOM, une colonne par année) et en version imprimable (impression ou PDF du navigateur).
 
 **Trésorerie**
 
@@ -72,6 +80,22 @@ dotation de l'année N = MIN(dotation annuelle,
 ```
 
 Durée 0 = non amorti (terrain, ou bien non retenu par le comptable).
+
+**Arrondi** : la dotation de chaque immobilisation est calculée sans arrondi ; la dotation totale de l'année (celle du résultat fiscal) est arrondie au centime. Sur le jeu de test, cela redonne exactement les dotations des comptes déposés (5 751,05 € en 2024, 9 297,34 € en 2025), alors qu'arrondir chaque ligne donnerait 9 297,33 € en 2025.
+
+Aucune clé de répartition n'est imposée (terrain, bâtiment, mobilier, composants) : chaque immobilisation est saisie par l'utilisateur, avec la valeur et la durée retenues par son comptable.
+
+**Base 365** : le BOFiP prévoit un prorata « en jours » pour l'amortissement linéaire, sans fixer la longueur de l'année. La base 365 est celle de l'Excel de référence ; elle retrouve la dotation du comptable du jeu de test (réfrigérateur mis en service le 11/06/2024 : 204 jours × 215,20 € / 365 = 120,28 €, contre 119,56 € en base 360).
+
+## Sources des règles fiscales (§ 3 et § 4)
+
+Vérifiées le 01/11/2026. Les sites officiels n'étaient pas consultables directement depuis l'environnement de développement (accès réseau refusé) : les passages ont été vérifiés à travers les extraits des pages officielles renvoyés par un moteur de recherche. À relire sur les pages elles-mêmes lors de la recette.
+
+- **L'amortissement ne peut ni créer ni augmenter un déficit** : article 39 C, II-2 du code général des impôts ([Légifrance](https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000029355753)) ; pour une location meublée, l'amortissement de l'ensemble (immeuble et meubles) « est admis en déduction du résultat imposable, au titre d'un même exercice, dans la limite du montant du loyer acquis, diminué du montant des autres charges afférentes à ces biens » ([BOI-BIC-AMT-20-40-10-20](https://bofip.impots.gouv.fr/bofip/4527-PGP.html/identifiant=BOI-BIC-AMT-20-40-10-20-20170301)).
+- **L'excédent d'amortissement est reportable sans limite de durée** : la fraction non déduite « peut être déduite du résultat des exercices suivants », dans la même limite ([BOI-BIC-AMT-20-40-10-30](https://bofip.impots.gouv.fr/bofip/4555-PGP.html/identifiant=BOI-BIC-AMT-20-40-10-30-20120912)) ; pour le LMNP, « les amortissements non déduits sont reportables sur les années suivantes sans limitation dans le temps », le report cessant à la vente du logement ou à l'arrêt de la location ([impots.gouv.fr, les régimes d'imposition](https://www.impots.gouv.fr/particulier/les-regimes-dimposition)).
+- **Intérêts et assurance emprunteur déductibles** : au réel, le loueur meublé déduit ses dépenses effectivement payées, dont les intérêts d'emprunt ([impots.gouv.fr, FAQ régime des locations meublées, mars 2026](https://www.impots.gouv.fr/sites/default/files/media/1_metier/5_international/actualite/faq-lmnp-03_2026.pdf)) ; les intérêts sont des charges financières déductibles ([BOI-BIC-CHG-50-20-10](https://bofip.impots.gouv.fr/bofip/990-PGP.html/identifiant=BOI-BIC-CHG-50-20-10-20120912)) ; les primes d'une assurance garantissant le remboursement d'un prêt, **lorsqu'elle est imposée par le contrat de prêt**, « revêtent le caractère de charges financières au même titre que l'intérêt » ([BOI-BIC-CHG-40-20-20](https://bofip.impots.gouv.fr/bofip/803-PGP.html/identifiant=BOI-BIC-CHG-40-20-20-20130408)).
+- **Amortissement au prorata temporis** : le point de départ de l'amortissement linéaire est le jour de la mise en service effective, et la première annuité est réduite au prorata du temps écoulé ; pour le linéaire, le temps s'apprécie en jours ([BOI-BIC-AMT-20-10](https://bofip.impots.gouv.fr/bofip/4543-PGP.html/identifiant=BOI-BIC-AMT-20-10-20120912), [BOI-BIC-AMT-20-20-30](https://bofip.impots.gouv.fr/bofip/4699-PGP.html/identifiant=BOI-BIC-AMT-20-20-30-20120912)).
+- Pour mémoire (plus-value, itération 4) : depuis la loi de finances pour 2025, les amortissements déduits viennent réduire le prix d'acquisition (§ 5).
 
 ## 5. Revente (Revente, Vendre quand)
 

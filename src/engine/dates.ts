@@ -47,6 +47,13 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   return dayNumber(to) - dayNumber(from);
 }
 
+/** Ajoute des jours (négatif pour reculer). */
+export function addDays(date: IsoDate, days: number): IsoDate {
+  const { year, month, day } = parseIso(date);
+  const d = new Date(Date.UTC(year, month - 1, day + days));
+  return toIso(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
 export function yearOf(date: IsoDate): number {
   return parseIso(date).year;
 }

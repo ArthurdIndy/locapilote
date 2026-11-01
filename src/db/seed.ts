@@ -4,9 +4,11 @@
  */
 import { eurosToCents } from '../engine/money';
 import type {
+  AccountantFiling,
   Category,
   CategoryDirection,
   Dataset,
+  FilingLine,
   IsoDate,
   Property,
   RentalType,
@@ -100,6 +102,21 @@ export interface RawSeed {
     duree_annees: number;
   }[];
   stocks_amortissements_comptable: { bien: string; annee: number; stock_reporte: number }[];
+  /** Comptes déposés par le comptable (onglet Contrôles de l'Excel), facultatif. */
+  comptes_deposes?: {
+    bien: string;
+    annee: number;
+    recettes: number | null;
+    charges_hors_amortissements: number | null;
+    dotations: number | null;
+    resultat: number | null;
+    explications: Partial<
+      Record<
+        'recettes' | 'charges_hors_amortissements' | 'dotations' | 'resultat' | 'stock',
+        string
+      >
+    >;
+  }[];
   depenses_avant_location: {
     libelle: string;
     date: string;
@@ -292,7 +309,8 @@ export function parseSeed(raw: RawSeed): Dataset {
     };
   });
 
-  const assets = raw.immobilisations.map((a) => ({
+  const assets = raw.immobilisations.map((a, index) => ({
+    id: `immo-${index + 1}`,
     propertyId: checkProperty(a.bien, `Immobilisation ${a.composant}`),
     component: a.composant,
     inServiceDate: isoDate(a.mise_en_service, `Immobilisation ${a.composant}`),
@@ -305,6 +323,30 @@ export function parseSeed(raw: RawSeed): Dataset {
     year: s.annee,
     carriedForward: eurosToCents(s.stock_reporte),
   }));
+
+  const accountantFilings: AccountantFiling[] = (raw.comptes_deposes ?? []).map((c) => {
+    const amounts: AccountantFiling['amounts'] = {};
+    const put = (key: FilingLine, euros: number | null) => {
+      if (euros !== null) amounts[key] = eurosToCents(euros);
+    };
+    put('income', c.recettes);
+    put('expenses', c.charges_hors_amortissements);
+    put('depreciation', c.dotations);
+    put('result', c.resultat);
+    const e = c.explications;
+    const comments: AccountantFiling['comments'] = {};
+    if (e.recettes) comments.income = e.recettes;
+    if (e.charges_hors_amortissements) comments.expenses = e.charges_hors_amortissements;
+    if (e.dotations) comments.depreciation = e.dotations;
+    if (e.resultat) comments.result = e.resultat;
+    if (e.stock) comments.carryforward = e.stock;
+    return {
+      propertyId: checkProperty(c.bien, `Comptes ${c.annee}`),
+      year: c.annee,
+      amounts,
+      comments,
+    };
+  });
 
   const preRentalExpenses = raw.depenses_avant_location.map((d) => ({
     propertyId: checkProperty(d.bien, `Dépense « ${d.libelle} »`),
@@ -358,6 +400,7 @@ export function parseSeed(raw: RawSeed): Dataset {
     loanInstallments,
     assets,
     accountantCarryforwards,
+    accountantFilings,
     preRentalExpenses,
     assumptions,
   };

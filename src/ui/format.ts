@@ -82,3 +82,10 @@ export function parsePercentInput(text: string): number | null {
 export function rateToInput(rate: number): string {
   return String(Math.round(rate * 1e8) / 1e6).replace('.', ',');
 }
+
+/** « 22,388075 » ou « 5 » → nombre d'années (≥ 0) ; `null` si la saisie n'est pas valide. */
+export function parseYearsInput(text: string): number | null {
+  const cleaned = text.replace(/\s/g, '').replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
+  return Number(cleaned);
+}

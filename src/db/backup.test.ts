@@ -37,6 +37,9 @@ function normalize(data: Dataset): Dataset {
     accountantCarryforwards: by(
       (s: Dataset['accountantCarryforwards'][number]) => `${s.propertyId}#${s.year}`,
     )(data.accountantCarryforwards),
+    accountantFilings: by((f: Dataset['accountantFilings'][number]) => `${f.propertyId}#${f.year}`)(
+      data.accountantFilings,
+    ),
     preRentalExpenses: data.preRentalExpenses,
     assumptions: by((a: Dataset['assumptions'][number]) => a.propertyId)(data.assumptions),
   };
@@ -113,6 +116,16 @@ describe('sauvegarde complète (US18)', () => {
     const backup = buildBackup(loadTestDataset());
     backup.data.properties[0]!.taxRegime = 'micro-foncier';
     expect(() => parseBackup(serializeBackup(backup))).toThrow(/pas compatible/);
+  });
+
+  it('lit une sauvegarde de la version 1 (avant les identifiants d’immobilisation)', () => {
+    const v1 = JSON.parse(serializeBackup(buildBackup(loadTestDataset())));
+    v1.formatVersion = 1;
+    delete v1.data.accountantFilings;
+    for (const a of v1.data.assets) delete a.id;
+    const { data } = parseBackup(JSON.stringify(v1));
+    expect(data.accountantFilings).toEqual([]);
+    expect(new Set(data.assets.map((a) => a.id)).size).toBe(5);
   });
 
   it('refuse une sauvegarde d’une version future', () => {

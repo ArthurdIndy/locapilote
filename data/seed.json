@@ -5631,6 +5631,32 @@
    "stock_reporte": 3824.3
   }
  ],
+ "comptes_deposes": [
+  {
+   "bien": "APPART-01",
+   "annee": 2024,
+   "recettes": 8316,
+   "charges_hors_amortissements": 4399.83,
+   "dotations": 5751.05,
+   "resultat": null,
+   "explications": {
+    "recettes": "Le comptable n'a pas retenu la TEOM refacturée (50,76 €)",
+    "charges_hors_amortissements": "Le comptable n'a retenu aucune charge de copropriété en 2024 (1 177 € payés) ; il a compté 669 € d'honoraires comptables (payés en 2025 dans le journal) ; intérêts : échéances de juin à décembre (1 176 €) contre 1 356 € retenus"
+   }
+  },
+  {
+   "bien": "APPART-01",
+   "annee": 2025,
+   "recettes": 14434.33,
+   "charges_hors_amortissements": 7126.6,
+   "dotations": 9297.34,
+   "resultat": null,
+   "explications": {
+    "recettes": "Écart identifié : provision 2024 reprise lors de la régularisation (623,70 €) et remise de loyer (107,46 €) comptées en plus par le comptable",
+    "charges_hors_amortissements": "Copropriété : 2 532,89 € retenus contre 2 426,77 € payés"
+   }
+  }
+ ],
  "depenses_avant_location": [
   {
    "libelle": "Taxe foncière 2017 (prorata remboursé au vendeur)",

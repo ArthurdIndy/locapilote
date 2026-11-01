@@ -11,6 +11,7 @@
 import Dexie, { type Table } from 'dexie';
 import type {
   AccountantCarryforward,
+  AccountantFiling,
   Asset,
   Category,
   Dataset,
@@ -25,7 +26,7 @@ import type {
 } from '../engine/types';
 import { defaultAssumptions } from './defaultAssumptions';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export class LocapiloteDb extends Dexie {
   properties!: Table<Property, string>;
@@ -36,6 +37,7 @@ export class LocapiloteDb extends Dexie {
   // Clé technique auto-incrémentée, gardée hors de l'objet (l'ordre de saisie est conservé).
   assets!: Table<Asset, number>;
   accountantCarryforwards!: Table<AccountantCarryforward, [string, number]>;
+  accountantFilings!: Table<AccountantFiling, [string, number]>;
   preRentalExpenses!: Table<PreRentalExpense, number>;
   assumptions!: Table<PropertyAssumptions, string>;
 
@@ -52,6 +54,21 @@ export class LocapiloteDb extends Dexie {
       preRentalExpenses: '++, propertyId',
       assumptions: 'propertyId',
     });
+    // Version 2 (US09) : chaque immobilisation reçoit un identifiant (modification, suppression),
+    // et les comptes déposés par le comptable ont leur table.
+    this.version(2)
+      .stores({
+        assets: '++, propertyId, id',
+        accountantFilings: '[propertyId+year], propertyId',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('assets')
+          .toCollection()
+          .modify((asset: Partial<Asset>) => {
+            if (!asset.id) asset.id = crypto.randomUUID();
+          });
+      });
   }
 
   /** Les tables, dans l'ordre du `Dataset`. */
@@ -64,6 +81,7 @@ export class LocapiloteDb extends Dexie {
       this.loanInstallments,
       this.assets,
       this.accountantCarryforwards,
+      this.accountantFilings,
       this.preRentalExpenses,
       this.assumptions,
     ];
@@ -79,6 +97,7 @@ export class LocapiloteDb extends Dexie {
       loanInstallments: await this.loanInstallments.toArray(),
       assets: await this.assets.toArray(),
       accountantCarryforwards: await this.accountantCarryforwards.toArray(),
+      accountantFilings: await this.accountantFilings.toArray(),
       preRentalExpenses: await this.preRentalExpenses.toArray(),
       assumptions: await this.assumptions.toArray(),
     }));
@@ -95,6 +114,7 @@ export class LocapiloteDb extends Dexie {
       await this.loanInstallments.bulkAdd(data.loanInstallments);
       await this.assets.bulkAdd(data.assets);
       await this.accountantCarryforwards.bulkAdd(data.accountantCarryforwards);
+      await this.accountantFilings.bulkAdd(data.accountantFilings);
       await this.preRentalExpenses.bulkAdd(data.preRentalExpenses);
       await this.assumptions.bulkAdd(data.assumptions);
     });
@@ -153,6 +173,47 @@ export class LocapiloteDb extends Dexie {
       await this.loanInstallments.where('loanId').equals(loanId).delete();
       await this.loans.delete(loanId);
     });
+  }
+
+  /** Enregistre une immobilisation (création ou modification) : vérifie que son bien existe. */
+  async saveAsset(asset: Asset): Promise<void> {
+    await this.transaction('rw', [this.assets, this.properties], async () => {
+      if (!(await this.properties.get(asset.propertyId))) throw new Error('Bien inconnu');
+      const [key] = await this.assets.where('id').equals(asset.id).primaryKeys();
+      if (key === undefined) await this.assets.add(asset);
+      else await this.assets.put(asset, key);
+    });
+  }
+
+  async deleteAsset(id: string): Promise<void> {
+    await this.assets.where('id').equals(id).delete();
+  }
+
+  /**
+   * Enregistre les comptes déposés d'une année et le stock d'amortissements reporté retenu
+   * par le comptable (`null` = non saisi, on reprend alors le calcul de l'outil).
+   */
+  async saveAccountantYear(filing: AccountantFiling, carriedForward: number | null): Promise<void> {
+    await this.transaction(
+      'rw',
+      [this.accountantFilings, this.accountantCarryforwards, this.properties],
+      async () => {
+        if (!(await this.properties.get(filing.propertyId))) throw new Error('Bien inconnu');
+        const key: [string, number] = [filing.propertyId, filing.year];
+        const empty =
+          Object.keys(filing.amounts).length === 0 &&
+          Object.values(filing.comments).every((c) => !c);
+        if (empty) await this.accountantFilings.delete(key);
+        else await this.accountantFilings.put(filing);
+        if (carriedForward === null) await this.accountantCarryforwards.delete(key);
+        else
+          await this.accountantCarryforwards.put({
+            propertyId: filing.propertyId,
+            year: filing.year,
+            carriedForward,
+          });
+      },
+    );
   }
 
   /**

@@ -2,8 +2,8 @@
  * Synthèse annuelle d'un bien : trésorerie et rentabilité (socle commun, indépendant du
  * régime fiscal). Voir docs/regles-de-calcul.md § 2 et § 3.
  *
- * Le résultat fiscal (LMNP réel : charges déductibles, amortissements, report) viendra d'un
- * module de `src/engine/tax/` (itération 3) et se branchera à côté de cette synthèse.
+ * Le résultat fiscal (LMNP réel : charges déductibles, amortissements, report) est calculé par
+ * le module du régime du bien, dans `src/engine/tax/` (`lmnp-reel.ts`).
  */
 import { daysBetween, endOfMonth, yearOf } from '../dates';
 import type { Category, Cents, Dataset, IsoDate, Property, TaxTreatment } from '../types';
