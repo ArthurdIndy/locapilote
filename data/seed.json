@@ -5638,10 +5638,11 @@
    "recettes": 8316,
    "charges_hors_amortissements": 4399.83,
    "dotations": 5751.05,
-   "resultat": null,
+   "resultat": 0,
    "explications": {
     "recettes": "Le comptable n'a pas retenu la TEOM refacturée (50,76 €)",
-    "charges_hors_amortissements": "Le comptable n'a retenu aucune charge de copropriété en 2024 (1 177 € payés) ; il a compté 669 € d'honoraires comptables (payés en 2025 dans le journal) ; intérêts : échéances de juin à décembre (1 176 €) contre 1 356 € retenus"
+    "charges_hors_amortissements": "Le comptable n'a retenu aucune charge de copropriété en 2024 (1 177 € payés) ; il a compté 669 € d'honoraires comptables (payés en 2025 dans le journal) ; intérêts : échéances de juin à décembre (1 176 €) contre 1 356 € retenus",
+    "stock": "Le comptable a retenu un résultat avant amortissements plus élevé (écarts de recettes et de charges ci-dessus) et a donc utilisé plus d'amortissements ; son stock reporté est plus bas d'autant. Reste 0,19 € d'écart non expliqué (le stock déposé implique 3 916,36 € d'amortissements utilisés, contre 3 916,17 € de résultat avant amortissements)."
    }
   },
   {
@@ -5650,10 +5651,11 @@
    "recettes": 14434.33,
    "charges_hors_amortissements": 7126.6,
    "dotations": 9297.34,
-   "resultat": null,
+   "resultat": 0,
    "explications": {
     "recettes": "Écart identifié : provision 2024 reprise lors de la régularisation (623,70 €) et remise de loyer (107,46 €) comptées en plus par le comptable",
-    "charges_hors_amortissements": "Copropriété : 2 532,89 € retenus contre 2 426,77 € payés"
+    "charges_hors_amortissements": "Copropriété : 2 532,89 € retenus contre 2 426,77 € payés",
+    "stock": "Le comptable a retenu un résultat avant amortissements plus élevé (écarts de recettes et de charges ci-dessus) et a donc utilisé plus d'amortissements ; son stock reporté est plus bas d'autant."
    }
   }
  ],

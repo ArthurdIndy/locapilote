@@ -243,6 +243,16 @@ test('rapprochement : les écarts expliqués du jeu de test (contrôles de expec
     await expect(row.locator('.rl-status')).toHaveText('Écart expliqué');
     await expect(row.locator('.rl-comment')).not.toBeEmpty();
   }
+  // Résultat déposé : 0 € en 2024 et 2025, comme l'outil. Stock reporté : écart expliqué.
+  for (const year of ['2024', '2025']) {
+    await reconciliation(page).getByRole('button', { name: year, exact: true }).click();
+    const result = reconciliationLine(page, 'Résultat fiscal');
+    await expect(result.locator('.rl-accountant')).toHaveText(eur(0));
+    await expect(result.locator('.rl-status')).toHaveText('OK');
+    const stock = reconciliationLine(page, 'Stock d’amortissements reporté (fin d’année)');
+    await expect(stock.locator('.rl-status')).toHaveText('Écart expliqué');
+    await expect(stock.locator('.rl-comment')).toContainText('a donc utilisé plus d');
+  }
   // Dotations : identiques aux comptes déposés.
   await expect(
     reconciliationLine(page, 'Dotations aux amortissements').locator('.rl-status'),

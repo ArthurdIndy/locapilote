@@ -222,3 +222,37 @@ describe('ordre des groupes', () => {
     ]);
   });
 });
+
+describe('stock reporté : écart avec le comptable', () => {
+  /** Amortissements utilisés par le comptable = recettes − charges − résultat déposés. */
+  const check = (yearNumber: number) => {
+    const y = years.find((k) => k.year === yearNumber)!;
+    const filing = dataset.accountantFilings.find((f) => f.year === yearNumber)!;
+    const { income, expenses, result } = filing.amounts;
+    const usedByAccountant = income! - expenses! - result!;
+    return {
+      stockGap: y.carryforwardEnd - y.accountantCarryforward!,
+      usedGap: usedByAccountant - y.depreciationUsed,
+      line: reconcile(y, filing).find((l) => l.line === 'carryforward')!,
+      result: reconcile(y, filing).find((l) => l.line === 'result')!,
+    };
+  };
+
+  it('2025 : l’écart du stock égale l’écart des amortissements utilisés (624,93 €)', () => {
+    const { stockGap, usedGap, line, result } = check(2025);
+    expect(stockGap).toBe(62493);
+    expect(usedGap).toBe(stockGap);
+    expect(line.status).toBe('explained');
+    expect(result.status).toBe('ok');
+  });
+
+  it('2024 : même explication, avec un reste de 0,19 € signalé dans le commentaire', () => {
+    const { stockGap, usedGap, line, result } = check(2024);
+    expect(stockGap).toBe(27646);
+    expect(usedGap).toBe(27627);
+    expect(stockGap - usedGap).toBe(19);
+    expect(line.status).toBe('explained');
+    expect(line.comment).toContain('Reste 0,19 €');
+    expect(result.status).toBe('ok');
+  });
+});
