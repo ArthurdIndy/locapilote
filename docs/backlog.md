@@ -6,3 +6,33 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
+| US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
+
+## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
+
+« En tant que propriétaire, je veux pouvoir dire à Claude, à l'oral ou par écrit, ce qui s'est passé, ou lui donner le document que j'ai reçu, pour que Locapilote soit mis à jour sans ressaisie. »
+
+Exemples : « j'ai payé 572 € de taxe foncière hier » ; le relevé mensuel de l'agence ; un avis de taxe ou de CFE ; le nouvel échéancier après une renégociation du prêt ; une facture de travaux à amortir ; un nouveau loyer après révision.
+
+**Toutes les données sont concernées**, pas seulement les mouvements : mouvements, prêts et échéanciers (une renégociation remplace les échéances futures et garde l'historique), immobilisations, biens (loyer, valeur estimée), hypothèses de vente.
+
+**Automatique, mais jamais à l'aveugle** : Claude prépare les modifications, affiche un récapitulatif clair (« j'ajoute 1 mouvement de 572 € en Taxe foncière ; je remplace 133 échéances futures du prêt »), et rien n'est enregistré sans confirmation. Une erreur de lecture finirait sinon dans la déclaration fiscale.
+
+**Complémentaire** : la saisie manuelle et les imports restent disponibles.
+
+**Exigence principale : utilisable par n'importe qui.** Toute personne à qui l'on donne Locapilote doit pouvoir s'en servir avec son propre compte Claude (offre gratuite comprise), sans dépendre d'une conversation, d'un projet ou d'instructions propres à l'auteur. Tout ce qu'il faut à Claude est fourni par l'application elle-même.
+
+### Étape 1 : après le MVP (données dans le navigateur)
+
+1. Dans Locapilote, un bouton « Préparer un import avec Claude » copie des instructions prêtes à coller : le format attendu (JSON documenté et versionné, couvrant tous les types de données), la liste des biens, comptes, prêts et catégories de l'utilisateur, et les règles de classement (une recette d'agence en brut et ses honoraires à part, transferts entre comptes, etc.).
+2. L'utilisateur colle ces instructions dans n'importe quelle conversation Claude, avec son document ou sa phrase. Claude rend un fichier d'import.
+3. Dans Locapilote, « Appliquer des modifications » montre un aperçu (ajouts, remplacements, doublons probables écartés, catégories inconnues signalées) ; l'utilisateur valide ou décoche ligne à ligne. Rien n'est remplacé sans être listé.
+
+Critères d'acceptation : le format d'import est documenté dans `docs/` ; les instructions générées fonctionnent dans une conversation Claude neuve ; aucune donnée existante n'est modifiée sans apparaître dans l'aperçu ; un doublon (même bien, même date, même montant, même compte) est signalé.
+
+### Étape 2 : avec la version 2 (base en ligne et comptes)
+
+Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute à son propre compte Claude et se connecte avec son compte Locapilote. L'utilisateur parle ou dépose un document dans n'importe quelle conversation ; Claude lit ses données, propose les modifications, et les enregistre directement après sa confirmation. C'est l'étape « tout à l'oral ». Chaque utilisateur n'accède qu'à ses propres données.
+
+À vérifier au moment de la construire : les offres Claude qui permettent d'ajouter un connecteur personnalisé.
+

@@ -57,6 +57,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US17 | Partage | Donner l'outil à un proche sans qu'il voie mes données | Il démarre vide, avec ses propres paramètres | Must |
 | US18 | Partage | Exporter toutes mes données | Rien n'est perdu si j'arrête l'outil | Must |
 | US19 | Locataire | Quittances, révision IRL, régularisation des charges | À préciser | Won't (pour l'instant) |
+| US20 | Assistant | Mettre à jour toutes mes données en langage naturel, à l'oral ou en déposant un document (relevé d'agence, export bancaire, avis d'impôt, nouvel échéancier de prêt…), avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; toujours un récapitulatif à confirmer avant enregistrement, doublons écartés ; la saisie manuelle reste disponible | Should (après le MVP) |
 
 ## MVP
 
