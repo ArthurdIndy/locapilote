@@ -91,6 +91,8 @@ Application web sans serveur ; données dans le navigateur de chaque utilisateur
 
 Pourquoi le web plutôt qu'une application de bureau : partage par simple lien, mises à jour automatiques, pas d'installeur à signer, accessible sur tous les appareils.
 
+**Règle multi-biens (écrans).** L'Accueil est la seule page qui montre tous les biens : une carte par bien (nom, type de location, régime fiscal). Un clic sur une carte en fait le bien courant et ouvre sa Synthèse. Toutes les autres pages (Mouvements, Synthèse, Fiscalité, Simulations, Mon bien) montrent le bien courant, avec un titre-sélecteur : le nom du bien, dans le titre de la page, est un menu déroulant qui change le bien courant (avec un seul bien, c'est un simple texte). Le bien courant est mémorisé dans le navigateur ; un lien vers les mouvements d'un bien le rend courant.
+
 ## Roadmap
 
 | Itération | Contenu | Période (2026) |

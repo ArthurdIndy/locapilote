@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { loadTestDataset } from '../../db/testDataset';
 import { expectedSynthesisLine } from '../../test/expected';
 import { centsToEuros } from '../money';
-import { propertySynthesis, rentalMonths, synthesisYears, type YearSynthesis } from './synthesis';
+import {
+  coOwnershipChargesBorne,
+  propertySynthesis,
+  rentalMonths,
+  synthesisYears,
+  yearGroupTotals,
+  type YearSynthesis,
+} from './synthesis';
 
 const dataset = loadTestDataset();
 const property = dataset.properties[0]!;
@@ -106,5 +113,80 @@ describe('date de mise à jour des données', () => {
     expect(y!.cashFlow).toBe(0);
     expect(y!.outstandingAtYearEnd).toBe(0);
     expect(y!.equity).toBe(property.estimatedValue);
+  });
+});
+
+describe('détail par groupe (recettes et dépenses)', () => {
+  it.each([0, 1, 2])('année %#, la somme des groupes égale le total de la ligne', (index) => {
+    const y = years[index]!;
+    const groups = yearGroupTotals(dataset, property, y.year);
+    const sum = (direction: string) =>
+      groups.filter((g) => g.direction === direction).reduce((s, g) => s + g.amount, 0);
+    expect(sum('income')).toBe(y.income);
+    expect(sum('expense')).toBe(y.expenses);
+    // Le groupe « Loyers » est le loyer hors charges de la synthèse.
+    expect(groups.find((g) => g.group === 'Loyers')?.amount).toBe(y.rent);
+  });
+
+  it('suit les groupes des catégories paramétrées, dans leur ordre', () => {
+    const groups = yearGroupTotals(dataset, property, 2025);
+    expect(groups.filter((g) => g.direction === 'income').map((g) => g.group)).toEqual([
+      'Loyers',
+      'Charges refacturées',
+      'Autres recettes',
+    ]);
+    expect(groups.filter((g) => g.direction === 'expense').map((g) => g.group)).toEqual([
+      'Frais de gestion',
+      'Copropriété',
+      'Assurances',
+      'Impôts et taxes',
+      'Entretien et petit équipement',
+      'Autres charges',
+      'Investissements',
+      'À qualifier',
+    ]);
+  });
+
+  it('un nouveau groupe apparaît sans modification du code', () => {
+    const data = {
+      ...dataset,
+      categories: [
+        ...dataset.categories,
+        {
+          ...dataset.categories.find((c) => c.direction === 'expense')!,
+          id: 'x',
+          group: 'Nouveau',
+        },
+      ],
+      transactions: [
+        ...dataset.transactions,
+        {
+          ...dataset.transactions[0]!,
+          id: 'tx',
+          categoryId: 'x',
+          date: '2025-06-01',
+          amount: 1234,
+        },
+      ],
+    };
+    const groups = yearGroupTotals(data, property, 2025);
+    expect(groups.find((g) => g.group === 'Nouveau')).toEqual({
+      group: 'Nouveau',
+      direction: 'expense',
+      amount: 1234,
+    });
+  });
+
+  it('charges de copropriété restant à ma charge = copropriété − charges refacturées', () => {
+    const borne = years.map((y) =>
+      coOwnershipChargesBorne(yearGroupTotals(dataset, property, y.year)),
+    );
+    expect(borne).toEqual([50313, 111151, 287090]);
+    for (const y of years) {
+      const groups = yearGroupTotals(dataset, property, y.year);
+      const copro = groups.find((g) => g.group === 'Copropriété')!.amount;
+      const recharged = groups.find((g) => g.group === 'Charges refacturées')!.amount;
+      expect(coOwnershipChargesBorne(groups)).toBe(copro - recharged);
+    }
   });
 });

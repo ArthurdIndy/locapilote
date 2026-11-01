@@ -59,11 +59,49 @@ export async function createProperty(
   await expect(page.getByText(`Bien « ${name} » créé.`)).toBeVisible();
 }
 
-/** Va sur une page par le menu. */
+/**
+ * Va sur une page par le menu : la barre de navigation (en bas de l'écran sur téléphone), ou,
+ * pour les entrées qui n'y sont pas sur téléphone (« Mon bien », « ⚙ Paramètres »), le menu ☰.
+ */
 export async function goTo(page: Page, label: string): Promise<void> {
-  await page
+  if (label === 'Paramètres') return openSettings(page);
+  const link = page
     .getByRole('navigation', { name: 'Navigation principale' })
+    .getByRole('link', { name: label, exact: true });
+  if (await link.isVisible()) return link.click();
+  await openPhoneMenu(page);
+  await page
+    .getByRole('navigation', { name: 'Menu' })
     .getByRole('link', { name: label, exact: true })
+    .click();
+}
+
+/** Ouvre le menu ☰ (téléphone). */
+export async function openPhoneMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await expect(page.getByRole('navigation', { name: 'Menu' })).toBeVisible();
+}
+
+/** Ouvre ⚙ Paramètres (données) : l'icône en haut à droite, ou le menu ☰ sur téléphone. */
+export async function openSettings(page: Page): Promise<void> {
+  const gear = page.getByRole('link', { name: 'Paramètres', exact: true });
+  if (await gear.isVisible()) return gear.click();
+  await openPhoneMenu(page);
+  await page
+    .getByRole('navigation', { name: 'Menu' })
+    .getByRole('link', { name: '⚙ Paramètres' })
+    .click();
+}
+
+/** Ouvre une section de « Mon bien » : Informations, Prêt ou Immobilisations. */
+export async function goToProperty(
+  page: Page,
+  section: 'Informations' | 'Prêt' | 'Immobilisations',
+): Promise<void> {
+  await goTo(page, 'Mon bien');
+  await page
+    .getByRole('navigation', { name: 'Sections du bien' })
+    .getByRole('link', { name: section, exact: true })
     .click();
 }
 
@@ -79,10 +117,16 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
  * Capture d'écran pour la recette : jointe au rapport Playwright et copiée dans
  * `e2e-captures/<projet>/<nom>.png`.
  */
-export async function capture(page: Page, testInfo: TestInfo, name: string): Promise<void> {
+export async function capture(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+  options: { fullPage?: boolean } = {},
+): Promise<void> {
+  const fullPage = options.fullPage ?? true;
   const path = join('e2e-captures', testInfo.project.name, `${name}.png`);
   mkdirSync(dirname(path), { recursive: true });
-  const body = await page.screenshot({ path, fullPage: true });
+  const body = await page.screenshot({ path, fullPage });
   await testInfo.attach(name, { body, contentType: 'image/png' });
 }
 
@@ -92,7 +136,10 @@ const percentFormat = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-const decimalFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+const monthsFormat = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 /** 1234.5 → « 1 234,50 € », comme à l'écran. */
 export function eur(value: number): string {
@@ -104,9 +151,9 @@ export function pct(value: number): string {
   return percentFormat.format(value);
 }
 
-/** 7.49589 → « 7,5 » */
-export function dec(value: number): string {
-  return decimalFormat.format(value);
+/** Mois de location, toujours deux décimales : 7.49589 → « 7,50 » */
+export function months(value: number): string {
+  return monthsFormat.format(value);
 }
 
 /** Le tableau de la banque du jeu de test, tel qu'on le copie depuis Excel (tabulations). */
@@ -122,4 +169,23 @@ export function bankTableAsPasted(): string {
     ].join('\t'),
   );
   return ['Date\tCapital dû\tCapital\tIntérêts\tAssurance', ...lines].join('\n');
+}
+
+/** Ouvre un détail replié (⊕) de la synthèse, s'il est fermé. */
+export async function openDetail(page: Page, label: string): Promise<void> {
+  const button = page
+    .getByRole('button', { name: label, exact: true })
+    .filter({ visible: true })
+    .first();
+  if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+}
+
+/** « −1 234,56 € » → -1234.56 */
+export function parseEur(text: string): number {
+  const cleaned = text
+    .replace(/[^\d,−-]/g, '')
+    .replace('−', '-')
+    .replace(',', '.');
+  return Number(cleaned);
 }

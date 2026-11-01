@@ -21,6 +21,7 @@ Montant au résultat = montant si Recette, −montant si Dépense, 0 sinon. Tran
 
 L'échéancier de la banque fait foi : pour chaque échéance, capital, intérêts, assurance. Échéance totale = capital + intérêts + assurance.
 
+- Assurance actuelle = assurance de la dernière échéance payée à la date du jour (ou de la première à venir). Quand l'échéancier montre un autre montant plus tard, l'écran du prêt signale le changement et la date de l'échéance concernée.
 - Capital restant dû à une date = montant emprunté − somme du capital des échéances payées jusqu'à cette date (incluse).
 - « Période louée » : échéances dont la date est postérieure ou égale à la date de mise en location du bien. Seuls leurs intérêts et leur assurance sont déductibles.
 - Le capital restant dû au 31/12 de la synthèse utilise l'échéancier complet (y compris les échéances postérieures à la date de mise à jour des données).
@@ -59,6 +60,9 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 - Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, divisés par 365/12.
 - Cash-flow mensuel = cash-flow / mois de location.
 - Enrichissement = cash-flow + capital remboursé sur la période louée.
+- Détail des recettes et des dépenses (replié à l'écran) : même périmètre, réparti par groupe de synthèse des catégories paramétrées ; la somme des groupes est égale au total de la ligne. Ordre : loyers d'abord, puis ordre alphabétique, groupes « Autres… » ensuite, et en dernier les groupes de catégories « À amortir » ou « À valider ». Ce détail montre ce qui a été payé, pas ce qui est déductible (voir le récapitulatif fiscal).
+- Charges de copropriété restant à ma charge = dépenses du groupe « Copropriété » − recettes du groupe « Charges refacturées », de l'année civile.
+- Mois de location : affichés avec deux décimales.
 
 **Rentabilité**
 

@@ -6,11 +6,11 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
-| Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 |
+| Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis** |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
-| Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 |
-| Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur |
-| Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 |
+| Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 · **fait à l'itération 3 bis** |
+| Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur · **fait à l'itération 3 bis** |
+| Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 · **fait à l'itération 3 bis** |
 | Impôt estimé et cash-flow après impôt | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
 
 ## Synthèse : détail des recettes et des dépenses
@@ -84,7 +84,7 @@ Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute
 
 **Rôle de chaque écran** (décision du 01/11/2026) : l'accueil répond à « où j'en suis aujourd'hui, et que dois-je faire ? » ; la synthèse répond à « comment s'est passée chaque année ? », avec tout le détail. L'accueil n'affiche que ce que la synthèse ne montre pas, ou ce qui mérite d'être vu d'un coup d'œil. On ajustera à l'usage.
 
-Contenu, pour le bien courant :
+Contenu, **dans la carte de chaque bien** de l'Accueil (règle multi-biens, voir `docs/conception.md`, Choix d'architecture : l'Accueil est la seule page qui montre tous les biens) :
 
 | Bloc | Contenu | Source |
 | --- | --- | --- |
@@ -93,8 +93,8 @@ Contenu, pour le bien courant :
 | | Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
 | À faire | Mouvements « À valider » à qualifier | Mouvements |
 | | Date du dernier mouvement saisi (« données à jour au … ») | Mouvements |
-| | Rappel quand la dernière sauvegarde date de plus d'un mois | Export (US18) |
-| Accès | Bouton « Voir la synthèse » | — |
+| | Rappel quand la dernière sauvegarde date de plus d'un mois (commun à tous les biens : au-dessus des cartes) | Export (US18) |
+| Accès | La carte entière : un clic ouvre la synthèse du bien | — |
 
 Restent dans la synthèse, pas sur l'accueil : rendement net, résultat fiscal estimé, capital restant dû (compris dans la somme nette).
 
@@ -105,8 +105,8 @@ Critères d'acceptation :
 - cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien ;
 - la fiche du bien enregistre la date de l'estimation ; au-delà de 6 mois, l'accueil propose de la mettre à jour ;
 - le bloc « À faire » est vide (« Rien à traiter ») quand tout est à jour ;
-- le bouton mène à la synthèse du bien courant ;
-- lisible sur téléphone (indicateurs empilés).
+- un clic sur la carte d'un bien en fait le bien courant et ouvre sa synthèse ;
+- lisible sur téléphone (cartes et indicateurs empilés).
 
 ## Navigation : 6 entrées au lieu de 10
 
@@ -130,7 +130,7 @@ Icône ⚙ en haut à droite : Données (export, import, jeu de test), puis plus
 Critères d'acceptation :
 
 - sur ordinateur, les 6 entrées tiennent sur une ligne, plus l'icône ⚙ ;
-- sur téléphone (375 px), Accueil, Mouvements, Synthèse, Fiscalité et Simulations sont dans une barre fixe en bas de l'écran ; « Mon bien » et ⚙ passent dans un menu ;
+- sur téléphone (375 px), Accueil, Mouvements, Synthèse, Fiscalité et Simulations sont sur une ligne d'onglets en haut qui défile (sous l'en-tête, onglet actif ramené au centre, dégradé sur le bord) ; « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite ;
 - les anciennes adresses (Biens, Prêt, Immobilisations, Données) redirigent vers leur nouvelle place ;
 - les liens internes existants (« Voir le mouvement concerné », « immobilisations », « Données ») mènent toujours au bon endroit ;
 - tests de parcours mis à jour.
