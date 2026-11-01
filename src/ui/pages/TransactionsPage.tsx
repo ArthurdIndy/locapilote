@@ -12,7 +12,7 @@ interface Props {
   data: Dataset;
   currentPropertyId: string | null;
   today: string;
-  /** Filtres reçus dans l'adresse : `bien`, `annee`, `fiscal=a-valider`. */
+  /** Filtres reçus dans l'adresse : `bien`, `annee`, `groupe`, `fiscal=a-valider`. */
   params?: URLSearchParams;
 }
 
@@ -37,6 +37,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     return data.properties.some((p) => p.id === id) ? id : '';
   });
   const [yearFilter, setYearFilter] = useState(() => params?.get('annee') ?? '');
+  const [groupFilter, setGroupFilter] = useState(() => params?.get('groupe') ?? '');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [toReviewOnly, setToReviewOnly] = useState(
     () => params?.get('fiscal') === TO_REVIEW_FILTER,
@@ -50,6 +51,11 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     () => new Map(data.properties.map((p) => [p.id, p])),
     [data.properties],
   );
+  // Groupes de synthèse des catégories paramétrées (Loyers, Copropriété…), dans leur ordre.
+  const groups = useMemo(
+    () => [...new Set(data.categories.map((c) => c.group))],
+    [data.categories],
+  );
   const years = useMemo(
     () => [...new Set(data.transactions.map((t) => t.date.slice(0, 4)))].sort().reverse(),
     [data.transactions],
@@ -62,13 +68,22 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
           (t) =>
             (!propertyFilter || t.propertyId === propertyFilter) &&
             (!yearFilter || t.date.startsWith(yearFilter)) &&
+            (!groupFilter || categories.get(t.categoryId)?.group === groupFilter) &&
             (!categoryFilter || t.categoryId === categoryFilter) &&
             (!toReviewOnly ||
               categories.get(t.categoryId)?.taxTreatment['lmnp-reel'] === 'to-review'),
         )
         // Du plus récent au plus ancien.
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
-    [data.transactions, categories, propertyFilter, yearFilter, categoryFilter, toReviewOnly],
+    [
+      data.transactions,
+      categories,
+      propertyFilter,
+      yearFilter,
+      groupFilter,
+      categoryFilter,
+      toReviewOnly,
+    ],
   );
 
   const totals = useMemo(() => {
@@ -105,7 +120,9 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     setMessage('Mouvement supprimé.');
   };
 
-  const hasFilter = Boolean(propertyFilter || yearFilter || categoryFilter || toReviewOnly);
+  const hasFilter = Boolean(
+    propertyFilter || yearFilter || groupFilter || categoryFilter || toReviewOnly,
+  );
 
   return (
     <div className="stack">
@@ -169,10 +186,29 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
           </select>
         </label>
         <label className="field">
+          <span>Groupe</span>
+          <select
+            value={groupFilter}
+            onChange={(e) => {
+              setGroupFilter(e.target.value);
+              setCategoryFilter('');
+            }}
+          >
+            <option value="">Tous</option>
+            {groups.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
           <span>Catégorie</span>
           <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">Toutes</option>
-            {sortCategories(data.categories).map((c) => (
+            {sortCategories(
+              data.categories.filter((c) => !groupFilter || c.group === groupFilter),
+            ).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
@@ -186,6 +222,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
             onClick={() => {
               setPropertyFilter('');
               setYearFilter('');
+              setGroupFilter('');
               setCategoryFilter('');
               setToReviewOnly(false);
             }}

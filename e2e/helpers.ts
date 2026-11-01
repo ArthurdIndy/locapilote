@@ -130,7 +130,8 @@ export async function capture(
   // de défilement, au lieu d'apparaître au milieu de la capture.
   const style = fullPage
     ? await page.addStyleTag({
-        content: 'body { position: relative; } .nav { position: absolute !important; }',
+        content:
+          '@media (max-width: 600px) { body { position: relative; } .nav { position: absolute !important; } }',
       })
     : null;
   const body = await page.screenshot({ path, fullPage });
@@ -174,4 +175,23 @@ export function bankTableAsPasted(): string {
     ].join('\t'),
   );
   return ['Date\tCapital dû\tCapital\tIntérêts\tAssurance', ...lines].join('\n');
+}
+
+/** Ouvre un détail replié (⊕) de la synthèse, s'il est fermé. */
+export async function openDetail(page: Page, label: string): Promise<void> {
+  const button = page
+    .getByRole('button', { name: label, exact: true })
+    .filter({ visible: true })
+    .first();
+  if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+}
+
+/** « −1 234,56 € » → -1234.56 */
+export function parseEur(text: string): number {
+  const cleaned = text
+    .replace(/[^\d,−-]/g, '')
+    .replace('−', '-')
+    .replace(',', '.');
+  return Number(cleaned);
 }

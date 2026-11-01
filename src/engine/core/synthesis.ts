@@ -158,3 +158,50 @@ export function propertySynthesis(
 ): YearSynthesis[] {
   return synthesisYears(property, dataAsOf).map((y) => yearSynthesis(data, property, y, dataAsOf));
 }
+
+/** Groupes de synthèse servant aux charges de copropriété restant à la charge du propriétaire. */
+export const CO_OWNERSHIP_GROUP = 'Copropriété';
+export const RECHARGED_CHARGES_GROUP = 'Charges refacturées';
+
+/** Total d'un groupe de catégories (Loyers, Copropriété…) sur une année. */
+export interface GroupTotal {
+  group: string;
+  direction: 'income' | 'expense';
+  amount: Cents;
+}
+
+/**
+ * Recettes et dépenses de l'année, par groupe de synthèse des catégories paramétrées (même
+ * périmètre que `income` et `expenses` de `yearSynthesis`). Tous les groupes de recette et de
+ * dépense sont rendus, même à zéro, dans l'ordre des catégories : un nouveau groupe apparaît
+ * sans modification du code.
+ */
+export function yearGroupTotals(data: Dataset, property: Property, year: number): GroupTotal[] {
+  const totals = new Map<string, GroupTotal>();
+  const keyOf = (direction: string, group: string) => `${direction}\u0000${group}`;
+  for (const c of data.categories) {
+    if (c.direction !== 'income' && c.direction !== 'expense') continue;
+    const key = keyOf(c.direction, c.group);
+    if (!totals.has(key)) totals.set(key, { group: c.group, direction: c.direction, amount: 0 });
+  }
+  const categories = new Map(data.categories.map((c) => [c.id, c]));
+  const prefix = `${year}-`;
+  for (const t of data.transactions) {
+    if (t.propertyId !== property.id || !t.date.startsWith(prefix)) continue;
+    const category = categories.get(t.categoryId);
+    if (!category) continue;
+    const total = totals.get(keyOf(category.direction, category.group));
+    if (total) total.amount += t.amount;
+  }
+  return [...totals.values()];
+}
+
+/**
+ * Charges de copropriété restant à la charge du propriétaire : charges de copropriété payées
+ * − charges refacturées au locataire.
+ */
+export function coOwnershipChargesBorne(groups: readonly GroupTotal[]): Cents {
+  const amount = (direction: GroupTotal['direction'], group: string) =>
+    groups.find((g) => g.direction === direction && g.group === group)?.amount ?? 0;
+  return amount('expense', CO_OWNERSHIP_GROUP) - amount('income', RECHARGED_CHARGES_GROUP);
+}

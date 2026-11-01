@@ -1140,3 +1140,29 @@ ul.warning {
 .assets-table .tx-actions {
   margin-top: 4px;
 }
+
+/* ---------- Synthèse : détails repliés (⊕ / ⊖) ---------- */
+
+.disclosure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.disclosure-sign {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+.disclosure:hover .disclosure-sign,
+.disclosure:focus-visible .disclosure-sign {
+  text-decoration: underline;
+}

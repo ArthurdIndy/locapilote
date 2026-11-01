@@ -108,8 +108,8 @@ test.describe('US03 · Mouvements', () => {
     await startWithTestData(page);
     await goTo(page, 'Mouvements');
     const filters = page.getByRole('region', { name: 'Filtres' });
-    await filters.getByRole('combobox').nth(0).selectOption('2025');
-    await filters.getByRole('combobox').nth(1).selectOption('Loyer hors charges');
+    await filters.getByLabel('Année').selectOption('2025');
+    await filters.getByLabel('Catégorie').selectOption('Loyer hors charges');
     await expect(page.getByText(/^14 mouvements · recettes 12\s387,89\s€/)).toBeVisible();
 
     const first = page.locator('.transaction').first();
