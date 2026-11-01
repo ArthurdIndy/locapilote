@@ -89,3 +89,18 @@ export function parseYearsInput(text: string): number | null {
   if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
   return Number(cleaned);
 }
+
+/** Années acceptées pour une date saisie : au-delà, c'est une saisie en cours ou une faute de frappe. */
+export const PLAUSIBLE_YEARS = { min: 2000, max: 2100 } as const;
+
+/**
+ * Date complète et plausible (AAAA-MM-JJ valide, année entre 2000 et 2100). Pendant la frappe,
+ * le navigateur produit des dates valides mais absurdes (« 2 » → année 0002) : on les écarte.
+ */
+export function isPlausibleDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number) as [number, number, number];
+  if (year < PLAUSIBLE_YEARS.min || year > PLAUSIBLE_YEARS.max) return false;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return month >= 1 && month <= 12 && day >= 1 && day <= lastDay;
+}

@@ -4,6 +4,7 @@ import {
   formatDate,
   formatEuros,
   formatPercent,
+  isPlausibleDate,
   normalizeForSearch,
   parseEurosInput,
   parsePercentInput,
@@ -72,5 +73,23 @@ describe('parseYearsInput', () => {
     expect(parseYearsInput('')).toBeNull();
     expect(parseYearsInput('-1')).toBeNull();
     expect(parseYearsInput('cinq')).toBeNull();
+  });
+});
+
+describe('isPlausibleDate', () => {
+  it('accepte une date complète entre 2000 et 2100', () => {
+    expect(isPlausibleDate('2026-10-25')).toBe(true);
+    expect(isPlausibleDate('2000-01-01')).toBe(true);
+    expect(isPlausibleDate('2100-12-31')).toBe(true);
+    expect(isPlausibleDate('2024-02-29')).toBe(true);
+  });
+
+  it('écarte une saisie en cours, hors plage ou impossible', () => {
+    expect(isPlausibleDate('0002-11-11')).toBe(false);
+    expect(isPlausibleDate('0202-11-11')).toBe(false);
+    expect(isPlausibleDate('1999-12-31')).toBe(false);
+    expect(isPlausibleDate('2101-01-01')).toBe(false);
+    expect(isPlausibleDate('2025-02-29')).toBe(false);
+    expect(isPlausibleDate('')).toBe(false);
   });
 });

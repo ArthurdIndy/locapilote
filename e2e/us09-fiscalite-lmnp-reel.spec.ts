@@ -489,3 +489,94 @@ test('menu : 8 onglets, utilisables sur téléphone (une ligne qui défile)', as
   await expectNoHorizontalScroll(page);
   if (isPhone(testInfo)) await capture(page, testInfo, 'us09-menu');
 });
+
+/*
+ * Saisie des dates au clavier, chiffre par chiffre (comme un utilisateur), et non avec `fill`
+ * qui remplit le champ d'un coup. Le jour et le mois sont égaux (11/11) : la saisie est la
+ * même quel que soit l'ordre jour/mois du navigateur ; l'année vient toujours en dernier.
+ */
+async function typeDate(page: Page, field: Locator, digits: string): Promise<void> {
+  await field.focus();
+  await page.keyboard.type(digits, { delay: 30 });
+}
+
+test.describe('saisie des dates au clavier', () => {
+  test('« Données à jour au » : la date tapée chiffre par chiffre est enregistrée', async ({
+    page,
+  }) => {
+    await goTo(page, 'Synthèse');
+    const date = page.getByLabel('Données à jour au');
+    await typeDate(page, date, '11112025');
+    // Pendant la frappe, le champ n'est pas réinitialisé : l'année est complète.
+    await expect(date).toHaveValue('2025-11-11');
+    await date.blur();
+    await expect(date).toHaveValue('2025-11-11');
+    // Enregistrée : même date sur la page Fiscalité, et 2026 n'est plus affichée.
+    await goTo(page, 'Fiscalité');
+    await expect(page.getByLabel('Données à jour au')).toHaveValue('2025-11-11');
+    await expect(page.locator('table[aria-label="Récapitulatif LMNP réel"] thead th')).toHaveText([
+      'Rubrique',
+      '2024',
+      '2025',
+    ]);
+  });
+
+  test('« Données à jour au » : la touche Entrée enregistre la date', async ({ page }) => {
+    await goTo(page, 'Fiscalité');
+    const date = page.getByLabel('Données à jour au');
+    await typeDate(page, date, '11112024');
+    await page.keyboard.press('Enter');
+    await expect(date).toHaveValue('2024-11-11');
+    await goTo(page, 'Synthèse');
+    await expect(page.getByLabel('Données à jour au')).toHaveValue('2024-11-11');
+  });
+
+  test('« Données à jour au » : une année hors plage n’est pas enregistrée', async ({ page }) => {
+    await goTo(page, 'Fiscalité');
+    const date = page.getByLabel('Données à jour au');
+    // Jour et mois tapés (11/11/2026, date complète et plausible, enregistrée), puis une
+    // année incomplète « 19 » (an 0019) : elle n'est pas enregistrée.
+    await typeDate(page, date, '111119');
+    await expect(date).toHaveValue('0019-11-11');
+    // On quitte le champ (le premier Tab mène au bouton calendrier, interne au champ).
+    await date.blur();
+    await expect(page.getByRole('alert')).toContainText('Date incomplète ou hors de la plage');
+    await expect(date).toHaveValue('2026-11-11');
+    await goTo(page, 'Synthèse');
+    await expect(page.getByLabel('Données à jour au')).toHaveValue('2026-11-11');
+  });
+
+  test('les autres champs date gardent la saisie au clavier', async ({ page }) => {
+    // Mouvement.
+    await goTo(page, 'Mouvements');
+    await page.getByRole('button', { name: 'Nouveau mouvement' }).click();
+    const txDate = page.getByLabel('Date', { exact: true });
+    await typeDate(page, txDate, '11112025');
+    await expect(txDate).toHaveValue('2025-11-11');
+
+    // Prêt : nouvelle échéance, et capital restant dû à une date.
+    await goTo(page, 'Prêt');
+    const atDate = page.getByLabel('Capital restant dû au');
+    await typeDate(page, atDate, '11112024');
+    await expect(atDate).toHaveValue('2024-11-11');
+    await expect(page.getByTestId('outstanding')).not.toHaveText('—');
+    await page.getByRole('button', { name: 'Ajouter un prêt' }).click();
+    const firstDate = page.getByLabel('Première échéance *');
+    await typeDate(page, firstDate, '11112025');
+    await expect(firstDate).toHaveValue('2025-11-11');
+
+    // Immobilisation.
+    await goTo(page, 'Immobilisations');
+    await page.getByRole('button', { name: 'Nouvelle immobilisation' }).click();
+    const inService = page.getByLabel('Date de mise en service *');
+    await typeDate(page, inService, '11112025');
+    await expect(inService).toHaveValue('2025-11-11');
+
+    // Bien.
+    await goTo(page, 'Biens');
+    await page.getByRole('button', { name: 'Ajouter un bien' }).click();
+    const acquisition = page.getByLabel('Date d’acquisition *');
+    await typeDate(page, acquisition, '11112025');
+    await expect(acquisition).toHaveValue('2025-11-11');
+  });
+});
