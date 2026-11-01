@@ -137,12 +137,14 @@ export interface RawSeed {
 const TAX_REGIMES: Record<string, TaxRegime> = {
   'LMNP réel': 'lmnp-reel',
   'LMNP micro-BIC': 'lmnp-micro-bic',
+  'LMP réel': 'lmp-reel',
   'Micro-foncier': 'micro-foncier',
   'Réel foncier': 'reel-foncier',
 };
 
 const RENTAL_TYPES: Record<string, RentalType> = {
   Meublée: 'furnished',
+  Saisonnière: 'seasonal',
   Nue: 'unfurnished',
 };
 

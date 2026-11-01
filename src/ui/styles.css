@@ -11,6 +11,7 @@
   --danger: #b42318;
   --success-soft: #e6f4ea;
   --danger-soft: #fdecea;
+  --warning-soft: #fff4d6;
   font-family:
     system-ui,
     -apple-system,
@@ -36,6 +37,7 @@
     --danger: #ff8a80;
     --success-soft: #16301f;
     --danger-soft: #3a1d1d;
+    --warning-soft: #3a3016;
   }
 }
 
@@ -579,4 +581,15 @@ details summary {
     padding: 10px 8px;
     font-size: 0.95rem;
   }
+}
+
+.warning {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--warning-soft);
+}
+
+select[aria-invalid='true'] {
+  border-color: var(--danger);
 }

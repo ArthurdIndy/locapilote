@@ -96,3 +96,21 @@ Plus l'apport à la date d'achat (négatif) et la somme nette de la vente moins 
 
 - Gain total = somme des flux. TRI = taux annuel qui annule la valeur actuelle des flux datés (XIRR, base 365 jours).
 - Rendement de l'attente entre deux scénarios = (gain du scénario − gain du précédent) / somme nette du précédent / (écart de dates en années).
+
+## 7. Type de location et régime fiscal (Biens)
+
+Le régime fiscal proposé dépend du type de location ; une combinaison incohérente est refusée.
+
+| Type de location | Régimes possibles |
+| --- | --- |
+| Meublée | LMNP micro-BIC, LMNP réel, LMP réel |
+| Saisonnière (meublé de tourisme) | LMNP micro-BIC, LMNP réel, LMP réel |
+| Nue | Micro-foncier, réel foncier |
+
+Si le type de location change et que le régime n'est plus compatible, le régime est vidé et doit être choisi à nouveau.
+
+Sources :
+
+- location de locaux d'habitation meublés imposée dans la catégorie des bénéfices industriels et commerciaux (BIC) : article 35, I-5° bis du code général des impôts ;
+- distinction entre loueur en meublé non professionnel (LMNP) et professionnel (LMP) : article 155, IV du code général des impôts ;
+- location nue imposée dans la catégorie des revenus fonciers : article 14 du code général des impôts ; présentation sur impots.gouv.fr (revenus fonciers et locations meublées).

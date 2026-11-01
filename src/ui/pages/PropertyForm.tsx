@@ -1,5 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { TAX_REGIMES, type Property, type RentalType, type TaxRegime } from '../../engine/types';
+import {
+  COMPATIBLE_TAX_REGIMES,
+  isTaxRegimeCompatible,
+  RENTAL_TYPES,
+  type Property,
+  type RentalType,
+  type TaxRegime,
+} from '../../engine/types';
 import { centsToInput, formatEuros, parseEurosInput } from '../format';
 import { REGIME_LABELS, RENTAL_TYPE_LABELS } from '../labels';
 
@@ -11,7 +18,8 @@ interface Fields {
   city: string;
   surfaceM2: string;
   rentalType: RentalType;
-  taxRegime: TaxRegime;
+  /** Vide tant qu'aucun régime compatible n'est choisi. */
+  taxRegime: TaxRegime | '';
   acquisitionDate: string;
   rentalStartDate: string;
   purchasePrice: string;
@@ -50,7 +58,7 @@ function toFields(p: Property | null): Fields {
     city: p?.city ?? '',
     surfaceM2: p?.surfaceM2 != null ? String(p.surfaceM2).replace('.', ',') : '',
     rentalType: p?.rentalType ?? 'furnished',
-    taxRegime: p?.taxRegime ?? 'lmnp-reel',
+    taxRegime: p && isTaxRegimeCompatible(p.rentalType, p.taxRegime) ? p.taxRegime : '',
     acquisitionDate: p?.acquisitionDate ?? '',
     rentalStartDate: p?.rentalStartDate ?? '',
     purchasePrice: money(p?.purchasePrice),
@@ -94,12 +102,21 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
     setFields((f) => ({ ...f, [key]: value }));
 
   const total = totalCost(fields);
+  const [regimeCleared, setRegimeCleared] = useState(false);
+
+  /** Changer le type de location vide le régime s'il n'est plus compatible. */
+  const changeRentalType = (rentalType: RentalType) => {
+    const cleared = fields.taxRegime !== '' && !isTaxRegimeCompatible(rentalType, fields.taxRegime);
+    setFields((f) => ({ ...f, rentalType, taxRegime: cleared ? '' : f.taxRegime }));
+    setRegimeCleared(cleared);
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const problems: string[] = [];
     const f = fields;
     if (!f.name.trim()) problems.push('Donne un nom au bien.');
+    if (!f.taxRegime) problems.push('Choisis un régime fiscal.');
     if (!f.acquisitionDate) problems.push('Indique la date d’acquisition.');
     if (f.rentalStartDate && f.acquisitionDate && f.rentalStartDate < f.acquisitionDate) {
       problems.push('La mise en location ne peut pas précéder l’acquisition.');
@@ -116,7 +133,7 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
     const surface = f.surfaceM2.trim() === '' ? null : Number(f.surfaceM2.replace(',', '.'));
     if (surface !== null && !(surface > 0)) problems.push('Surface invalide.');
     setErrors(problems);
-    if (problems.length > 0 || total === null) return;
+    if (problems.length > 0 || total === null || !f.taxRegime) return;
 
     const property: Property = {
       id: initial?.id ?? crypto.randomUUID(),
@@ -183,9 +200,9 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
             <span>Type de location</span>
             <select
               value={fields.rentalType}
-              onChange={(e) => set('rentalType', e.target.value as RentalType)}
+              onChange={(e) => changeRentalType(e.target.value as RentalType)}
             >
-              {(Object.keys(RENTAL_TYPE_LABELS) as RentalType[]).map((t) => (
+              {RENTAL_TYPES.map((t) => (
                 <option key={t} value={t}>
                   {RENTAL_TYPE_LABELS[t]}
                 </option>
@@ -197,8 +214,10 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
             <select
               value={fields.taxRegime}
               onChange={(e) => set('taxRegime', e.target.value as TaxRegime)}
+              aria-invalid={fields.taxRegime === ''}
             >
-              {TAX_REGIMES.map((r) => (
+              {fields.taxRegime === '' && <option value="">Choisir un régime…</option>}
+              {COMPATIBLE_TAX_REGIMES[fields.rentalType].map((r) => (
                 <option key={r} value={r}>
                   {REGIME_LABELS[r]}
                 </option>
@@ -210,8 +229,16 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
           {text('acquisitionDate', 'Date d’acquisition *', { type: 'date' })}
           {text('rentalStartDate', 'Date de mise en location', { type: 'date' })}
         </div>
+        {fields.taxRegime === '' && (
+          <p className="warning" role="status">
+            {regimeCleared
+              ? 'Le régime choisi ne correspond pas à ce type de location : choisis-en un dans la liste.'
+              : 'Choisis le régime fiscal du bien.'}
+          </p>
+        )}
         <p className="muted small">
-          Changer de régime ne demande aucune ressaisie : les mouvements restent les mêmes.
+          Meublée ou saisonnière : régimes LMNP ou LMP. Nue : micro-foncier ou réel foncier. Changer
+          de régime ne demande aucune ressaisie : les mouvements restent les mêmes.
         </p>
       </fieldset>
 

@@ -109,6 +109,12 @@ describe('sauvegarde complète (US18)', () => {
     expect(() => parseBackup(JSON.stringify(incomplete))).toThrow(/« loans »/);
   });
 
+  it('refuse un bien dont le régime ne correspond pas au type de location', () => {
+    const backup = buildBackup(loadTestDataset());
+    backup.data.properties[0]!.taxRegime = 'micro-foncier';
+    expect(() => parseBackup(serializeBackup(backup))).toThrow(/pas compatible/);
+  });
+
   it('refuse une sauvegarde d’une version future', () => {
     const backup = { ...buildBackup(loadTestDataset()), formatVersion: 99 };
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/plus récente/);
