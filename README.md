@@ -46,7 +46,8 @@ Prérequis : Node.js 22.
 | --- | --- |
 | `npm install` | Installe les dépendances |
 | `npm run dev` | Lance l'application en local |
-| `npm test` | Lance les tests (Vitest) |
+| `npm test` | Lance les tests du moteur (Vitest) |
+| `npm run test:e2e` | Lance les tests de parcours dans le navigateur (Playwright ; la première fois : `npx playwright install chromium`) |
 | `npm run lint` | Vérifie le code (ESLint) |
 | `npm run build` | Construit le site dans `dist/` |
 

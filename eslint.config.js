@@ -18,6 +18,12 @@ export default tseslint.config(
     },
   },
   {
+    // Tests de parcours Playwright : code Node, sans React (la fixture « use » n'est pas un hook).
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: { globals: globals.node },
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
+  {
     // Le moteur de calcul reste pur : pas de React ni de stockage.
     files: ['src/engine/**/*.ts'],
     ignores: ['src/engine/**/*.test.ts'],
