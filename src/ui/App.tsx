@@ -6,6 +6,8 @@ import { useCurrentProperty } from './currentProperty';
 import { todayIso } from './format';
 import { DataPage } from './pages/DataPage';
 import { HomePage } from './pages/HomePage';
+import { LoansPage } from './pages/LoansPage';
+import { SynthesisPage } from './pages/SynthesisPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
@@ -89,6 +91,8 @@ function MainApp({ data, route }: { data: Dataset; route: RouteId }) {
       {route === 'mouvements' && (
         <TransactionsPage data={data} currentPropertyId={current?.id ?? null} today={today} />
       )}
+      {route === 'pret' && <LoansPage data={data} property={current} today={today} />}
+      {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
       {route === 'donnees' && <DataPage data={data} today={today} />}
     </Layout>
   );

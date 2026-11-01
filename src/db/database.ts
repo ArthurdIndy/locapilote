@@ -14,13 +14,16 @@ import type {
   Asset,
   Category,
   Dataset,
+  IsoDate,
   Loan,
   LoanInstallment,
   PreRentalExpense,
   Property,
   PropertyAssumptions,
+  ScheduleSource,
   Transaction,
 } from '../engine/types';
+import { defaultAssumptions } from './defaultAssumptions';
 
 export const SCHEMA_VERSION = 1;
 
@@ -117,6 +120,51 @@ export class LocapiloteDb extends Dexie {
         await this.transactions.put(transaction);
       },
     );
+  }
+
+  /** Enregistre un prêt (création ou modification) : vérifie que son bien existe. */
+  async saveLoan(loan: Loan): Promise<void> {
+    await this.transaction('rw', [this.loans, this.properties], async () => {
+      if (!(await this.properties.get(loan.propertyId))) throw new Error('Bien inconnu');
+      await this.loans.put(loan);
+    });
+  }
+
+  /** Remplace tout l'échéancier d'un prêt, et note son origine (banque ou estimé). */
+  async replaceLoanSchedule(
+    loanId: string,
+    installments: LoanInstallment[],
+    source: ScheduleSource,
+  ): Promise<void> {
+    await this.transaction('rw', [this.loans, this.loanInstallments], async () => {
+      const loan = await this.loans.get(loanId);
+      if (!loan) throw new Error('Prêt inconnu');
+      if (installments.some((i) => i.loanId !== loanId))
+        throw new Error('Échéance d’un autre prêt');
+      await this.loanInstallments.where('loanId').equals(loanId).delete();
+      await this.loanInstallments.bulkAdd(installments);
+      await this.loans.put({ ...loan, scheduleSource: source });
+    });
+  }
+
+  /** Supprime un prêt et toutes ses échéances. */
+  async deleteLoan(loanId: string): Promise<void> {
+    await this.transaction('rw', [this.loans, this.loanInstallments], async () => {
+      await this.loanInstallments.where('loanId').equals(loanId).delete();
+      await this.loans.delete(loanId);
+    });
+  }
+
+  /**
+   * Règle la date de mise à jour des données d'un bien. Si le bien n'a pas encore
+   * d'hypothèses, elles sont créées avec les valeurs par défaut.
+   */
+  async setDataAsOf(propertyId: string, dataAsOf: IsoDate): Promise<void> {
+    await this.transaction('rw', [this.assumptions, this.properties], async () => {
+      if (!(await this.properties.get(propertyId))) throw new Error('Bien inconnu');
+      const current = (await this.assumptions.get(propertyId)) ?? defaultAssumptions(propertyId);
+      await this.assumptions.put({ ...current, dataAsOf });
+    });
   }
 }
 

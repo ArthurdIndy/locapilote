@@ -48,3 +48,37 @@ export function centsToInput(cents: Cents): string {
 export function normalizeForSearch(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
+
+const percentFormat = new Intl.NumberFormat('fr-FR', {
+  style: 'percent',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** 0.045922 → « 4,59 % » */
+export function formatPercent(rate: number): string {
+  return percentFormat.format(rate);
+}
+
+const decimalFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+
+/** 7.49589 → « 7,5 » */
+export function formatDecimal(value: number): string {
+  return decimalFormat.format(value);
+}
+
+/**
+ * Lit un taux saisi en pourcentage (« 1,5 », « 1.5 % ») et le renvoie en décimal (0.015).
+ * Renvoie `null` si la saisie n'est pas valide.
+ */
+export function parsePercentInput(text: string): number | null {
+  const cleaned = text.replace(/[\s\u00a0\u202f%]/g, '').replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
+  // Arrondi pour éviter 1.5 / 100 = 0.015000000000000001.
+  return Math.round(Number(cleaned) * 1e6) / 1e8;
+}
+
+/** 0.015 → « 1,5 » (champ modifiable). */
+export function rateToInput(rate: number): string {
+  return String(Math.round(rate * 1e8) / 1e6).replace('.', ',');
+}

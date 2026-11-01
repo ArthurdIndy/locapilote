@@ -3,8 +3,11 @@ import {
   centsToInput,
   formatDate,
   formatEuros,
+  formatPercent,
   normalizeForSearch,
   parseEurosInput,
+  parsePercentInput,
+  rateToInput,
   todayIso,
 } from './format';
 
@@ -45,5 +48,14 @@ describe('formatage', () => {
 
   it('cherche sans tenir compte des accents', () => {
     expect(normalizeForSearch('Équipement')).toBe('equipement');
+  });
+
+  it('lit et affiche les taux en pourcentage', () => {
+    expect(parsePercentInput('1,5')).toBe(0.015);
+    expect(parsePercentInput('1.45 %')).toBe(0.0145);
+    expect(parsePercentInput('abc')).toBeNull();
+    expect(parsePercentInput('-1')).toBeNull();
+    expect(rateToInput(0.015)).toBe('1,5');
+    expect(formatPercent(0.045922).replace(/\s/g, ' ')).toBe('4,59 %');
   });
 });

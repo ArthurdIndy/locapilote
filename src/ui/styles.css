@@ -573,12 +573,15 @@ details summary {
     justify-content: flex-end;
   }
 
+  /* Six onglets ne tiennent pas sur une ligne : ils passent sur deux, tous visibles. */
   .nav {
     gap: 0;
+    flex-wrap: wrap;
+    overflow-x: visible;
   }
 
   .nav a {
-    padding: 10px 8px;
+    padding: 8px 8px;
     font-size: 0.95rem;
   }
 }
@@ -592,4 +595,215 @@ details summary {
 
 select[aria-invalid='true'] {
   border-color: var(--danger);
+}
+
+/* ---------- Prêt ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.badge.bank {
+  background: var(--success-soft);
+}
+
+.badge.estimated {
+  background: var(--warning-soft);
+}
+
+.card h3 {
+  margin: 0;
+}
+
+h4 {
+  margin: 8px 0 4px;
+  font-size: 1rem;
+}
+
+.inline-date {
+  max-width: 200px;
+}
+
+ul.warning {
+  padding-left: 28px;
+}
+
+.import-preview p {
+  margin: 0;
+}
+
+/* Tableau qui défile horizontalement si l'écran est trop étroit ; première colonne figée. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-scroll th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+}
+
+.responsive-table,
+.synthesis-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.responsive-table th,
+.responsive-table td,
+.synthesis-table th,
+.synthesis-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.responsive-table thead th,
+.synthesis-table thead th {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.responsive-table th[scope='row'],
+.responsive-table th:first-child {
+  text-align: left;
+}
+
+/* ---------- Synthèse ---------- */
+
+.data-as-of input {
+  max-width: 220px;
+}
+
+.synthesis-wide {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+
+.synthesis-table th[scope='row'] {
+  text-align: left;
+  font-weight: 400;
+  white-space: normal;
+}
+
+.synthesis-table .section-row th {
+  text-align: left;
+  padding-top: 16px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.synthesis-table tr.detail th {
+  padding-left: 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.synthesis-table tr.detail td {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.synthesis-table tr.strong th,
+.synthesis-table tr.strong td,
+.year-lines .strong dt,
+.year-lines .strong dd {
+  font-weight: 700;
+}
+
+.negative {
+  color: var(--expense);
+}
+
+.positive {
+  color: var(--income);
+}
+
+.synthesis-narrow {
+  display: none;
+}
+
+.year-card h3 {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.year-card h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.year-lines {
+  margin: 0;
+}
+
+.year-lines > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.year-lines dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.year-lines .detail dt {
+  padding-left: 16px;
+  color: var(--muted);
+}
+
+.year-lines .detail dd {
+  color: var(--muted);
+}
+
+.tax-placeholder {
+  border-style: dashed;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .synthesis-wide {
+    display: none;
+  }
+
+  .synthesis-narrow {
+    display: flex;
+  }
+
+  .responsive-table {
+    font-size: 0.85rem;
+  }
+
+  .responsive-table .hide-narrow {
+    display: none;
+  }
 }

@@ -40,9 +40,17 @@ Le cadrage complet (personas, user stories, MVP, roadmap) est dans `docs/concept
 - Tout calcul du moteur doit retrouver `expected.json` à 0,01 € près (0,0001 pour les taux). Si un écart apparaît, signale-le avant de modifier un test.
 - **Ne jamais committer de données personnelles réelles** (noms, adresses, relevés, montants réels). Le dépôt est public.
 
+## Recette
+
+- À chaque story, écris les **tests de parcours** (Playwright, dossier `e2e/`, un fichier par story : `e2e/us07-pret.spec.ts`) qui rejouent chacun de ses critères d'acceptation dans le navigateur, sur ordinateur et sur téléphone (375 px). Ils tournent à chaque pull request (`.github/workflows/tests.yml`) ; en local : `npm run test:e2e`.
+- Les parcours partent toujours du **jeu de test** (ou d'un départ vide) : jamais de données personnelles. L'horloge est figée au 01/11/2026 (`e2e/helpers.ts`).
+- Les captures d'écran se prennent avec `capture(page, testInfo, 'nom')` : elles vont dans `e2e-captures/` (et dans le rapport Playwright de la CI). Pour viser l'aperçu Cloudflare de la branche : `BASE_URL=https://<branche>-locapilote.art-dindy.workers.dev npm run test:e2e`.
+- Termine la pull request par un **tableau de recette** : une ligne par critère d'acceptation, ✅ ou ❌, le test qui le vérifie, et les captures d'écran (ordinateur et téléphone) de l'aperçu, prises uniquement sur le jeu de test. Les captures jointes sont copiées dans `docs/recette/<itération>/`.
+- Un critère non vérifiable automatiquement est signalé comme tel, avec les étapes pour le vérifier à la main.
+
 ## Une story est terminée quand
 
-- les tests passent (`npm test`) et le build aussi (`npm run build`) ;
+- les tests passent (`npm test`, `npm run test:e2e`) et le build aussi (`npm run build`) ;
 - les chiffres concernés retombent sur `data/expected.json` ;
 - l'écran est utilisable en français, sur ordinateur et sur téléphone ;
 - Arthur a fait la recette sur la pull request.

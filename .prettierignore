@@ -5,3 +5,6 @@ package-lock.json
 data
 docs
 *.md
+test-results
+playwright-report
+e2e-captures

@@ -23,6 +23,11 @@ L'échéancier de la banque fait foi : pour chaque échéance, capital, intérê
 
 - Capital restant dû à une date = montant emprunté − somme du capital des échéances payées jusqu'à cette date (incluse).
 - « Période louée » : échéances dont la date est postérieure ou égale à la date de mise en location du bien. Seuls leurs intérêts et leur assurance sont déductibles.
+- Le capital restant dû au 31/12 de la synthèse utilise l'échéancier complet (y compris les échéances postérieures à la date de mise à jour des données).
+
+**Chargement du tableau de la banque** : copier-coller depuis Excel ou fichier CSV, colonnes date, capital dû, capital, intérêts, assurance. Le « capital dû » peut être celui d'avant ou d'après l'échéance : l'outil le détecte sur la première ligne en le comparant au montant emprunté. Un avertissement (non bloquant) est affiché si la somme du capital des échéances s'écarte du montant emprunté de plus d'un centime par échéance, ou si le nombre d'échéances diffère de la durée.
+
+**Échéancier estimé** (quand on n'a pas le tableau de la banque), signalé comme tel à l'écran : mensualités constantes, mensualité hors assurance = M × t / (1 − (1 + t)^−n) avec t = taux annuel / 12 et n = durée en mois ; intérêts du mois = capital dû × t, arrondis au centime ; capital = mensualité arrondie − intérêts ; la dernière échéance solde le capital ; assurance = assurance mensuelle du prêt ; une échéance par mois à partir de la première, même jour du mois (ramené au dernier jour si besoin). La banque calcule sa première échéance au prorata des jours et arrondit à sa façon : son tableau fait foi.
 
 ## 3. Synthèse annuelle (Synthèse), par bien et par année
 
@@ -41,8 +46,9 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 
 **Trésorerie**
 
+- Recettes encaissées = mouvements des catégories de sens Recette ; dépenses payées = mouvements des catégories de sens Dépense (investissements et dépenses à qualifier compris), de l'année civile entière, même après la date de mise à jour (comme l'Excel).
 - Cash-flow = recettes encaissées − dépenses payées (hors prêt) − échéances de prêt de la période louée (jusqu'à la date de mise à jour).
-- Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), divisés par 365/12.
+- Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, divisés par 365/12.
 - Cash-flow mensuel = cash-flow / mois de location.
 - Enrichissement = cash-flow + capital remboursé sur la période louée.
 
@@ -50,7 +56,9 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 
 - Loyers annualisés = loyers hors charges / mois de location × 12.
 - Rendement brut = loyers annualisés / coût total d'acquisition.
-- Rendement net = (recettes − charges hors intérêts et assurance emprunteur), annualisé, / coût total d'acquisition.
+- Loyers hors charges = mouvements des catégories du groupe « Loyers ».
+- Rendement net = (recettes − charges hors intérêts et assurance emprunteur), annualisé, / coût total d'acquisition. Les charges sont les dépenses payées hors investissements (« À amortir ») et hors dépenses à qualifier (« À valider ») ; tant que seul le LMNP réel est paramétré, c'est son traitement qui sert de référence.
+- Années affichées : de l'année de mise en location à celle de la date de mise à jour des données (réglable dans la synthèse ; la date du jour par défaut).
 
 ## 4. Amortissements (Amortissements)
 
