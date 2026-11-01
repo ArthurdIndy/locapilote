@@ -65,24 +65,30 @@ Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute
 
 ## US21 : tableau de bord d'accueil (itération 5)
 
-« En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où en est mon bien cette année. »
+« En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où j'en suis aujourd'hui et ce que j'ai à faire. »
 
-Indicateurs de l'année en cours, pour le bien courant :
+**Rôle de chaque écran** (décision du 01/11/2026) : l'accueil répond à « où j'en suis aujourd'hui, et que dois-je faire ? » ; la synthèse répond à « comment s'est passée chaque année ? », avec tout le détail. L'accueil n'affiche que ce que la synthèse ne montre pas, ou ce qui mérite d'être vu d'un coup d'œil. On ajustera à l'usage.
 
-| Indicateur | Source |
-| --- | --- |
-| Cash-flow mensuel moyen | Synthèse (US08) |
-| Enrichissement de l'année | Synthèse (US08) |
-| Capital restant dû à la date du jour | Prêt (US07) |
-| Rendement net | Synthèse (US08) |
-| Résultat fiscal estimé | Fiscalité (US09) |
-| Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
+Contenu, pour le bien courant :
+
+| Bloc | Contenu | Source |
+| --- | --- | --- |
+| Trois indicateurs de l'année en cours | Cash-flow mensuel moyen | Synthèse (US08) |
+| | Enrichissement de l'année | Synthèse (US08) |
+| | Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
+| À faire | Mouvements « À valider » à qualifier | Mouvements |
+| | Date du dernier mouvement saisi (« données à jour au … ») | Mouvements |
+| | Rappel quand la dernière sauvegarde date de plus d'un mois | Export (US18) |
+| Accès | Bouton « Voir la synthèse » | — |
+
+Restent dans la synthèse, pas sur l'accueil : rendement net, résultat fiscal estimé, capital restant dû (compris dans la somme nette).
 
 Critères d'acceptation :
 
-- chaque indicateur affiche la comparaison avec l'année précédente (« −421 €/mois, contre −257 € en 2025 ») et mène à son détail en un clic ;
+- chaque indicateur affiche la comparaison avec l'année précédente (« −421 €/mois, contre −257 € en 2025 ») ;
 - la somme nette précise sur quelle valeur elle repose (« sur la base d'une valeur de 305 000 €, estimée le … ») ;
-- cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien (mini-simulation) ;
+- cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien ;
 - la fiche du bien enregistre la date de l'estimation ; au-delà de 6 mois, l'accueil propose de la mettre à jour ;
+- le bloc « À faire » est vide (« Rien à traiter ») quand tout est à jour ;
+- le bouton mène à la synthèse du bien courant ;
 - lisible sur téléphone (indicateurs empilés).
-
