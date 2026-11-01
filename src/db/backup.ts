@@ -152,6 +152,14 @@ function checkDataset(data: Dataset): void {
 
   for (const l of data.loans) {
     if (!propertyIds.has(l.propertyId)) fail(`le prêt ${l.id} renvoie à un bien inconnu.`);
+    if (!isCents(l.principal)) fail(`montant invalide pour le prêt ${l.id}.`);
+    if (
+      l.scheduleSource !== undefined &&
+      l.scheduleSource !== 'bank' &&
+      l.scheduleSource !== 'estimated'
+    ) {
+      fail(`origine d’échéancier inconnue pour le prêt ${l.id}.`);
+    }
   }
   const loanIds = unique(
     data.loans.map((l) => l.id),
@@ -159,6 +167,10 @@ function checkDataset(data: Dataset): void {
   );
   for (const e of data.loanInstallments) {
     if (!loanIds.has(e.loanId)) fail(`l’échéance ${e.number} renvoie à un prêt inconnu.`);
+    if (!isDate(e.date)) fail(`date invalide pour l’échéance ${e.number} du prêt ${e.loanId}.`);
+    if (![e.principal, e.interest, e.insurance].every(isCents)) {
+      fail(`montant invalide pour l’échéance ${e.number} du prêt ${e.loanId}.`);
+    }
   }
   for (const row of [
     ...data.assets,

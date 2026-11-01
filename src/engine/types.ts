@@ -123,7 +123,14 @@ export interface Loan {
   firstInstallmentDate: IsoDate;
   lastInstallmentDate: IsoDate;
   monthlyInsurance: Cents;
+  /**
+   * Origine de l'échéancier : `bank` (tableau de la banque, il fait foi) ou `estimated`
+   * (calculé par Locapilote à partir des paramètres du prêt). Absent = `bank`.
+   */
+  scheduleSource?: ScheduleSource;
 }
+
+export type ScheduleSource = 'bank' | 'estimated';
 
 /** Échéance de prêt, telle que donnée par l'échéancier de la banque (il fait foi). */
 export interface LoanInstallment {
