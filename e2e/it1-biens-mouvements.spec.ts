@@ -9,6 +9,7 @@ import {
   expect,
   expectNoHorizontalScroll,
   goTo,
+  goToProperty,
   startEmpty,
   startWithTestData,
   test,
@@ -43,7 +44,7 @@ test.describe('US01 · Biens', () => {
     await goTo(page, 'Accueil');
     await expect(page.getByRole('heading', { name: 'Studio des tests' })).toBeVisible();
 
-    await goTo(page, 'Biens');
+    await goToProperty(page, 'Informations');
     await page.getByRole('button', { name: 'Modifier' }).click();
     await page.getByLabel('Nom du bien *').fill('Studio renommé');
     await page.getByRole('button', { name: 'Enregistrer' }).click();
@@ -130,7 +131,7 @@ test.describe('US03 · Mouvements', () => {
 test.describe('US18 · Données', () => {
   test('exporter tout en JSON puis réimporter redonne les mêmes données', async ({ page }) => {
     await startWithTestData(page);
-    await goTo(page, 'Données');
+    await goTo(page, 'Paramètres');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Exporter toutes mes données (JSON)' }).click();
     const download = await downloadPromise;
@@ -145,7 +146,7 @@ test.describe('US18 · Données', () => {
     await goTo(page, 'Mouvements');
     await page.locator('.transaction').first().getByRole('button', { name: 'Supprimer' }).click();
     await expect(page.getByText(/^288 mouvements/)).toBeVisible();
-    await goTo(page, 'Données');
+    await goTo(page, 'Paramètres');
     await page.locator('input[type=file]').setInputFiles(file);
     await expect(
       page.getByText(/Import terminé : 1 bien, 289 mouvements, 240 échéances/),
@@ -154,7 +155,7 @@ test.describe('US18 · Données', () => {
 
   test('refuse un fichier qui n’est pas une sauvegarde, sans rien modifier', async ({ page }) => {
     await startWithTestData(page);
-    await goTo(page, 'Données');
+    await goTo(page, 'Paramètres');
     await page.locator('input[type=file]').setInputFiles({
       name: 'faux.json',
       mimeType: 'application/json',
@@ -167,7 +168,7 @@ test.describe('US18 · Données', () => {
 
   test('exporter les mouvements en CSV pour Excel', async ({ page }, testInfo) => {
     await startWithTestData(page);
-    await goTo(page, 'Données');
+    await goTo(page, 'Paramètres');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Exporter les mouvements (CSV)' }).click();
     const download = await downloadPromise;

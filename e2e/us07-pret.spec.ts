@@ -5,6 +5,7 @@ import {
   expect,
   expectNoHorizontalScroll,
   goTo,
+  goToProperty,
   startEmpty,
   startWithTestData,
   test,
@@ -16,7 +17,7 @@ import type { Page } from '@playwright/test';
 async function createTestLoan(page: Page): Promise<void> {
   await startEmpty(page);
   await createProperty(page, 'Bien avec prêt', { rentalStart: '2024-05-18' });
-  await goTo(page, 'Prêt');
+  await goToProperty(page, 'Prêt');
   await page.getByRole('button', { name: 'Ajouter un prêt' }).click();
   await page.getByLabel('Banque *').fill('Banque test');
   await page.getByLabel('Montant emprunté (€) *').fill('170 190');
@@ -46,7 +47,7 @@ test('créer un prêt rattaché au bien : banque, montant, taux, durée, dates, 
 test('refuse un prêt incomplet', async ({ page }) => {
   await startEmpty(page);
   await createProperty(page, 'Bien');
-  await goTo(page, 'Prêt');
+  await goToProperty(page, 'Prêt');
   await page.getByRole('button', { name: 'Ajouter un prêt' }).click();
   await page.getByRole('button', { name: 'Créer le prêt' }).click();
   const alert = page.getByRole('alert');
@@ -123,7 +124,7 @@ test('le jeu de test charge son prêt et ses 240 échéances ; capital restant d
   page,
 }, testInfo) => {
   await startWithTestData(page);
-  await goTo(page, 'Prêt');
+  await goToProperty(page, 'Prêt');
   await expect(page.getByText('Tableau de la banque', { exact: true })).toBeVisible();
   await expect(page.locator('.loan-years tbody tr')).toHaveCount(21); // 2017 à 2037
   const counts = await page.locator('.loan-years tbody td:nth-child(2)').allTextContents();
@@ -144,10 +145,10 @@ test('le jeu de test charge son prêt et ses 240 échéances ; capital restant d
 
 test('supprimer un prêt et ses échéances', async ({ page }) => {
   await startWithTestData(page);
-  await goTo(page, 'Prêt');
+  await goToProperty(page, 'Prêt');
   await page.getByRole('button', { name: 'Supprimer' }).click();
   await expect(page.getByText('Prêt supprimé.')).toBeVisible();
   await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
-  await goTo(page, 'Données');
+  await goTo(page, 'Paramètres');
   await expect(page.getByText(/1 bien, 289 mouvements, 0 échéances de prêt/).first()).toBeVisible();
 });

@@ -190,6 +190,87 @@ h3 {
   border-bottom-color: var(--accent);
 }
 
+.header-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.settings-link,
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.settings-link[aria-current='page'],
+.menu-button.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.menu-button {
+  display: none;
+}
+
+.phone-menu {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 12px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+}
+
+.phone-menu a {
+  padding: 12px 14px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.phone-menu a[aria-current='page'] {
+  color: var(--accent);
+  background: var(--accent-soft, transparent);
+}
+
+/* Onglets internes de « Mon bien ». */
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tabs a {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface);
+}
+
+.tabs a[aria-current='page'] {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .footer {
   margin-top: 32px;
   font-size: 0.85rem;
@@ -574,30 +655,62 @@ details summary {
   }
 
   /*
-   * Huit onglets ne tiennent pas sur une ligne : le menu défile horizontalement, sur une
-   * seule ligne. L'onglet actif est ramené au centre (App.tsx) ; le dégradé à droite
-   * signale qu'il y en a d'autres.
+   * Téléphone : les 5 entrées les plus utilisées dans une barre fixe en bas de l'écran ;
+   * « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite.
    */
-  .nav {
-    gap: 0;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    mask-image: linear-gradient(to right, #000 85%, transparent);
+  .with-nav {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
-  .nav::-webkit-scrollbar {
-    display: none;
+  .nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    box-shadow: 0 -2px 8px rgb(0 0 0 / 0.06);
   }
 
   .nav a {
-    padding: 10px 10px;
-    font-size: 0.95rem;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 14px 1px 12px;
+    font-size: 0.7rem;
+    letter-spacing: -0.01em;
+    text-align: center;
+    border-bottom: none;
+    border-top: 3px solid transparent;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .nav a:last-child {
-    padding-right: 40px;
+  .nav a[aria-current='page'] {
+    border-top-color: var(--accent);
+  }
+
+  .nav a.nav-secondary,
+  .settings-link {
+    display: none;
+  }
+
+  .menu-button {
+    display: inline-flex;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .tabs a {
+    padding: 8px 11px;
+    font-size: 0.9rem;
   }
 }
 

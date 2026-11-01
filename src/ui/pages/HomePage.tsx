@@ -2,7 +2,7 @@ import { outstandingPrincipal } from '../../engine/core/loan';
 import type { Dataset, Property } from '../../engine/types';
 import { formatDate, formatEuros } from '../format';
 import { REGIME_LABELS, RENTAL_TYPE_LABELS } from '../labels';
-import { routeHref } from '../router';
+import { propertyHref, routeHref } from '../router';
 
 export function HomePage({ data, today }: { data: Dataset; today: string }) {
   if (data.properties.length === 0) {
@@ -10,7 +10,7 @@ export function HomePage({ data, today }: { data: Dataset; today: string }) {
       <section className="card">
         <h2>Aucun bien pour l’instant</h2>
         <p>Commence par créer le logement que tu loues.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer mon bien
         </a>
       </section>

@@ -1,6 +1,6 @@
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
 import type { Dataset, Property } from '../../engine/types';
-import { routeHref } from '../router';
+import { propertyHref } from '../router';
 import { DataAsOfBar } from './DataAsOfBar';
 import { TaxSection } from './TaxSection';
 
@@ -20,7 +20,7 @@ export function TaxPage({ data, property, today }: Props) {
       <section className="card">
         <h2>Fiscalité</h2>
         <p>Crée d’abord un bien.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
       </section>
@@ -35,8 +35,8 @@ export function TaxPage({ data, property, today }: Props) {
       <DataAsOfBar propertyId={property.id} date={asOf.date} isDefault={asOf.isDefault} />
       {property.taxRegime === 'lmnp-reel' && !property.rentalStartDate ? (
         <p className="card">
-          Indique la date de mise en location du bien (page <a href={routeHref('biens')}>Biens</a>)
-          pour voir son résultat fiscal.
+          Indique la date de mise en location du bien (
+          <a href={propertyHref('informations')}>Mon bien</a>) pour voir son résultat fiscal.
         </p>
       ) : (
         <TaxSection data={data} property={property} dataAsOf={asOf.date} />

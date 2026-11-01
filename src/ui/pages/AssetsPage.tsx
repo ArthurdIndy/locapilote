@@ -17,7 +17,7 @@ import {
   parseEurosInput,
   parseYearsInput,
 } from '../format';
-import { routeHref } from '../router';
+import { propertyHref, routeHref } from '../router';
 import { TaxDisclaimer } from './TaxDisclaimer';
 
 interface Props {
@@ -54,7 +54,7 @@ export function AssetsPage({ data, property, today }: Props) {
       <section className="card">
         <h2>Immobilisations</h2>
         <p>Crée d’abord un bien : chaque immobilisation y est rattachée.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
       </section>
@@ -89,7 +89,7 @@ export function AssetsPage({ data, property, today }: Props) {
   return (
     <div className="stack">
       <div className="toolbar">
-        <h2>Immobilisations · {property.name}</h2>
+        <h3>Immobilisations</h3>
         {!editing && (
           <button
             type="button"
@@ -292,7 +292,7 @@ export function AssetsPage({ data, property, today }: Props) {
           <p className="muted small">
             Le total de l’année est arrondi au centime ; chaque ligne est affichée arrondie. Les
             dotations alimentent le résultat fiscal de la page{' '}
-            <a href={routeHref('synthese')}>Synthèse</a>.
+            <a href={routeHref('fiscalite')}>Fiscalité</a>.
           </p>
         </>
       )}

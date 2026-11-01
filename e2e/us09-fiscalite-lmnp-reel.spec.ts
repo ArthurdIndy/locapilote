@@ -8,6 +8,7 @@ import {
   expected,
   expectNoHorizontalScroll,
   goTo,
+  goToProperty,
   isPhone,
   startWithTestData,
   test,
@@ -123,13 +124,13 @@ test('chaque écran fiscal porte l’avertissement et renvoie vers impots.gouv.f
   await expect(taxRegion(page)).toContainText('pas un conseil fiscal');
   await expect(taxRegion(page)).toContainText('expert-comptable');
   await expect(taxRegion(page).getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
-  await goTo(page, 'Immobilisations');
+  await goToProperty(page, 'Immobilisations');
   await expect(page.getByText(/pas un conseil fiscal/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
 });
 
 test('un autre régime affiche « pas encore disponible »', async ({ page }, testInfo) => {
-  await goTo(page, 'Biens');
+  await goToProperty(page, 'Informations');
   await page.getByRole('button', { name: 'Modifier' }).click();
   await page.getByLabel('Régime fiscal').selectOption({ label: 'LMNP micro-BIC' });
   await page.getByRole('button', { name: 'Enregistrer' }).click();
@@ -162,10 +163,9 @@ test('les mouvements « À valider » sont signalés, avec un lien vers eux', as
 });
 
 test('immobilisations : liste et dotation de chaque année', async ({ page }, testInfo) => {
-  await goTo(page, 'Immobilisations');
-  await expect(
-    page.getByRole('heading', { name: 'Immobilisations · Appartement exemple' }),
-  ).toBeVisible();
+  await goToProperty(page, 'Immobilisations');
+  await expect(page.getByRole('heading', { name: 'Mon bien · Appartement exemple' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Immobilisations', exact: true })).toBeVisible();
   const phone = isPhone(testInfo);
   const dotation = line("Dotations aux amortissements de l'année");
   if (phone) {
@@ -202,7 +202,7 @@ test('immobilisations : ajout, modification et suppression, répercutés sur le 
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
-  await goTo(page, 'Immobilisations');
+  await goToProperty(page, 'Immobilisations');
   await page.getByRole('button', { name: 'Nouvelle immobilisation' }).click();
   await page.getByLabel('Composant *').fill('Canapé');
   await page.getByLabel('Date de mise en service *').fill('2026-01-01');
@@ -218,7 +218,7 @@ test('immobilisations : ajout, modification et suppression, répercutés sur le 
     eur(9588.39),
   );
 
-  await goTo(page, 'Immobilisations');
+  await goToProperty(page, 'Immobilisations');
   await page.getByRole('button', { name: 'Modifier Canapé' }).click();
   await expect(page.getByLabel('Valeur (€) *')).toHaveValue('1000');
   await page.getByLabel('Durée (années) *').fill('0');
@@ -230,14 +230,14 @@ test('immobilisations : ajout, modification et suppression, répercutés sur le 
     eur(9388.39),
   );
 
-  await goTo(page, 'Immobilisations');
+  await goToProperty(page, 'Immobilisations');
   await page.getByRole('button', { name: 'Supprimer Canapé' }).click();
   await expect(page.getByText('Immobilisation « Canapé » supprimée.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Modifier Canapé' })).toHaveCount(0);
 });
 
 test('immobilisation : la saisie est vérifiée', async ({ page }) => {
-  await goTo(page, 'Immobilisations');
+  await goToProperty(page, 'Immobilisations');
   await page.getByRole('button', { name: 'Nouvelle immobilisation' }).click();
   await page.getByLabel('Durée (années) *').fill('cinq');
   await page.getByRole('button', { name: 'Ajouter l’immobilisation' }).click();
@@ -424,72 +424,6 @@ test('« Données à jour au » : une ligne en haut de page, même date en Synth
   await expect(page.getByLabel('Données à jour au')).toHaveValue('2026-10-25');
 });
 
-/**
- * L'onglet actif est entièrement visible dans le menu et dans l'écran. On attend d'abord la
- * fin du défilement du menu (position stable), puis on compare les bords à ±1 px près : les
- * positions au sous-pixel près (ratio 0,9996) ne doivent pas faire échouer le test.
- */
-async function expectActiveTabFullyVisible(nav: Locator): Promise<void> {
-  let previous = -1;
-  await expect
-    .poll(
-      async () => {
-        const current = await nav.evaluate((el) => el.scrollLeft);
-        const stable = current === previous;
-        previous = current;
-        return stable;
-      },
-      { intervals: [100, 100, 200, 200, 500], timeout: 5000 },
-    )
-    .toBe(true);
-  const edges = await nav.evaluate((el) => {
-    const tab = el.querySelector('[aria-current="page"]')!.getBoundingClientRect();
-    const menu = el.getBoundingClientRect();
-    return {
-      tabLeft: tab.left,
-      tabRight: tab.right,
-      left: Math.max(menu.left, 0),
-      right: Math.min(menu.right, document.documentElement.clientWidth),
-    };
-  });
-  const TOLERANCE = 1; // px
-  expect(edges.tabLeft).toBeGreaterThanOrEqual(edges.left - TOLERANCE);
-  expect(edges.tabRight).toBeLessThanOrEqual(edges.right + TOLERANCE);
-}
-
-test('menu : 8 onglets, utilisables sur téléphone (une ligne qui défile)', async ({
-  page,
-}, testInfo) => {
-  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
-  await expect(nav.getByRole('link')).toHaveText([
-    'Accueil',
-    'Biens',
-    'Mouvements',
-    'Prêt',
-    'Immobilisations',
-    'Synthèse',
-    'Fiscalité',
-    'Données',
-  ]);
-  // Une seule ligne d'onglets, sur ordinateur comme sur téléphone.
-  const box = await nav.boundingBox();
-  expect(box!.height).toBeLessThan(60);
-  for (const [label, heading] of [
-    ['Données', /^Données/],
-    ['Accueil', /Appartement exemple/],
-    ['Fiscalité', /^Fiscalité/],
-  ] as const) {
-    await goTo(page, label);
-    await expect(page.getByRole('heading', { level: 2, name: heading }).first()).toBeVisible();
-    // L'onglet actif est visible à l'écran, sans défilement manuel.
-    const active = nav.locator('[aria-current="page"]');
-    await expect(active).toHaveText(label);
-    await expectActiveTabFullyVisible(nav);
-  }
-  await expectNoHorizontalScroll(page);
-  if (isPhone(testInfo)) await capture(page, testInfo, 'us09-menu');
-});
-
 /*
  * Saisie des dates au clavier, chiffre par chiffre (comme un utilisateur), et non avec `fill`
  * qui remplit le champ d'un coup. Le jour et le mois sont égaux (11/11) : la saisie est la
@@ -555,7 +489,7 @@ test.describe('saisie des dates au clavier', () => {
     await expect(txDate).toHaveValue('2025-11-11');
 
     // Prêt : nouvelle échéance, et capital restant dû à une date.
-    await goTo(page, 'Prêt');
+    await goToProperty(page, 'Prêt');
     const atDate = page.getByLabel('Capital restant dû au');
     await typeDate(page, atDate, '11112024');
     await expect(atDate).toHaveValue('2024-11-11');
@@ -566,14 +500,14 @@ test.describe('saisie des dates au clavier', () => {
     await expect(firstDate).toHaveValue('2025-11-11');
 
     // Immobilisation.
-    await goTo(page, 'Immobilisations');
+    await goToProperty(page, 'Immobilisations');
     await page.getByRole('button', { name: 'Nouvelle immobilisation' }).click();
     const inService = page.getByLabel('Date de mise en service *');
     await typeDate(page, inService, '11112025');
     await expect(inService).toHaveValue('2025-11-11');
 
     // Bien.
-    await goTo(page, 'Biens');
+    await goToProperty(page, 'Informations');
     await page.getByRole('button', { name: 'Ajouter un bien' }).click();
     const acquisition = page.getByLabel('Date d’acquisition *');
     await typeDate(page, acquisition, '11112025');

@@ -8,7 +8,7 @@ import {
 } from '../../engine/core/loan';
 import type { Dataset, Loan, Property } from '../../engine/types';
 import { formatDate, formatEuros, formatPercent } from '../format';
-import { routeHref } from '../router';
+import { propertyHref } from '../router';
 import { LoanForm } from './LoanForm';
 import { ScheduleImport } from './ScheduleImport';
 
@@ -29,7 +29,7 @@ export function LoansPage({ data, property, today }: Props) {
       <section className="card">
         <h2>Prêt</h2>
         <p>Crée d’abord un bien : chaque prêt y est rattaché.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
       </section>
@@ -57,7 +57,7 @@ export function LoansPage({ data, property, today }: Props) {
   return (
     <div className="stack">
       <div className="toolbar">
-        <h2>Prêt · {property.name}</h2>
+        <h3>Prêt</h3>
         {!editing && (
           <button
             type="button"

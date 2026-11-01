@@ -3,7 +3,7 @@ import { propertySynthesis, type YearSynthesis } from '../../engine/core/synthes
 import { lmnpReelSummary } from '../../engine/tax/lmnp-reel';
 import type { Dataset, Property } from '../../engine/types';
 import { formatDate, formatDecimal, formatEuros, formatPercent } from '../format';
-import { routeHref } from '../router';
+import { propertyHref, routeHref } from '../router';
 import { DataAsOfBar } from './DataAsOfBar';
 
 interface Props {
@@ -125,7 +125,7 @@ export function SynthesisPage({ data, property, today }: Props) {
       <section className="card">
         <h2>Synthèse</h2>
         <p>Crée d’abord un bien.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
       </section>
@@ -150,8 +150,8 @@ export function SynthesisPage({ data, property, today }: Props) {
 
       {!property.rentalStartDate ? (
         <p className="card">
-          Indique la date de mise en location du bien (page <a href={routeHref('biens')}>Biens</a>)
-          pour voir sa synthèse.
+          Indique la date de mise en location du bien (
+          <a href={propertyHref('informations')}>Mon bien</a>) pour voir sa synthèse.
         </p>
       ) : years.length === 0 ? (
         <p className="card">

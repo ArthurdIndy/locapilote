@@ -1,19 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
 import { todayIso } from './format';
-import { AssetsPage } from './pages/AssetsPage';
-import { DataPage } from './pages/DataPage';
 import { HomePage } from './pages/HomePage';
-import { LoansPage } from './pages/LoansPage';
+import { MyPropertyPage } from './pages/MyPropertyPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { SimulationsPage } from './pages/SimulationsPage';
 import { SynthesisPage } from './pages/SynthesisPage';
 import { TaxPage } from './pages/TaxPage';
-import { PropertiesPage } from './pages/PropertiesPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
-import { ROUTES, routeHref, useLocation, type Location, type RouteId } from './router';
+import { MAIN_NAV, routeHref, useLocation, type Location, type RouteId } from './router';
 
 type LoadState =
   { status: 'ready'; initialized: boolean; data: Dataset } | { status: 'error'; message: string };
@@ -90,7 +89,6 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
       }
     >
       {route === 'accueil' && <HomePage data={data} today={today} />}
-      {route === 'biens' && <PropertiesPage data={data} onCreated={setCurrentId} />}
       {route === 'mouvements' && (
         <TransactionsPage
           key={location.key}
@@ -100,11 +98,19 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
           params={params}
         />
       )}
-      {route === 'pret' && <LoansPage data={data} property={current} today={today} />}
-      {route === 'immobilisations' && <AssetsPage data={data} property={current} today={today} />}
       {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
       {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
-      {route === 'donnees' && <DataPage data={data} today={today} />}
+      {route === 'simulations' && <SimulationsPage />}
+      {route === 'mon-bien' && (
+        <MyPropertyPage
+          data={data}
+          property={current}
+          today={today}
+          params={params}
+          onCreated={setCurrentId}
+        />
+      )}
+      {route === 'parametres' && <SettingsPage data={data} today={today} />}
     </Layout>
   );
 }
@@ -115,35 +121,85 @@ interface LayoutProps {
   children: ReactNode;
 }
 
+/** Entrées du menu ☰ (téléphone) : celles qui ne sont pas dans la barre du bas, puis ⚙. */
+const PHONE_MENU: readonly { id: RouteId; label: string }[] = [
+  ...MAIN_NAV.filter((r) => !r.bottomBar),
+  { id: 'parametres', label: '⚙ Paramètres' },
+];
+
 function Layout({ route, propertySelector, children }: LayoutProps) {
-  const nav = useRef<HTMLElement>(null);
-  // Sur téléphone, le menu défile horizontalement : l'onglet actif est ramené au centre.
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Le menu ☰ se referme avec Échap.
   useEffect(() => {
-    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!nav.current || !active) return;
-    nav.current.scrollLeft =
-      active.offsetLeft -
-      nav.current.offsetLeft -
-      (nav.current.clientWidth - active.offsetWidth) / 2;
-  }, [route]);
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
+  const inPhoneMenu = PHONE_MENU.some((r) => r.id === route);
 
   return (
-    <div className="page">
+    <div className={route ? 'page with-nav' : 'page'}>
       <header className="header">
         <div className="header-top">
           <div>
             <h1>Locapilote</h1>
             <p className="tagline">Piloter un logement en location</p>
           </div>
-          {propertySelector}
+          <div className="header-tools">
+            {propertySelector}
+            {route && (
+              <>
+                <a
+                  className="settings-link"
+                  href={routeHref('parametres')}
+                  aria-label="Paramètres"
+                  title="Paramètres : données (export, import, jeu de test)"
+                  aria-current={route === 'parametres' ? 'page' : undefined}
+                >
+                  ⚙
+                </a>
+                <button
+                  type="button"
+                  className={inPhoneMenu ? 'menu-button active' : 'menu-button'}
+                  aria-label="Menu"
+                  aria-expanded={menuOpen}
+                  aria-controls="menu-telephone"
+                  onClick={() => setMenuOpen((open) => !open)}
+                >
+                  ☰
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        {route && (
-          <nav className="nav" aria-label="Navigation principale" ref={nav}>
-            {ROUTES.map((r) => (
+        {route && menuOpen && (
+          <nav id="menu-telephone" className="phone-menu" aria-label="Menu">
+            {PHONE_MENU.map((r) => (
               <a
                 key={r.id}
                 href={routeHref(r.id)}
                 aria-current={r.id === route ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                {r.label}
+              </a>
+            ))}
+          </nav>
+        )}
+        {route && (
+          <nav className="nav" aria-label="Navigation principale">
+            {MAIN_NAV.map((r) => (
+              <a
+                key={r.id}
+                className={r.bottomBar ? undefined : 'nav-secondary'}
+                href={routeHref(r.id)}
+                aria-current={r.id === route ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
               >
                 {r.label}
               </a>
@@ -154,7 +210,7 @@ function Layout({ route, propertySelector, children }: LayoutProps) {
       <main>{children}</main>
       <footer className="footer">
         Tes données restent dans ce navigateur, sur cet appareil. Pense à les exporter régulièrement
-        depuis la page <a href={routeHref('donnees')}>Données</a>.
+        depuis <a href={routeHref('parametres')}>⚙ Paramètres</a>.
       </footer>
     </div>
   );

@@ -3,7 +3,7 @@ import { db } from '../../db/database';
 import type { Category, Dataset, Transaction } from '../../engine/types';
 import { formatDate, formatEuros } from '../format';
 import { sortCategories } from '../labels';
-import { routeHref } from '../router';
+import { propertyHref } from '../router';
 import { TransactionForm } from './TransactionForm';
 
 type Editing = { mode: 'new' } | { mode: 'edit'; transaction: Transaction } | null;
@@ -87,7 +87,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
       <section className="card">
         <h2>Mouvements</h2>
         <p>Crée d’abord un bien : chaque mouvement y est rattaché.</p>
-        <a className="button primary" href={routeHref('biens')}>
+        <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
       </section>

@@ -59,11 +59,49 @@ export async function createProperty(
   await expect(page.getByText(`Bien « ${name} » créé.`)).toBeVisible();
 }
 
-/** Va sur une page par le menu. */
+/**
+ * Va sur une page par le menu : la barre de navigation (en bas de l'écran sur téléphone), ou,
+ * pour les entrées qui n'y sont pas sur téléphone (« Mon bien », « ⚙ Paramètres »), le menu ☰.
+ */
 export async function goTo(page: Page, label: string): Promise<void> {
-  await page
+  if (label === 'Paramètres') return openSettings(page);
+  const link = page
     .getByRole('navigation', { name: 'Navigation principale' })
+    .getByRole('link', { name: label, exact: true });
+  if (await link.isVisible()) return link.click();
+  await openPhoneMenu(page);
+  await page
+    .getByRole('navigation', { name: 'Menu' })
     .getByRole('link', { name: label, exact: true })
+    .click();
+}
+
+/** Ouvre le menu ☰ (téléphone). */
+export async function openPhoneMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await expect(page.getByRole('navigation', { name: 'Menu' })).toBeVisible();
+}
+
+/** Ouvre ⚙ Paramètres (données) : l'icône en haut à droite, ou le menu ☰ sur téléphone. */
+export async function openSettings(page: Page): Promise<void> {
+  const gear = page.getByRole('link', { name: 'Paramètres', exact: true });
+  if (await gear.isVisible()) return gear.click();
+  await openPhoneMenu(page);
+  await page
+    .getByRole('navigation', { name: 'Menu' })
+    .getByRole('link', { name: '⚙ Paramètres' })
+    .click();
+}
+
+/** Ouvre une section de « Mon bien » : Informations, Prêt ou Immobilisations. */
+export async function goToProperty(
+  page: Page,
+  section: 'Informations' | 'Prêt' | 'Immobilisations',
+): Promise<void> {
+  await goTo(page, 'Mon bien');
+  await page
+    .getByRole('navigation', { name: 'Sections du bien' })
+    .getByRole('link', { name: section, exact: true })
     .click();
 }
 
@@ -79,10 +117,24 @@ export async function expectNoHorizontalScroll(page: Page): Promise<void> {
  * Capture d'écran pour la recette : jointe au rapport Playwright et copiée dans
  * `e2e-captures/<projet>/<nom>.png`.
  */
-export async function capture(page: Page, testInfo: TestInfo, name: string): Promise<void> {
+export async function capture(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+  options: { fullPage?: boolean } = {},
+): Promise<void> {
+  const fullPage = options.fullPage ?? true;
   const path = join('e2e-captures', testInfo.project.name, `${name}.png`);
   mkdirSync(dirname(path), { recursive: true });
-  const body = await page.screenshot({ path, fullPage: true });
+  // Page entière : la barre fixe du bas (téléphone) est placée en bas de la page, comme en fin
+  // de défilement, au lieu d'apparaître au milieu de la capture.
+  const style = fullPage
+    ? await page.addStyleTag({
+        content: 'body { position: relative; } .nav { position: absolute !important; }',
+      })
+    : null;
+  const body = await page.screenshot({ path, fullPage });
+  await style?.evaluate((el) => (el as Element).remove());
   await testInfo.attach(name, { body, contentType: 'image/png' });
 }
 
