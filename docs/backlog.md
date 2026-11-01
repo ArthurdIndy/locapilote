@@ -8,7 +8,29 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
 | Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 |
+| Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 |
+
+## Synthèse : détail des recettes et des dépenses
+
+« En tant que propriétaire, je veux voir de quoi sont faites mes recettes et mes dépenses de l'année, pour repérer ce qui pèse sur le cash-flow (petits travaux, ballon d'eau chaude…) et ce que les charges de copropriété me coûtent vraiment. »
+
+À faire juste après l'itération 3 (même écran), niveau de réflexion moyen.
+
+Dans le bloc Trésorerie de la synthèse :
+
+- **Recettes encaissées ⊕** : un « + » ouvre le détail par groupe (loyers hors charges, charges refacturées au locataire, autres recettes) ; un « − » le referme.
+- **Dépenses payées (hors prêt) ⊕** : même principe, détail par groupe (copropriété, frais de gestion, impôts et taxes, assurances, entretien et petit équipement, investissements à amortir, dépenses à qualifier).
+- **Charges de copropriété restant à ma charge** : charges de copropriété payées − charges refacturées au locataire, par année.
+
+Critères d'acceptation :
+
+- les détails sont fermés par défaut ; l'état ouvert ou fermé est mémorisé dans le navigateur ;
+- la somme des lignes de détail est égale au total de la ligne (contrôlé par un test) ;
+- un clic sur une ligne de détail ouvre la page Mouvements filtrée sur ce groupe et cette année (pour retrouver le ballon d'eau chaude, par exemple) ;
+- les groupes viennent des catégories paramétrées : un nouveau groupe apparaît sans modification du code ;
+- ce détail montre ce qui a été payé ; il ne remplace pas le récapitulatif fiscal (ce qui est déductible) ;
+- lisible sur téléphone, dans la carte de chaque année.
 
 ## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
 
