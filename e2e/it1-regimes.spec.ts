@@ -64,6 +64,7 @@ test('l’import refuse une sauvegarde avec un régime incompatible', async ({ p
       loanInstallments: [],
       assets: [],
       accountantCarryforwards: [],
+      accountantFilings: [],
       preRentalExpenses: [],
       assumptions: [],
     },

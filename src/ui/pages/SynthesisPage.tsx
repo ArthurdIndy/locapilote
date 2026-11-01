@@ -6,6 +6,7 @@ import { isValidIsoDate } from '../../engine/dates';
 import type { Dataset, Property } from '../../engine/types';
 import { formatDate, formatDecimal, formatEuros, formatPercent } from '../format';
 import { routeHref } from '../router';
+import { TaxSection } from './TaxSection';
 
 interface Props {
   data: Dataset;
@@ -162,7 +163,7 @@ export function SynthesisPage({ data, property, today }: Props) {
 
           {/* Grand écran : un tableau, une colonne par année (comme l'Excel). */}
           <div className="synthesis-wide">
-            <table className="synthesis-table">
+            <table className="synthesis-table" aria-label="Synthèse annuelle">
               <thead>
                 <tr>
                   <th scope="col">
@@ -231,17 +232,7 @@ export function SynthesisPage({ data, property, today }: Props) {
         </>
       )}
 
-      <section className="card tax-placeholder" aria-label="Résultat fiscal">
-        <h3>Résultat fiscal</h3>
-        <p>
-          Le résultat fiscal (recettes imposables, charges déductibles, amortissements et report)
-          arrive à la prochaine itération.
-        </p>
-        <p className="muted small">
-          Locapilote donne des estimations, pas un conseil fiscal : fais-les confirmer par un
-          expert-comptable ou sur <a href="https://www.impots.gouv.fr">impots.gouv.fr</a>.
-        </p>
-      </section>
+      <TaxSection data={data} property={property} dataAsOf={asOf.date} />
     </div>
   );
 }
