@@ -4,6 +4,8 @@ export const ROUTES = [
   { id: 'accueil', label: 'Accueil' },
   { id: 'biens', label: 'Biens' },
   { id: 'mouvements', label: 'Mouvements' },
+  { id: 'pret', label: 'Prêt' },
+  { id: 'synthese', label: 'Synthèse' },
   { id: 'donnees', label: 'Données' },
 ] as const;
 
