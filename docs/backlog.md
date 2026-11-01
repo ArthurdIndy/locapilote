@@ -22,6 +22,8 @@ Dans le bloc Trésorerie de la synthèse :
 - **Recettes encaissées ⊕** : un « + » ouvre le détail par groupe (loyers hors charges, charges refacturées au locataire, autres recettes) ; un « − » le referme.
 - **Dépenses payées (hors prêt) ⊕** : même principe, détail par groupe (copropriété, frais de gestion, impôts et taxes, assurances, entretien et petit équipement, investissements à amortir, dépenses à qualifier).
 - **Échéances de prêt (période louée) ⊕** : les lignes « dont capital », « dont intérêts », « dont assurance », aujourd'hui toujours visibles, passent dans un détail replié, comme les deux lignes précédentes.
+- **Rentabilité** : le rendement brut et le rendement net restent visibles ; les lignes « Loyers hors charges » et « Loyers annualisés » passent dans un détail replié ⊕.
+- **Restent toujours visibles** : cash-flow, mois de location, cash-flow mensuel moyen, capital remboursé, enrichissement, rendements, patrimoine.
 - **Charges de copropriété restant à ma charge** : charges de copropriété payées − charges refacturées au locataire, par année.
 
 Critères d'acceptation :
