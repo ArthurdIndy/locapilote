@@ -57,6 +57,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US17 | Partage | Donner l'outil à un proche sans qu'il voie mes données | Il démarre vide, avec ses propres paramètres | Must |
 | US18 | Partage | Exporter toutes mes données | Rien n'est perdu si j'arrête l'outil | Must |
 | US19 | Locataire | Quittances, révision IRL, régularisation des charges | À préciser | Won't (pour l'instant) |
+| US20 | Mouvements | Ajouter des mouvements depuis un document (relevé d'agence, export bancaire, facture) ou une simple phrase, avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; aperçu avant ajout, doublons écartés | Should (après le MVP) |
 
 ## MVP
 
