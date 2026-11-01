@@ -58,7 +58,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US18 | Partage | Exporter toutes mes données | Rien n'est perdu si j'arrête l'outil | Must |
 | US19 | Locataire | Quittances, révision IRL, régularisation des charges | À préciser | Won't (pour l'instant) |
 | US20 | Assistant | Mettre à jour toutes mes données en langage naturel, à l'oral ou en déposant un document (relevé d'agence, export bancaire, avis d'impôt, nouvel échéancier de prêt…), avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; toujours un récapitulatif à confirmer avant enregistrement, doublons écartés ; la saisie manuelle reste disponible | Should (après le MVP) |
-| US21 | Suivi | Voir sur l'accueil un tableau de bord de l'année en cours : cash-flow mensuel, enrichissement, capital restant dû, rendement net, résultat fiscal estimé, somme nette si je vends aujourd'hui | Chaque indicateur comparé à l'année précédente et cliquable vers son détail ; la somme nette indique la valeur estimée et sa date, et cette valeur se modifie depuis l'accueil | Must (itération 5) |
+| US21 | Suivi | Voir sur l'accueil où j'en suis aujourd'hui et ce que j'ai à faire : cash-flow mensuel moyen, enrichissement et somme nette si je vends aujourd'hui, puis les points à traiter, et un accès direct à la synthèse | Trois indicateurs seulement, comparés à l'année précédente ; la somme nette indique la valeur estimée et sa date, et cette valeur se modifie depuis l'accueil ; le détail reste dans la synthèse | Must (itération 5) |
 
 ## MVP
 

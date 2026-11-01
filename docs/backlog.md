@@ -8,7 +8,32 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
 | Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 |
+| Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 |
+
+## Synthèse : détail des recettes et des dépenses
+
+« En tant que propriétaire, je veux voir de quoi sont faites mes recettes et mes dépenses de l'année, pour repérer ce qui pèse sur le cash-flow (petits travaux, ballon d'eau chaude…) et ce que les charges de copropriété me coûtent vraiment. »
+
+À faire juste après l'itération 3 (même écran), niveau de réflexion moyen.
+
+Dans le bloc Trésorerie de la synthèse :
+
+- **Recettes encaissées ⊕** : un « + » ouvre le détail par groupe (loyers hors charges, charges refacturées au locataire, autres recettes) ; un « − » le referme.
+- **Dépenses payées (hors prêt) ⊕** : même principe, détail par groupe (copropriété, frais de gestion, impôts et taxes, assurances, entretien et petit équipement, investissements à amortir, dépenses à qualifier).
+- **Échéances de prêt (période louée) ⊕** : les lignes « dont capital », « dont intérêts », « dont assurance », aujourd'hui toujours visibles, passent dans un détail replié, comme les deux lignes précédentes.
+- **Rentabilité** : le rendement brut et le rendement net restent visibles ; les lignes « Loyers hors charges » et « Loyers annualisés » passent dans un détail replié ⊕.
+- **Restent toujours visibles** : cash-flow, mois de location, cash-flow mensuel moyen, capital remboursé, enrichissement, rendements, patrimoine.
+- **Charges de copropriété restant à ma charge** : charges de copropriété payées − charges refacturées au locataire, par année.
+
+Critères d'acceptation :
+
+- les détails sont fermés par défaut ; l'état ouvert ou fermé est mémorisé dans le navigateur ;
+- la somme des lignes de détail est égale au total de la ligne (contrôlé par un test) ;
+- un clic sur une ligne de détail ouvre la page Mouvements filtrée sur ce groupe et cette année (pour retrouver le ballon d'eau chaude, par exemple) ;
+- les groupes viennent des catégories paramétrées : un nouveau groupe apparaît sans modification du code ;
+- ce détail montre ce qui a été payé ; il ne remplace pas le récapitulatif fiscal (ce qui est déductible) ;
+- lisible sur téléphone, dans la carte de chaque année.
 
 ## US20 : tout mettre à jour en langage naturel, avec l'aide de Claude
 
@@ -40,24 +65,30 @@ Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute
 
 ## US21 : tableau de bord d'accueil (itération 5)
 
-« En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où en est mon bien cette année. »
+« En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où j'en suis aujourd'hui et ce que j'ai à faire. »
 
-Indicateurs de l'année en cours, pour le bien courant :
+**Rôle de chaque écran** (décision du 01/11/2026) : l'accueil répond à « où j'en suis aujourd'hui, et que dois-je faire ? » ; la synthèse répond à « comment s'est passée chaque année ? », avec tout le détail. L'accueil n'affiche que ce que la synthèse ne montre pas, ou ce qui mérite d'être vu d'un coup d'œil. On ajustera à l'usage.
 
-| Indicateur | Source |
-| --- | --- |
-| Cash-flow mensuel moyen | Synthèse (US08) |
-| Enrichissement de l'année | Synthèse (US08) |
-| Capital restant dû à la date du jour | Prêt (US07) |
-| Rendement net | Synthèse (US08) |
-| Résultat fiscal estimé | Fiscalité (US09) |
-| Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
+Contenu, pour le bien courant :
+
+| Bloc | Contenu | Source |
+| --- | --- | --- |
+| Trois indicateurs de l'année en cours | Cash-flow mensuel moyen | Synthèse (US08) |
+| | Enrichissement de l'année | Synthèse (US08) |
+| | Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
+| À faire | Mouvements « À valider » à qualifier | Mouvements |
+| | Date du dernier mouvement saisi (« données à jour au … ») | Mouvements |
+| | Rappel quand la dernière sauvegarde date de plus d'un mois | Export (US18) |
+| Accès | Bouton « Voir la synthèse » | — |
+
+Restent dans la synthèse, pas sur l'accueil : rendement net, résultat fiscal estimé, capital restant dû (compris dans la somme nette).
 
 Critères d'acceptation :
 
-- chaque indicateur affiche la comparaison avec l'année précédente (« −421 €/mois, contre −257 € en 2025 ») et mène à son détail en un clic ;
+- chaque indicateur affiche la comparaison avec l'année précédente (« −421 €/mois, contre −257 € en 2025 ») ;
 - la somme nette précise sur quelle valeur elle repose (« sur la base d'une valeur de 305 000 €, estimée le … ») ;
-- cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien (mini-simulation) ;
+- cette valeur estimée se modifie directement depuis l'accueil, ce qui met à jour la somme nette et la fiche du bien ;
 - la fiche du bien enregistre la date de l'estimation ; au-delà de 6 mois, l'accueil propose de la mettre à jour ;
+- le bloc « À faire » est vide (« Rien à traiter ») quand tout est à jour ;
+- le bouton mène à la synthèse du bien courant ;
 - lisible sur téléphone (indicateurs empilés).
-
