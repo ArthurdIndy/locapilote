@@ -30,12 +30,12 @@ Le cadrage complet (personas, user stories, MVP, roadmap) est dans `docs/concept
 - `src/db/` : schéma et accès aux données. `src/ui/` : écrans.
 - Montants manipulés en **centimes entiers** dans le moteur ; conversion en euros seulement à l'affichage.
 - Dates en chaînes ISO `AAAA-MM-JJ` ; jamais de calcul de date dépendant du fuseau horaire.
-- Tests avec Vitest. Mise en ligne sur Cloudflare Pages.
+- Tests avec Vitest. Mise en ligne sur Cloudflare Workers (site statique, `wrangler.jsonc`) : `main` est déployé automatiquement par Workers Builds, avec un aperçu par branche.
 - Code et noms techniques en anglais ; interface, documentation et commits en français. Glossaire : bien = property, mouvement = transaction, catégorie = category, échéance de prêt = loan installment, immobilisation = asset, amortissement = depreciation, report = carryforward, régime = tax regime.
 
 ## Données de test
 
-- `data/seed.json` : un bien réel anonymisé (appartement meublé en LMNP réel, acheté en 2017, loué depuis 2024), avec mouvements, prêt, échéancier, immobilisations et hypothèses.
+- `data/seed.json` : un jeu de test anonymisé (appartement meublé en LMNP réel, acheté en 2017, loué depuis 2024), avec mouvements, prêt, échéancier, immobilisations et hypothèses.
 - `data/expected.json` : les résultats attendus (synthèse annuelle, revente, scénarios de vente, contrôles), calculés par l'Excel de référence `data/jeu-de-test.xlsx`.
 - Tout calcul du moteur doit retrouver `expected.json` à 0,01 € près (0,0001 pour les taux). Si un écart apparaît, signale-le avant de modifier un test.
 - **Ne jamais committer de données personnelles réelles** (noms, adresses, relevés, montants réels). Le dépôt est public.
