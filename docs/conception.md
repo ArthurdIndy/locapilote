@@ -4,7 +4,7 @@ Octobre 2026 · Arthur d'Indy (product owner), avec Claude
 
 ## Point de départ
 
-Un appartement meublé loué en LMNP réel, suivi pendant des années dans un fichier Excel. Après un diagnostic (doublons, formules cassées, catégories incohérentes, fiscalité absente), l'Excel a été restructuré : journal unique, référentiels, échéancier du prêt, amortissements, synthèse fiscale, contrôles et simulateur de vente. Locapilote en fait un produit réutilisable. La version anonymisée de cet Excel sert de référence de calcul (`data/jeu-de-test.xlsx`).
+Un appartement meublé loué en LMNP réel, suivi pendant des années dans un fichier Excel. Après un diagnostic (doublons, formules cassées, catégories incohérentes, fiscalité absente), l'Excel a été restructuré : journal unique, référentiels, échéancier du prêt, amortissements, synthèse fiscale, contrôles et simulateur de vente. Locapilote en fait un produit réutilisable. Un jeu de test anonymisé, construit avec cet Excel, sert de référence de calcul (`data/jeu-de-test.xlsx`).
 
 ## Vision et objectifs
 
