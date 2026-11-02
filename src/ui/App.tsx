@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
@@ -115,25 +115,14 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-/** Entrées du menu ☰ (téléphone) : celles qui ne sont pas dans la barre du bas, puis ⚙. */
+/** Entrées du menu ☰ (téléphone) : celles qui ne sont pas en onglets, puis ⚙. */
 const PHONE_MENU: readonly { id: RouteId; label: string }[] = [
-  ...MAIN_NAV.filter((r) => !r.bottomBar),
+  ...MAIN_NAV.filter((r) => !r.phoneTab),
   { id: 'parametres', label: '⚙ Paramètres' },
 ];
 
 function Layout({ route, children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const nav = useRef<HTMLElement>(null);
-
-  // Sur téléphone, la ligne d'onglets défile : l'onglet actif est ramené au centre.
-  useEffect(() => {
-    const active = nav.current?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!nav.current || !active || active.offsetParent === null) return;
-    nav.current.scrollLeft =
-      active.offsetLeft -
-      nav.current.offsetLeft -
-      (nav.current.clientWidth - active.offsetWidth) / 2;
-  }, [route]);
 
   // Le menu ☰ se referme avec Échap.
   useEffect(() => {
@@ -196,11 +185,11 @@ function Layout({ route, children }: LayoutProps) {
           </nav>
         )}
         {route && (
-          <nav className="nav" aria-label="Navigation principale" ref={nav}>
+          <nav className="nav" aria-label="Navigation principale">
             {MAIN_NAV.map((r) => (
               <a
                 key={r.id}
-                className={r.bottomBar ? undefined : 'nav-secondary'}
+                className={r.phoneTab ? undefined : 'nav-secondary'}
                 href={routeHref(r.id)}
                 aria-current={r.id === route ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}

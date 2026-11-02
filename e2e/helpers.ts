@@ -189,3 +189,15 @@ export function parseEur(text: string): number {
     .replace(',', '.');
   return Number(cleaned);
 }
+
+/** Le titre-sélecteur de la page : le nom du bien courant, qui ouvre le menu des biens. */
+export function titlePicker(page: Page) {
+  return page.getByRole('main').getByRole('heading', { level: 2 }).getByRole('button');
+}
+
+/** Choisit le bien courant dans le titre-sélecteur. */
+export async function chooseProperty(page: Page, name: string): Promise<void> {
+  await titlePicker(page).click();
+  await page.getByRole('menuitemradio', { name, exact: true }).click();
+  await expect(titlePicker(page)).toHaveText(new RegExp(`^${name}`));
+}

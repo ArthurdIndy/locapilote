@@ -32,21 +32,33 @@ export function HomePage({ data, onOpen }: { data: Dataset; onOpen: (id: string)
             .join(', ');
           return (
             <li key={property.id}>
-              <a
-                className="card property-card"
-                href={routeHref('synthese')}
-                onClick={() => onOpen(property.id)}
-              >
+              {/* Toute la carte est cliquable : le lien « Voir la synthèse › » la couvre. */}
+              <section className="card property-card" aria-label={property.name}>
                 <h3>{property.name}</h3>
                 {location && <span className="address">{location}</span>}
                 <span className="property-card-facts">
                   {RENTAL_TYPE_LABELS[property.rentalType]} · {REGIME_LABELS[property.taxRegime]}
                 </span>
-                <span className="property-card-action">Voir la synthèse →</span>
-              </a>
+                <a
+                  className="property-card-action"
+                  href={routeHref('synthese')}
+                  onClick={() => onOpen(property.id)}
+                >
+                  Voir la synthèse
+                  <span className="visually-hidden"> de {property.name}</span> ›
+                </a>
+              </section>
             </li>
           );
         })}
+        <li>
+          <a
+            className="card property-card add-property-card"
+            href={propertyHref('informations', true)}
+          >
+            + Ajouter un bien
+          </a>
+        </li>
       </ul>
     </div>
   );

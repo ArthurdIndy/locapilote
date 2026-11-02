@@ -116,21 +116,23 @@ Avec l'itération 4 (vente, budget), le menu passerait à 10 onglets. Les écran
 
 À faire juste avant l'itération 4, dans la même session que le détail replié de la synthèse (travail d'interface, niveau de réflexion moyen), pour que la vente et le budget arrivent directement dans « Simulations ».
 
-| Entrée | Contient |
-| --- | --- |
-| Accueil | Tableau de bord (US21) |
-| Mouvements | Saisie et liste |
-| Synthèse | Trésorerie, rentabilité, patrimoine |
-| Fiscalité | Récapitulatif fiscal, rapprochement avec le comptable, export (US09) |
-| Simulations | Vente (US11), budget (US12) |
-| Mon bien | Fiche du bien en trois sections : informations, prêt, immobilisations ; choix du bien quand il y en a plusieurs |
+| Entrée | Rôle | Contient |
+| --- | --- | --- |
+| Accueil | Où j'en suis maintenant | Une carte par bien, puis « + Ajouter un bien » ; tableau de bord (US21) |
+| Mouvements | Saisie au fil de l'eau | Saisie et liste, du bien courant |
+| Synthèse | Les années passées | Trésorerie, rentabilité, patrimoine |
+| Fiscalité | Déclaration, une fois par an | Récapitulatif fiscal, rapprochement avec le comptable, export (US09) |
+| Simulations | Le futur | Vente (US11), budget (US12) |
+| Mon bien | Fiche du bien, saisie une fois | Trois sections : informations, prêt, immobilisations ; bouton « Ajouter un bien » à droite du titre |
+
+Le rôle de chaque écran est noté dans `docs/conception.md` (Choix d'architecture). Pages d'un bien : titre-sélecteur sur une ligne (« Mouvements · Bien 22 ▾ »), le nom du bien ouvre au clic le menu des biens.
 
 Icône ⚙ en haut à droite : Données (export, import, jeu de test), puis plus tard les catégories et les paramètres du foyer (tranche d'imposition).
 
 Critères d'acceptation :
 
 - sur ordinateur, les 6 entrées tiennent sur une ligne, plus l'icône ⚙ ;
-- sur téléphone (375 px), Accueil, Mouvements, Synthèse, Fiscalité et Simulations sont sur une ligne d'onglets en haut qui défile (sous l'en-tête, onglet actif ramené au centre, dégradé sur le bord) ; « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite ;
+- sur téléphone (375 px), seuls Accueil, Mouvements et Simulations restent en onglets en haut, sous l'en-tête, et tiennent entièrement sans défilement ; Synthèse, Fiscalité, « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite ; chaque carte de l'Accueil a un lien « Voir la synthèse › » ;
 - les anciennes adresses (Biens, Prêt, Immobilisations, Données) redirigent vers leur nouvelle place ;
 - les liens internes existants (« Voir le mouvement concerné », « immobilisations », « Données ») mènent toujours au bon endroit ;
 - tests de parcours mis à jour.

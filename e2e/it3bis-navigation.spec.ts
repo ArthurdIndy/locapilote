@@ -14,11 +14,13 @@ import {
   openSettings,
   startWithTestData,
   test,
+  titlePicker,
+  chooseProperty,
 } from './helpers';
-import type { Locator } from '@playwright/test';
 
 const ENTRIES = ['Accueil', 'Mouvements', 'Synthèse', 'Fiscalité', 'Simulations', 'Mon bien'];
-const PHONE_TABS = ENTRIES.slice(0, 5);
+/** Sur téléphone, seuls ces onglets restent visibles ; les autres sont dans le menu ☰. */
+const PHONE_TABS = ['Accueil', 'Mouvements', 'Simulations'];
 
 test.beforeEach(async ({ page }) => {
   await startWithTestData(page);
@@ -43,7 +45,7 @@ test('ordinateur : les 6 entrées tiennent sur une ligne, plus l’icône ⚙', 
   await capture(page, testInfo, 'it3bis-menu');
 });
 
-test('téléphone : une ligne d’onglets en haut qui défile ; « Mon bien » et ⚙ dans le menu ☰', async ({
+test('téléphone : 3 onglets qui tiennent sur 375 px ; Synthèse, Fiscalité, Mon bien et ⚙ dans le menu ☰', async ({
   page,
 }, testInfo) => {
   test.skip(!isPhone(testInfo), 'téléphone seulement');
@@ -51,69 +53,44 @@ test('téléphone : une ligne d’onglets en haut qui défile ; « Mon bien » e
   await expect(nav.getByRole('link').filter({ visible: true })).toHaveText(PHONE_TABS);
   await expect(page.getByRole('link', { name: 'Paramètres', exact: true })).toBeHidden();
 
-  // Une seule ligne, sous l'en-tête, en haut de la page (pas de barre fixe en bas).
+  // Une seule ligne, en haut de la page, sans défilement : chaque onglet est entièrement visible.
   const box = await nav.boundingBox();
   expect(box!.height).toBeLessThan(60);
   expect(box!.y).toBeLessThan(200);
   expect(await nav.evaluate((el) => getComputedStyle(el).position)).toBe('static');
-
-  // Elle défile du doigt ; l'onglet actif est ramené dans l'écran.
-  expect(await nav.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
-  for (const label of ['Simulations', 'Fiscalité', 'Accueil']) {
-    await goTo(page, label);
-    await expect(nav.locator('[aria-current="page"]')).toHaveText(label);
-    await expectActiveTabFullyVisible(nav);
+  expect(await nav.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+  const width = page.viewportSize()!.width;
+  for (const tab of await nav.getByRole('link').filter({ visible: true }).all()) {
+    const tabBox = (await tab.boundingBox())!;
+    expect(tabBox.x).toBeGreaterThanOrEqual(0);
+    expect(tabBox.x + tabBox.width).toBeLessThanOrEqual(width);
+    expect(await tab.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   }
   await goTo(page, 'Simulations');
-  await expectActiveTabFullyVisible(nav);
+  await expect(nav.locator('[aria-current="page"]')).toHaveText('Simulations');
   await expectNoHorizontalScroll(page);
   await capture(page, testInfo, 'it3bis-onglets', { fullPage: false });
 
-  // Le bas de page n'est plus masqué : le pied de page est visible en fin de défilement.
-  await goTo(page, 'Synthèse');
-  await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('contentinfo')).toBeInViewport();
-
+  // Le menu ☰ : Synthèse, Fiscalité, Mon bien, ⚙ Paramètres.
   await openPhoneMenu(page);
   const menu = page.getByRole('navigation', { name: 'Menu' });
-  await expect(menu.getByRole('link')).toHaveText(['Mon bien', '⚙ Paramètres']);
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(menu.getByRole('link')).toHaveText([
+    'Synthèse',
+    'Fiscalité',
+    'Mon bien',
+    '⚙ Paramètres',
+  ]);
   await capture(page, testInfo, 'it3bis-menu', { fullPage: false });
-  await menu.getByRole('link', { name: 'Mon bien' }).click();
-  await expect(page.getByRole('heading', { name: 'Mon bien · Appartement exemple' })).toBeVisible();
+  await menu.getByRole('link', { name: 'Synthèse' }).click();
+  await expect(page.getByRole('heading', { name: 'Synthèse · Appartement exemple' })).toBeVisible();
   await expect(menu).toBeHidden();
-});
+  // Le bouton ☰ signale qu'on est sur une page du menu.
+  await expect(page.getByRole('button', { name: 'Menu' })).toHaveClass(/active/);
 
-/**
- * L'onglet actif est entièrement visible dans la ligne d'onglets et dans l'écran. On attend la
- * fin du défilement (position stable), puis on compare les bords à ±1 px près.
- */
-async function expectActiveTabFullyVisible(nav: Locator): Promise<void> {
-  let previous = -1;
-  await expect
-    .poll(
-      async () => {
-        const current = await nav.evaluate((el) => el.scrollLeft);
-        const stable = current === previous;
-        previous = current;
-        return stable;
-      },
-      { intervals: [100, 100, 200, 200, 500], timeout: 5000 },
-    )
-    .toBe(true);
-  const edges = await nav.evaluate((el) => {
-    const tab = el.querySelector('[aria-current="page"]')!.getBoundingClientRect();
-    const menu = el.getBoundingClientRect();
-    return {
-      tabLeft: tab.left,
-      tabRight: tab.right,
-      left: Math.max(menu.left, 0),
-      right: Math.min(menu.right, document.documentElement.clientWidth),
-    };
-  });
-  expect(edges.tabLeft).toBeGreaterThanOrEqual(edges.left - 1);
-  expect(edges.tabRight).toBeLessThanOrEqual(edges.right + 1);
-}
+  // Le bas de page n'est pas masqué : le pied de page est visible en fin de défilement.
+  await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+  await expect(page.getByRole('contentinfo')).toBeInViewport();
+});
 
 test('chaque entrée ouvre sa page', async ({ page }) => {
   for (const [label, heading] of [
@@ -153,48 +130,49 @@ test('Mon bien : informations, prêt et immobilisations du bien', async ({ page 
   await expectNoHorizontalScroll(page);
 });
 
+const SECOND = 'Bien 22';
+
 test.describe('règle multi-biens', () => {
   test.beforeEach(async ({ page }) => {
     await goTo(page, 'Mon bien');
     await page.getByRole('button', { name: 'Ajouter un bien' }).click();
-    await createProperty(page, 'Studio second');
+    await createProperty(page, SECOND);
   });
 
   test('l’Accueil montre une carte par bien ; un clic la rend courante et ouvre sa Synthèse', async ({
     page,
-  }, testInfo) => {
+  }) => {
     await goTo(page, 'Accueil');
-    const cards = page.getByRole('main').getByRole('link', { name: /Voir la synthèse/ });
+    const main = page.getByRole('main');
+    const cards = main.locator('.property-card[aria-label]');
     await expect(cards).toHaveCount(2);
-    await expect(cards.nth(0)).toContainText('Appartement exemple');
-    await expect(cards.nth(0)).toContainText('Meublée · LMNP au réel');
-    await expect(cards.nth(1)).toContainText('Studio second');
+    const first = main.getByRole('region', { name: 'Appartement exemple' });
+    await expect(first).toContainText('Meublée · LMNP au réel');
+    await expect(main.getByRole('region', { name: SECOND })).toBeVisible();
+    // Chaque carte a un lien visible « Voir la synthèse › ».
+    for (const card of await cards.all()) {
+      const link = card.getByRole('link', { name: /^Voir la synthèse/ });
+      await expect(link).toBeVisible();
+      await expect(link).toContainText('›');
+    }
+    // La carte « + Ajouter un bien » vient en dernier.
+    await expect(main.getByRole('listitem').last()).toHaveText('+ Ajouter un bien');
     await expectNoHorizontalScroll(page);
-    await capture(page, testInfo, 'it3bis-accueil-biens');
 
-    await cards.nth(0).click();
+    // Un clic sur le lien ouvre la Synthèse du bien.
+    await first.getByRole('link', { name: /^Voir la synthèse/ }).click();
     await expect(page).toHaveURL(/#\/synthese$/);
-    const title = page.getByRole('heading', { level: 2 }).filter({ hasText: 'Synthèse' });
-    await expect(title.getByLabel('Bien courant')).toHaveValue(/.+/);
-    await expect(title.getByLabel('Bien courant').locator('option:checked')).toHaveText(
-      'Appartement exemple',
-    );
+    await expect(titlePicker(page)).toHaveText(/^Appartement exemple/);
 
+    // Un clic ailleurs dans la carte aussi (en haut à gauche, sur le nom).
     await goTo(page, 'Accueil');
-    await page
-      .getByRole('main')
-      .getByRole('link', { name: /Studio second/ })
-      .click();
-    await expect(page.getByLabel('Bien courant').locator('option:checked')).toHaveText(
-      'Studio second',
-    );
+    await main.getByRole('region', { name: SECOND }).click({ position: { x: 30, y: 30 } });
+    await expect(page).toHaveURL(/#\/synthese$/);
+    await expect(titlePicker(page)).toHaveText(new RegExp(`^${SECOND}`));
   });
 
-  test('les autres pages montrent le bien courant, choisi dans le titre', async ({
-    page,
-  }, testInfo) => {
-    const selector = page.getByLabel('Bien courant');
-    // Le titre-sélecteur est dans le titre de chaque page d'un bien ; plus de sélecteur en en-tête.
+  test('les autres pages montrent le bien courant, choisi dans le titre', async ({ page }) => {
+    // Le titre-sélecteur est dans le titre de chaque page d'un bien ; rien dans l'en-tête.
     for (const [label, title] of [
       ['Mouvements', 'Mouvements'],
       ['Synthèse', 'Synthèse'],
@@ -202,33 +180,174 @@ test.describe('règle multi-biens', () => {
       ['Mon bien', 'Mon bien'],
     ] as const) {
       await goTo(page, label);
-      const heading = page.getByRole('heading', { level: 2 }).filter({ hasText: title });
-      await expect(heading.getByLabel('Bien courant')).toBeVisible();
-      await expect(page.getByRole('banner').getByLabel('Bien courant')).toHaveCount(0);
+      await expect(
+        page.getByRole('heading', { level: 2, name: `${title} · ${SECOND}` }),
+      ).toBeVisible();
+      await expect(titlePicker(page)).toBeVisible();
+      await expect(page.getByRole('banner').getByRole('combobox')).toHaveCount(0);
     }
 
     // Mon bien : le bien courant, et son prêt.
-    await selector.selectOption({ label: 'Appartement exemple' });
+    await chooseProperty(page, 'Appartement exemple');
     await goToProperty(page, 'Prêt');
     await expect(page.getByRole('region', { name: 'Prêt BANQUE' })).toBeVisible();
-    await selector.selectOption({ label: 'Studio second' });
+    await chooseProperty(page, SECOND);
     await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
 
     // Mouvements : seulement ceux du bien courant ; plus de filtre « Bien ».
     await goTo(page, 'Mouvements');
+    await chooseProperty(page, 'Appartement exemple');
     await expect(page.getByRole('region', { name: 'Filtres' }).getByLabel('Bien')).toHaveCount(0);
-    await expect(page.getByText(/^0 mouvement · /)).toBeVisible();
-    await selector.selectOption({ label: 'Appartement exemple' });
     await expect(page.getByText(/^289 mouvements · /)).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await capture(page, testInfo, 'it3bis-titre-selecteur', { fullPage: false });
 
     // Un lien vers les mouvements d'un bien rend ce bien courant.
-    await selector.selectOption({ label: 'Studio second' });
+    await chooseProperty(page, SECOND);
     await page.goto('/#/mouvements?bien=APPART-01&annee=2024&fiscal=a-valider');
-    await expect(selector.locator('option:checked')).toHaveText('Appartement exemple');
+    await expect(titlePicker(page)).toHaveText(/^Appartement exemple/);
     await expect(page.locator('.transaction')).toHaveCount(1);
   });
+
+  test('Mouvements vide : seulement le message et le bouton « Nouveau mouvement »', async ({
+    page,
+  }, testInfo) => {
+    await goTo(page, 'Mouvements');
+    await expect(titlePicker(page)).toHaveText(new RegExp(`^${SECOND}`));
+    await expect(page.getByText('Aucun mouvement pour l’instant.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nouveau mouvement' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Filtres' })).toHaveCount(0);
+    await expect(page.getByText(/mouvements? · recettes/)).toHaveCount(0);
+    await capture(page, testInfo, 'it3bis-mouvements-vide');
+  });
+
+  test('titre-sélecteur : une ligne, le nom comme le titre, ▾ discret, menu au clic', async ({
+    page,
+  }, testInfo) => {
+    await goTo(page, 'Mouvements');
+    const heading = page.getByRole('heading', { level: 2, name: `Mouvements · ${SECOND}` });
+    const picker = titlePicker(page);
+    // Pas de liste déroulante native.
+    await expect(page.getByRole('main').getByRole('combobox')).toHaveCount(0);
+    // Une seule ligne.
+    const lineHeight = await heading.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight));
+    expect((await heading.boundingBox())!.height).toBeLessThan(lineHeight * 1.5);
+    // Même police et même taille que le titre, sans bordure ni fond.
+    const style = await picker.evaluate((el) => {
+      const s = getComputedStyle(el);
+      const h = getComputedStyle(el.closest('h2')!);
+      return {
+        sameFont: s.fontFamily === h.fontFamily && s.fontSize === h.fontSize,
+        sameWeight: s.fontWeight === h.fontWeight,
+        border: s.borderStyle,
+        background: s.backgroundColor,
+      };
+    });
+    expect(style).toEqual({
+      sameFont: true,
+      sameWeight: true,
+      border: 'none',
+      background: 'rgba(0, 0, 0, 0)',
+    });
+    // ▾ collé au nom ; soulignement au survol.
+    await expect(picker).toContainText('▾');
+    const name = picker.locator('.property-title-name');
+    await picker.hover();
+    await expect(name).toHaveCSS('text-decoration-line', 'underline');
+    // Le bouton d'action est aligné verticalement sur la ligne du titre.
+    const titleBox = (await heading.boundingBox())!;
+    const actionBox = (await page
+      .getByRole('button', { name: 'Nouveau mouvement' })
+      .boundingBox())!;
+    expect(
+      Math.abs(titleBox.y + titleBox.height / 2 - (actionBox.y + actionBox.height / 2)),
+    ).toBeLessThan(4);
+    // Le menu des biens s'ouvre au clic, et se referme après le choix.
+    await picker.click();
+    const menu = page.getByRole('menu', { name: 'Choisir le bien' });
+    await expect(menu.getByRole('menuitemradio')).toHaveText(['Appartement exemple', SECOND]);
+    await expect(menu.getByRole('menuitemradio', { name: SECOND })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await capture(page, testInfo, 'it3bis-titre-selecteur', { fullPage: false });
+    await menu.getByRole('menuitemradio', { name: 'Appartement exemple' }).click();
+    await expect(menu).toBeHidden();
+    await expect(heading).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Mouvements · Appartement exemple' }),
+    ).toBeVisible();
+    // Échap referme le menu.
+    await picker.click();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+  });
+
+  test('captures : chaque page avec deux biens', async ({ page }, testInfo) => {
+    await chooseProperty(page, 'Appartement exemple');
+    for (const [label, name] of [
+      ['Accueil', 'accueil'],
+      ['Mouvements', 'mouvements'],
+      ['Synthèse', 'synthese'],
+      ['Fiscalité', 'fiscalite'],
+      ['Simulations', 'simulations'],
+      ['Mon bien', 'mon-bien'],
+      ['Paramètres', 'parametres'],
+    ] as const) {
+      await goTo(page, label);
+      await expectNoHorizontalScroll(page);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await capture(page, testInfo, `it3bis-deux-biens-${name}`, { fullPage: false });
+    }
+  });
+});
+
+test('téléphone : un nom de bien long est tronqué avec « … », le ▾ reste visible', async ({
+  page,
+}, testInfo) => {
+  test.skip(!isPhone(testInfo), 'téléphone seulement');
+  await goTo(page, 'Mon bien');
+  await page.getByRole('button', { name: 'Ajouter un bien' }).click();
+  await createProperty(page, 'Appartement de la rue des Longues-Herbes');
+  await goTo(page, 'Mouvements');
+  const picker = titlePicker(page);
+  const name = picker.locator('.property-title-name');
+  await expect(name).toHaveCSS('text-overflow', 'ellipsis');
+  expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  const caret = picker.locator('.property-title-caret');
+  await expect(caret).toBeInViewport({ ratio: 1 });
+  await expectNoHorizontalScroll(page);
+  await capture(page, testInfo, 'it3bis-nom-long', { fullPage: false });
+});
+
+test('ajouter un bien : carte « + Ajouter un bien » de l’Accueil', async ({ page }) => {
+  await page.getByRole('main').getByRole('link', { name: '+ Ajouter un bien' }).click();
+  await expect(page.getByRole('heading', { name: 'Nouveau bien' })).toBeVisible();
+  await createProperty(page, 'Studio ajouté');
+  await expect(page).toHaveURL(/#\/mon-bien\?section=informations$/);
+  await expect(titlePicker(page)).toHaveText(/^Studio ajouté/);
+  await goTo(page, 'Accueil');
+  await expect(page.getByRole('main').getByRole('region')).toHaveCount(2);
+});
+
+test('ajouter un bien : bouton en haut de Mon bien, à droite du titre', async ({
+  page,
+}, testInfo) => {
+  await goTo(page, 'Mon bien');
+  const title = page.getByRole('heading', { level: 2, name: 'Mon bien · Appartement exemple' });
+  const button = page.getByRole('button', { name: 'Ajouter un bien' });
+  const titleBox = (await title.boundingBox())!;
+  const buttonBox = (await button.boundingBox())!;
+  // À droite du titre, sur sa première ligne.
+  expect(buttonBox.x).toBeGreaterThanOrEqual(titleBox.x + titleBox.width - 1);
+  expect(buttonBox.y).toBeLessThan(titleBox.y + titleBox.height);
+  // Au-dessus des onglets de la fiche.
+  const tabs = page.getByRole('navigation', { name: 'Sections du bien' });
+  expect(buttonBox.y).toBeLessThan((await tabs.boundingBox())!.y);
+  await expectNoHorizontalScroll(page);
+  await capture(page, testInfo, 'it3bis-mon-bien-ajouter', { fullPage: false });
+  await button.click();
+  await expect(page.getByRole('heading', { name: 'Nouveau bien' })).toBeVisible();
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await expect(title).toBeVisible();
 });
 
 test('Simulations : page d’attente qui annonce la vente et le budget', async ({

@@ -282,6 +282,44 @@ h3 {
   margin: 0;
 }
 
+/* Titre et bouton d'action sur la même ligne, alignés verticalement, même sur téléphone. */
+.title-toolbar {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.title-toolbar h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title-toolbar .button {
+  flex: none;
+}
+
+.label-narrow {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .label-wide {
+    display: none;
+  }
+
+  .label-narrow {
+    display: inline;
+  }
+
+  .property-title {
+    font-size: 1.25rem;
+  }
+
+  .title-toolbar .button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}
+
 /* ---------- Boutons ---------- */
 
 .button {
@@ -648,32 +686,17 @@ details summary {
   }
 
   /*
-   * Téléphone : les 5 entrées les plus utilisées sur une seule ligne d'onglets, sous l'en-tête,
-   * qui défile du doigt. L'onglet actif est ramené au centre (App.tsx) ; le dégradé à droite
-   * signale qu'il y en a d'autres. « Mon bien » et ⚙ passent dans le menu ☰ en haut à droite.
+   * Téléphone : trois onglets seulement (Accueil, Mouvements, Simulations), qui tiennent sur
+   * 375 px sans défilement. Synthèse, Fiscalité, Mon bien et ⚙ passent dans le menu ☰.
    */
   .nav {
     gap: 0;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    mask-image: linear-gradient(to right, #000 85%, transparent);
-  }
-
-  .nav::-webkit-scrollbar {
-    display: none;
   }
 
   .nav a {
-    padding: 10px 10px;
-    font-size: 0.95rem;
-  }
-
-  /* Espace en fin de ligne : le dernier onglet n'est pas caché par le dégradé. */
-  .nav::after {
-    content: '';
-    flex: 0 0 32px;
+    flex: 1 1 0;
+    padding: 10px 4px;
+    text-align: center;
   }
 
   .nav a.nav-secondary,
@@ -1161,6 +1184,7 @@ ul.warning {
 }
 
 .property-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1176,8 +1200,26 @@ ul.warning {
 }
 
 .property-card:hover,
-.property-card:focus-visible {
+.property-card:focus-within {
   border-color: var(--accent);
+}
+
+/* Le lien « Voir la synthèse › » couvre toute la carte : un clic n'importe où l'ouvre. */
+.property-card-action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.add-property-card {
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border-style: dashed;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .property-card-facts {
@@ -1185,6 +1227,7 @@ ul.warning {
 }
 
 .property-card-action {
+  align-self: flex-start;
   margin-top: auto;
   padding-top: 8px;
   color: var(--accent);
@@ -1192,15 +1235,100 @@ ul.warning {
   font-size: 0.9rem;
 }
 
-/* ---------- Titre-sélecteur : le nom du bien courant, au choix ---------- */
+/* ---------- Titre-sélecteur : « Mouvements · Bien 22 ▾ », sur une seule ligne ---------- */
 
-.title-selector select {
+.property-title {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.property-title-prefix {
+  flex: none;
+}
+
+/* Le menu des biens s'aligne sur le début du titre : il ne déborde pas de l'écran. */
+.property-title-picker {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.property-title-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Le nom du bien a l'allure du titre : ni bordure ni fond ; ▾ discret, soulignement au survol. */
+.property-title-button {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
   max-width: 100%;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
+  padding: 0;
+  border: none;
+  background: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.property-title-button:hover .property-title-name,
+.property-title-button:focus-visible .property-title-name {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.property-title-caret {
+  flex: none;
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 0.6em;
+}
+
+.property-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 30;
+  min-width: 220px;
+  max-width: calc(100vw - 32px);
+  margin: 6px 0 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.property-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.property-menu button:hover,
+.property-menu button:focus-visible {
+  background: var(--accent-soft);
+}
+
+.property-menu button[aria-checked='true'] {
+  color: var(--accent);
+}
+
+.property-menu button[aria-checked='true']::before {
+  content: '✓ ';
 }

@@ -125,22 +125,29 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
     setMessage('Mouvement supprimé.');
   };
 
+  /** Bien sans aucun mouvement : ni filtres ni totaux, seulement le message et le bouton. */
+  const isEmpty = !data.transactions.some((t) => t.propertyId === currentPropertyId);
   const hasFilter = Boolean(yearFilter || groupFilter || categoryFilter || toReviewOnly);
 
   return (
     <div className="stack">
-      <div className="toolbar">
+      <div className="toolbar title-toolbar">
         <PropertyTitle title="Mouvements" />
         {!editing && (
           <button
             type="button"
             className="button primary"
+            aria-label="Nouveau mouvement"
             onClick={() => {
               setMessage(null);
               setEditing({ mode: 'new' });
             }}
           >
-            Nouveau mouvement
+            {/* Sur téléphone, libellé court pour laisser la place au titre-sélecteur. */}
+            <span className="label-wide">Nouveau mouvement</span>
+            <span className="label-narrow" aria-hidden="true">
+              + Nouveau
+            </span>
           </button>
         )}
       </div>
@@ -163,121 +170,127 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
         />
       )}
 
-      <section className="card filters" aria-label="Filtres">
-        <label className="field">
-          <span>Année</span>
-          <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-            <option value="">Toutes</option>
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Groupe</span>
-          <select
-            value={groupFilter}
-            onChange={(e) => {
-              setGroupFilter(e.target.value);
-              setCategoryFilter('');
-            }}
-          >
-            <option value="">Tous</option>
-            {groups.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Catégorie</span>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">Toutes</option>
-            {sortCategories(
-              data.categories.filter((c) => !groupFilter || c.group === groupFilter),
-            ).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {hasFilter && (
-          <button
-            type="button"
-            className="button link"
-            onClick={() => {
-              setYearFilter('');
-              setGroupFilter('');
-              setCategoryFilter('');
-              setToReviewOnly(false);
-            }}
-          >
-            Effacer les filtres
-          </button>
-        )}
-      </section>
-
-      {toReviewOnly && (
-        <p className="warning" role="status">
-          Seuls les mouvements « À valider » sont affichés : ils ne sont pas retenus dans le
-          résultat fiscal tant qu’ils ne sont pas qualifiés (charge déductible ou investissement à
-          amortir). Modifie leur catégorie une fois la réponse du comptable obtenue.{' '}
-          <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
-            Voir tous les mouvements
-          </button>
-        </p>
-      )}
-
-      <p className="muted summary">
-        {filtered.length} mouvement{filtered.length > 1 ? 's' : ''} · recettes{' '}
-        {formatEuros(totals.income)} · dépenses {formatEuros(totals.expense)}
-      </p>
-
-      {filtered.length === 0 ? (
-        <p className="card muted">
-          {!data.transactions.some((t) => t.propertyId === currentPropertyId)
-            ? 'Aucun mouvement pour l’instant. Clique sur « Nouveau mouvement ».'
-            : 'Aucun mouvement ne correspond aux filtres.'}
-        </p>
+      {isEmpty ? (
+        <p className="card muted">Aucun mouvement pour l’instant.</p>
       ) : (
-        <ul className="transactions">
-          {filtered.map((t) => {
-            const category = categories.get(t.categoryId);
-            const direction = category?.direction ?? 'neutral';
-            return (
-              <li key={t.id} className="transaction">
-                <span className="tx-date">{formatDate(t.date)}</span>
-                <span className="tx-main">
-                  <strong>{category?.name ?? t.categoryId}</strong>
-                  <span className="muted small">
-                    {[t.label, t.account].filter(Boolean).join(' · ')}
-                  </span>
-                </span>
-                <span className={`tx-amount ${direction}`}>{signedAmount(t, category)}</span>
-                <span className="tx-actions">
-                  <button
-                    type="button"
-                    className="button small"
-                    onClick={() => {
-                      setMessage(null);
-                      setEditing({ mode: 'edit', transaction: t });
-                      window.scrollTo(0, 0);
-                    }}
-                  >
-                    Modifier
-                  </button>
-                  <button type="button" className="button small danger" onClick={() => remove(t)}>
-                    Supprimer
-                  </button>
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <section className="card filters" aria-label="Filtres">
+            <label className="field">
+              <span>Année</span>
+              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+                <option value="">Toutes</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Groupe</span>
+              <select
+                value={groupFilter}
+                onChange={(e) => {
+                  setGroupFilter(e.target.value);
+                  setCategoryFilter('');
+                }}
+              >
+                <option value="">Tous</option>
+                {groups.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Catégorie</span>
+              <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <option value="">Toutes</option>
+                {sortCategories(
+                  data.categories.filter((c) => !groupFilter || c.group === groupFilter),
+                ).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {hasFilter && (
+              <button
+                type="button"
+                className="button link"
+                onClick={() => {
+                  setYearFilter('');
+                  setGroupFilter('');
+                  setCategoryFilter('');
+                  setToReviewOnly(false);
+                }}
+              >
+                Effacer les filtres
+              </button>
+            )}
+          </section>
+
+          {toReviewOnly && (
+            <p className="warning" role="status">
+              Seuls les mouvements « À valider » sont affichés : ils ne sont pas retenus dans le
+              résultat fiscal tant qu’ils ne sont pas qualifiés (charge déductible ou investissement
+              à amortir). Modifie leur catégorie une fois la réponse du comptable obtenue.{' '}
+              <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
+                Voir tous les mouvements
+              </button>
+            </p>
+          )}
+
+          <p className="muted summary">
+            {filtered.length} mouvement{filtered.length > 1 ? 's' : ''} · recettes{' '}
+            {formatEuros(totals.income)} · dépenses {formatEuros(totals.expense)}
+          </p>
+
+          {filtered.length === 0 ? (
+            <p className="card muted">Aucun mouvement ne correspond aux filtres.</p>
+          ) : (
+            <ul className="transactions">
+              {filtered.map((t) => {
+                const category = categories.get(t.categoryId);
+                const direction = category?.direction ?? 'neutral';
+                return (
+                  <li key={t.id} className="transaction">
+                    <span className="tx-date">{formatDate(t.date)}</span>
+                    <span className="tx-main">
+                      <strong>{category?.name ?? t.categoryId}</strong>
+                      <span className="muted small">
+                        {[t.label, t.account].filter(Boolean).join(' · ')}
+                      </span>
+                    </span>
+                    <span className={`tx-amount ${direction}`}>{signedAmount(t, category)}</span>
+                    <span className="tx-actions">
+                      <button
+                        type="button"
+                        className="button small"
+                        onClick={() => {
+                          setMessage(null);
+                          setEditing({ mode: 'edit', transaction: t });
+                          window.scrollTo(0, 0);
+                        }}
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        className="button small danger"
+                        onClick={() => remove(t)}
+                      >
+                        Supprimer
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

@@ -14,16 +14,17 @@ export const ROUTES = [
 export type RouteId = (typeof ROUTES)[number]['id'];
 
 /**
- * Les 6 entrées du menu principal. Sur téléphone, celles marquées `bottomBar` sont dans la
- * barre fixe en bas de l'écran ; les autres passent dans le menu ☰ (avec ⚙ Paramètres).
+ * Les 6 entrées du menu principal, toutes visibles sur ordinateur. Sur téléphone, seules
+ * celles marquées `phoneTab` restent en onglets (elles tiennent sur 375 px) ; les autres
+ * passent dans le menu ☰, avec ⚙ Paramètres.
  */
-export const MAIN_NAV: readonly { id: RouteId; label: string; bottomBar: boolean }[] = [
-  { id: 'accueil', label: 'Accueil', bottomBar: true },
-  { id: 'mouvements', label: 'Mouvements', bottomBar: true },
-  { id: 'synthese', label: 'Synthèse', bottomBar: true },
-  { id: 'fiscalite', label: 'Fiscalité', bottomBar: true },
-  { id: 'simulations', label: 'Simulations', bottomBar: true },
-  { id: 'mon-bien', label: 'Mon bien', bottomBar: false },
+export const MAIN_NAV: readonly { id: RouteId; label: string; phoneTab: boolean }[] = [
+  { id: 'accueil', label: 'Accueil', phoneTab: true },
+  { id: 'mouvements', label: 'Mouvements', phoneTab: true },
+  { id: 'synthese', label: 'Synthèse', phoneTab: false },
+  { id: 'fiscalite', label: 'Fiscalité', phoneTab: false },
+  { id: 'simulations', label: 'Simulations', phoneTab: true },
+  { id: 'mon-bien', label: 'Mon bien', phoneTab: false },
 ];
 
 /** Sections de la fiche « Mon bien » (paramètre `section` de l'adresse). */
@@ -94,7 +95,7 @@ export function routeHref(id: RouteId, params?: Record<string, string>): string 
   return `#/${id}${query ? `?${query}` : ''}`;
 }
 
-/** Adresse d'une section de « Mon bien ». */
-export function propertyHref(section: PropertySectionId): string {
-  return routeHref('mon-bien', { section });
+/** Adresse d'une section de « Mon bien » ; `newProperty` ouvre le formulaire d'ajout d'un bien. */
+export function propertyHref(section: PropertySectionId, newProperty = false): string {
+  return routeHref('mon-bien', newProperty ? { section, nouveau: '1' } : { section });
 }

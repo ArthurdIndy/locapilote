@@ -4,6 +4,8 @@ import { PROPERTY_SECTIONS, propertyHref, type PropertySectionId } from '../rout
 import { AssetsPage } from './AssetsPage';
 import { LoansPage } from './LoansPage';
 import { PropertyInfoSection } from './PropertiesPage';
+import { PropertyForm } from './PropertyForm';
+import { db } from '../../db/database';
 import { PropertyTitle } from '../components/PropertyTitle';
 
 interface Props {
@@ -20,25 +22,50 @@ interface Props {
  */
 export function MyPropertyPage({ data, property, today, params, onCreated }: Props) {
   const [message, setMessage] = useState<string | null>(null);
+  // Ajout d'un bien : bouton à droite du titre, ou carte « + Ajouter un bien » de l'Accueil
+  // (#/mon-bien?nouveau=1). Sans bien, le formulaire s'ouvre directement.
+  const [adding, setAdding] = useState(() => params.get('nouveau') === '1');
   const requested = params.get('section');
   const section: PropertySectionId =
     PROPERTY_SECTIONS.find((s) => s.id === requested)?.id ?? 'informations';
 
-  if (!property) {
+  const create = async (created: Property) => {
+    await db.properties.put(created);
+    onCreated(created.id);
+    setMessage(`Bien « ${created.name} » créé.`);
+    setAdding(false);
+    // La fiche du bien créé s'ouvre sur ses informations.
+    window.location.hash = propertyHref('informations');
+    window.scrollTo(0, 0);
+  };
+
+  if (adding || !property) {
     return (
-      <PropertyInfoSection
-        data={data}
-        property={null}
-        onCreated={onCreated}
-        message={message}
-        setMessage={setMessage}
+      <PropertyForm
+        key="new"
+        initial={null}
+        onSave={create}
+        onCancel={property ? () => setAdding(false) : null}
       />
     );
   }
 
   return (
     <div className="stack">
-      <PropertyTitle title="Mon bien" />
+      <div className="toolbar title-toolbar">
+        <PropertyTitle title="Mon bien" />
+        <button
+          type="button"
+          className="button"
+          onClick={() => {
+            setMessage(null);
+            setAdding(true);
+            window.scrollTo(0, 0);
+          }}
+        >
+          Ajouter un bien
+        </button>
+      </div>
       <nav className="tabs" aria-label="Sections du bien">
         {PROPERTY_SECTIONS.map((s) => (
           <a
@@ -53,9 +80,7 @@ export function MyPropertyPage({ data, property, today, params, onCreated }: Pro
       {section === 'informations' && (
         <PropertyInfoSection
           key={property.id}
-          data={data}
           property={property}
-          onCreated={onCreated}
           message={message}
           setMessage={setMessage}
         />

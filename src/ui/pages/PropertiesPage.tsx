@@ -1,49 +1,40 @@
 import { useState } from 'react';
 import { db } from '../../db/database';
-import type { Dataset, Property } from '../../engine/types';
+import type { Property } from '../../engine/types';
 import { formatDate, formatEuros } from '../format';
 import { REGIME_LABELS, RENTAL_TYPE_LABELS } from '../labels';
 import { PropertyForm } from './PropertyForm';
 
-type Editing = { mode: 'new' } | { mode: 'edit'; property: Property } | null;
-
 /**
- * Section « Informations » de Mon bien : la fiche du bien courant, sa modification, et l'ajout
- * d'un autre bien. Sans bien, le formulaire de création s'ouvre directement.
+ * Section « Informations » de Mon bien : la fiche du bien courant et sa modification. L'ajout
+ * d'un bien est géré par « Mon bien » (bouton à droite du titre).
  */
 export function PropertyInfoSection({
-  data,
   property,
-  onCreated,
   message,
   setMessage,
 }: {
-  data: Dataset;
-  property: Property | null;
-  onCreated: (id: string) => void;
+  property: Property;
   /** Message de confirmation, gardé par « Mon bien » : il survit au passage à la fiche créée. */
   message: string | null;
   setMessage: (message: string | null) => void;
 }) {
-  const [editing, setEditing] = useState<Editing>(property ? null : { mode: 'new' });
+  const [editing, setEditing] = useState(false);
 
   const save = async (saved: Property) => {
     await db.properties.put(saved);
-    if (editing?.mode === 'new') onCreated(saved.id);
-    setMessage(
-      editing?.mode === 'new' ? `Bien « ${saved.name} » créé.` : `Bien « ${saved.name} » modifié.`,
-    );
-    setEditing(null);
+    setMessage(`Bien « ${saved.name} » modifié.`);
+    setEditing(false);
     window.scrollTo(0, 0);
   };
 
-  if (editing || !property) {
+  if (editing) {
     return (
       <PropertyForm
-        key={editing?.mode === 'edit' ? editing.property.id : 'new'}
-        initial={editing?.mode === 'edit' ? editing.property : null}
+        key={property.id}
+        initial={property}
         onSave={save}
-        onCancel={data.properties.length > 0 ? () => setEditing(null) : null}
+        onCancel={() => setEditing(false)}
       />
     );
   }
@@ -104,7 +95,7 @@ export function PropertyInfoSection({
             className="button"
             onClick={() => {
               setMessage(null);
-              setEditing({ mode: 'edit', property });
+              setEditing(true);
             }}
           >
             Modifier
@@ -119,24 +110,6 @@ export function PropertyInfoSection({
           ))}
         </dl>
       </section>
-      <div className="actions">
-        <button
-          type="button"
-          className="button"
-          onClick={() => {
-            setMessage(null);
-            setEditing({ mode: 'new' });
-          }}
-        >
-          Ajouter un bien
-        </button>
-        {data.properties.length > 1 && (
-          <span className="muted small">
-            {data.properties.length} biens : choisis celui à afficher avec « Bien courant », en haut
-            de l’écran.
-          </span>
-        )}
-      </div>
     </div>
   );
 }

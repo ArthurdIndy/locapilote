@@ -26,9 +26,9 @@ test.describe('Premier lancement', () => {
 
   test('avec le jeu de test, l’accueil affiche la carte du bien', async ({ page }) => {
     await startWithTestData(page);
-    const card = page.getByRole('link', { name: /Appartement exemple/ });
+    const card = page.getByRole('region', { name: 'Appartement exemple' });
     await expect(card).toContainText('Meublée · LMNP au réel');
-    await card.click();
+    await card.getByRole('link', { name: /^Voir la synthèse/ }).click();
     await expect(
       page.getByRole('heading', { name: 'Synthèse · Appartement exemple' }),
     ).toBeVisible();

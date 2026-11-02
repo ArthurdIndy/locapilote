@@ -91,6 +91,19 @@ Application web sans serveur ; données dans le navigateur de chaque utilisateur
 
 Pourquoi le web plutôt qu'une application de bureau : partage par simple lien, mises à jour automatiques, pas d'installeur à signer, accessible sur tous les appareils.
 
+**Rôle de chaque écran.**
+
+| Écran | Rôle | Fréquence |
+| --- | --- | --- |
+| Accueil | Où j'en suis maintenant : une carte par bien | À chaque visite |
+| Mouvements | Saisie au fil de l'eau | Chaque mois |
+| Synthèse | Les années passées : trésorerie, rentabilité, patrimoine | Quand on veut faire le point |
+| Fiscalité | Déclaration et rapprochement avec le comptable | Une fois par an |
+| Simulations | Le futur : vente, budget | Ponctuellement |
+| Mon bien | Fiche du bien, saisie une fois : informations, prêt, immobilisations | Rarement |
+
+Sur ordinateur, les 6 écrans sont dans le menu, plus ⚙ Paramètres (données). Sur téléphone, seuls Accueil, Mouvements et Simulations restent en onglets ; Synthèse, Fiscalité, Mon bien et ⚙ sont dans le menu ☰, et chaque carte de l'Accueil mène à la Synthèse de son bien.
+
 **Règle multi-biens (écrans).** L'Accueil est la seule page qui montre tous les biens : une carte par bien (nom, type de location, régime fiscal). Un clic sur une carte en fait le bien courant et ouvre sa Synthèse. Toutes les autres pages (Mouvements, Synthèse, Fiscalité, Simulations, Mon bien) montrent le bien courant, avec un titre-sélecteur : le nom du bien, dans le titre de la page, est un menu déroulant qui change le bien courant (avec un seul bien, c'est un simple texte). Le bien courant est mémorisé dans le navigateur ; un lien vers les mouvements d'un bien le rend courant.
 
 ## Roadmap
