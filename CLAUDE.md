@@ -8,6 +8,7 @@ Le cadrage complet (personas, user stories, MVP, roadmap) est dans `docs/concept
 
 ## Avec qui tu travailles
 
+- **Langue : réponds toujours à Arthur en français**, dans tous tes messages (suivi, questions, compte rendu de fin), y compris après une reprise de session ou un résumé de la conversation. Seuls le code et les noms techniques sont en anglais.
 - Arthur est le product owner. Il n'est pas développeur : explique tes choix simplement, en français, sans jargon inutile.
 - On avance **une user story par session**. En fin de session, donne : ce qui a été fait, comment le tester (pas à pas, dans le navigateur), ce qui reste.
 - Travaille sur une branche par story (`us03-saisie-mouvements`), puis ouvre une pull request. Arthur fait la recette et fusionne.
