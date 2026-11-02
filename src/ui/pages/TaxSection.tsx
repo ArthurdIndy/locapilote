@@ -18,7 +18,7 @@ import type {
 import { downloadText } from '../download';
 import { centsToInput, formatDate, formatEuros, parseEurosInput } from '../format';
 import { REGIME_LABELS } from '../labels';
-import { routeHref } from '../router';
+import { propertyHref, routeHref } from '../router';
 import { recapRows, recapToCsv, type RecapRow } from '../taxRecap';
 import { TO_REVIEW_FILTER } from './TransactionsPage';
 import { TaxDisclaimer } from './TaxDisclaimer';
@@ -211,7 +211,7 @@ function LmnpReelSection({ data, property, dataAsOf }: Props) {
             )}
             <li className="no-print">
               Les investissements de l’année sont à reporter dans les{' '}
-              <a href={routeHref('immobilisations')}>immobilisations</a> pour être amortis.
+              <a href={propertyHref('immobilisations')}>immobilisations</a> pour être amortis.
             </li>
           </ul>
 

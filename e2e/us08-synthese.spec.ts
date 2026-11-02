@@ -2,13 +2,14 @@
 import type { Locator, Page } from '@playwright/test';
 import {
   capture,
-  dec,
   eur,
   expect,
   expected,
   expectNoHorizontalScroll,
   goTo,
   isPhone,
+  months,
+  openDetail,
   pct,
   seed,
   startWithTestData,
@@ -27,7 +28,7 @@ const CHECKS: [string, (year: string) => string][] = [
   ['dont intérêts', (y) => eur(line("Intérêts d'emprunt (période louée)")[y]!)],
   ['dont assurance', (y) => eur(line('Assurance emprunteur (période louée)')[y]!)],
   ['Cash-flow', (y) => eur(line('Cash-flow')[y]!)],
-  ['Mois de location', (y) => dec(line('Mois de location sur la période')[y]!)],
+  ['Mois de location', (y) => months(line('Mois de location sur la période')[y]!)],
   ['Cash-flow mensuel moyen', (y) => eur(line('Cash-flow mensuel moyen')[y]!)],
   ['Capital remboursé', (y) => eur(line('dont capital remboursé')[y]!)],
   [
@@ -53,7 +54,7 @@ function cell(page: Page, phone: boolean, label: string, year: string): Locator 
     return page
       .getByRole('region', { name: `Année ${year}` })
       .locator('.year-lines > div')
-      .filter({ has: page.locator('dt').getByText(label, { exact: true }) })
+      .filter({ has: page.locator('dt').getByText(new RegExp(`^${escapeRegExp(label)}[⊕⊖]?$`)) })
       .locator('dd');
   }
   const column = YEARS.indexOf(year) + 2; // 1re colonne = libellé
@@ -61,6 +62,10 @@ function cell(page: Page, phone: boolean, label: string, year: string): Locator 
     .locator('table[aria-label="Synthèse annuelle"] tr')
     .filter({ has: page.getByRole('rowheader', { name: label, exact: true }) })
     .locator(`td:nth-child(${column})`);
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 test.beforeEach(async ({ page }) => {
@@ -71,6 +76,9 @@ test.beforeEach(async ({ page }) => {
 
 test('les chiffres 2024 à 2026 retombent sur expected.json', async ({ page }, testInfo) => {
   const phone = isPhone(testInfo);
+  // Les lignes « dont » et les loyers sont dans des détails repliés (itération 3 bis).
+  await openDetail(page, 'Échéances de prêt (période louée)');
+  await openDetail(page, 'Rendement brut');
   for (const year of YEARS) {
     for (const [label, value] of CHECKS) {
       await expect(cell(page, phone, label, year), `${label} ${year}`).toHaveText(value(year));

@@ -67,6 +67,37 @@ export function formatDecimal(value: number): string {
   return decimalFormat.format(value);
 }
 
+const twoDecimalsFormat = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Mois de location, toujours avec deux décimales : 7.49589 → « 7,50 », 12 → « 12,00 ». */
+export function formatMonths(value: number): string {
+  return twoDecimalsFormat.format(value);
+}
+
+const MONTH_NAMES = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+];
+
+/** « 2032-12-05 » → « décembre 2032 » (sans passer par Date). */
+export function formatMonthYear(date: IsoDate): string {
+  const [year, month] = date.split('-');
+  return `${MONTH_NAMES[Number(month) - 1]} ${year}`;
+}
+
 /**
  * Lit un taux saisi en pourcentage (« 1,5 », « 1.5 % ») et le renvoie en décimal (0.015).
  * Renvoie `null` si la saisie n'est pas valide.

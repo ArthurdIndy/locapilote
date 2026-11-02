@@ -43,7 +43,7 @@ export function WelcomePage() {
           type="button"
           className="choice"
           disabled={busy}
-          onClick={() => start(() => startEmpty(db), '#/biens')}
+          onClick={() => start(() => startEmpty(db), '#/mon-bien')}
         >
           <strong>Démarrer vide</strong>
           <span>
@@ -52,8 +52,8 @@ export function WelcomePage() {
         </button>
       </div>
       <p className="muted small">
-        Tu pourras changer d’avis plus tard depuis la page Données (import d’une sauvegarde ou du
-        jeu de test).
+        Tu pourras changer d’avis plus tard depuis ⚙ Paramètres (import d’une sauvegarde ou du jeu
+        de test).
       </p>
       {error && <p className="error-text">Erreur : {error}</p>}
     </section>

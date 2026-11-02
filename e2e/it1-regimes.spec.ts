@@ -1,5 +1,13 @@
 /** Recette de la pull request #3 : régimes fiscaux compatibles avec le type de location. */
-import { createProperty, expect, goTo, startEmpty, startWithTestData, test } from './helpers';
+import {
+  createProperty,
+  expect,
+  goTo,
+  goToProperty,
+  startEmpty,
+  startWithTestData,
+  test,
+} from './helpers';
 
 test('la liste des régimes dépend du type de location', async ({ page }) => {
   await startEmpty(page);
@@ -17,7 +25,7 @@ test('la liste des régimes dépend du type de location', async ({ page }) => {
 
 test('passer en location nue vide un régime LMNP et bloque l’enregistrement', async ({ page }) => {
   await startWithTestData(page);
-  await goTo(page, 'Biens');
+  await goToProperty(page, 'Informations');
   await page.getByRole('button', { name: 'Modifier' }).click();
   await expect(page.getByLabel('Régime fiscal')).toHaveValue('lmnp-reel');
   await page.getByLabel('Type de location').selectOption({ label: 'Nue' });
@@ -28,7 +36,9 @@ test('passer en location nue vide un régime LMNP et bloque l’enregistrement',
   await page.getByLabel('Régime fiscal').selectOption({ label: 'Réel foncier' });
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Bien « Appartement exemple » modifié.')).toBeVisible();
-  await expect(page.getByText(/Nue · Réel foncier/)).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Informations du bien' })).toContainText(
+    'Réel foncier',
+  );
 });
 
 test('un nouveau bien meublé peut être en LMP au réel', async ({ page }) => {
@@ -37,13 +47,16 @@ test('un nouveau bien meublé peut être en LMP au réel', async ({ page }) => {
   await page.getByLabel('Nom du bien *').fill('Meublé LMP');
   await page.getByLabel('Date d’acquisition *').fill('2021-01-01');
   await page.getByRole('button', { name: 'Créer le bien' }).click();
-  await expect(page.getByText(/Meublée · LMP au réel/)).toBeVisible();
+  await expect(page.getByText('Bien « Meublé LMP » créé.')).toBeVisible();
+  const facts = page.getByRole('region', { name: 'Informations du bien' });
+  await expect(facts).toContainText('Meublée');
+  await expect(facts).toContainText('LMP au réel');
 });
 
 test('l’import refuse une sauvegarde avec un régime incompatible', async ({ page }) => {
   await startEmpty(page);
   await createProperty(page, 'Bien valide');
-  await goTo(page, 'Données');
+  await goTo(page, 'Paramètres');
   const backup = {
     application: 'locapilote',
     formatVersion: 1,
@@ -75,6 +88,6 @@ test('l’import refuse une sauvegarde avec un régime incompatible', async ({ p
     buffer: Buffer.from(JSON.stringify(backup)),
   });
   await expect(page.getByText(/n’est pas compatible avec son type de location/)).toBeVisible();
-  await goTo(page, 'Biens');
+  await goToProperty(page, 'Informations');
   await expect(page.getByRole('heading', { name: 'Bien valide' })).toBeVisible();
 });

@@ -74,7 +74,6 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
 
   return (
     <div className="stack">
-      <h2>Données</h2>
       {status && (
         <p className={status.kind === 'success' ? 'success' : 'error-text'} role="status">
           {status.text}

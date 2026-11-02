@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatMonths,
+  formatMonthYear,
   centsToInput,
   formatDate,
   formatEuros,
@@ -91,5 +93,20 @@ describe('isPlausibleDate', () => {
     expect(isPlausibleDate('2101-01-01')).toBe(false);
     expect(isPlausibleDate('2025-02-29')).toBe(false);
     expect(isPlausibleDate('')).toBe(false);
+  });
+});
+
+describe('formatMonths', () => {
+  it('affiche toujours deux décimales', () => {
+    expect(formatMonths(7.495890410958904)).toBe('7,50');
+    expect(formatMonths(12)).toBe('12,00');
+    expect(formatMonths(9.994520547945205)).toBe('9,99');
+  });
+});
+
+describe('formatMonthYear', () => {
+  it('donne le mois en toutes lettres', () => {
+    expect(formatMonthYear('2032-12-05')).toBe('décembre 2032');
+    expect(formatMonthYear('2018-01-05')).toBe('janvier 2018');
   });
 });
