@@ -99,39 +99,63 @@ Vérifiées le 01/11/2026. Les sites officiels n'étaient pas consultables direc
 - **L'excédent d'amortissement est reportable sans limite de durée** : la fraction non déduite « peut être déduite du résultat des exercices suivants », dans la même limite ([BOI-BIC-AMT-20-40-10-30](https://bofip.impots.gouv.fr/bofip/4555-PGP.html/identifiant=BOI-BIC-AMT-20-40-10-30-20120912)) ; pour le LMNP, « les amortissements non déduits sont reportables sur les années suivantes sans limitation dans le temps », le report cessant à la vente du logement ou à l'arrêt de la location ([impots.gouv.fr, les régimes d'imposition](https://www.impots.gouv.fr/particulier/les-regimes-dimposition)).
 - **Intérêts et assurance emprunteur déductibles** : au réel, le loueur meublé déduit ses dépenses effectivement payées, dont les intérêts d'emprunt ([impots.gouv.fr, FAQ régime des locations meublées, mars 2026](https://www.impots.gouv.fr/sites/default/files/media/1_metier/5_international/actualite/faq-lmnp-03_2026.pdf)) ; les intérêts sont des charges financières déductibles ([BOI-BIC-CHG-50-20-10](https://bofip.impots.gouv.fr/bofip/990-PGP.html/identifiant=BOI-BIC-CHG-50-20-10-20120912)) ; les primes d'une assurance garantissant le remboursement d'un prêt, **lorsqu'elle est imposée par le contrat de prêt**, « revêtent le caractère de charges financières au même titre que l'intérêt » ([BOI-BIC-CHG-40-20-20](https://bofip.impots.gouv.fr/bofip/803-PGP.html/identifiant=BOI-BIC-CHG-40-20-20-20130408)).
 - **Amortissement au prorata temporis** : le point de départ de l'amortissement linéaire est le jour de la mise en service effective, et la première annuité est réduite au prorata du temps écoulé ; pour le linéaire, le temps s'apprécie en jours ([BOI-BIC-AMT-20-10](https://bofip.impots.gouv.fr/bofip/4543-PGP.html/identifiant=BOI-BIC-AMT-20-10-20120912), [BOI-BIC-AMT-20-20-30](https://bofip.impots.gouv.fr/bofip/4699-PGP.html/identifiant=BOI-BIC-AMT-20-20-30-20120912)).
-- Pour mémoire (plus-value, itération 4) : depuis la loi de finances pour 2025, les amortissements déduits viennent réduire le prix d'acquisition (§ 5).
+- Plus-value : voir les sources du § 5.
 
 ## 5. Revente (Revente, Vendre quand)
 
-**Somme perçue** = prix − frais d'agence − frais divers de vente − capital restant dû à la date de vente − indemnités de remboursement anticipé − impôt sur la plus-value.
+Moteur : `src/engine/core/sale.ts` (somme perçue, commun à tous les régimes), `src/engine/tax/capital-gain/` (un module de plus-value par régime : `private-individuals.ts` pour les règles des particuliers, `index.ts` pour le choix du module ; seul le LMNP réel est disponible, les autres régimes affichent « non calculé »), assemblés par `src/engine/sale-simulation.ts`. Testé contre les blocs « revente » et « vendre_quand » de `data/expected.json`.
+
+**Somme perçue** = prix − frais d'agence (% du prix) − frais divers de vente − capital restant dû à la date de vente (tous les prêts du bien, échéances datées au plus tard ce jour-là) − indemnités de remboursement anticipé − impôt sur la plus-value. Somme disponible pour le prochain achat = somme nette − autres dettes (hypothèse).
 
 **Plus-value** (régime des particuliers, applicable au LMNP) :
 
-- Durée de détention = années pleines entre la date d'acquisition et la date de vente.
+- Durée de détention = années pleines (révolues) entre la date d'acquisition et la date de vente (comme DATEDIF « y »).
 - Prix de cession = prix − frais d'agence − frais divers.
 - Prix d'acquisition corrigé = prix d'achat hors mobilier + MAX(frais d'acquisition réels, 7,5 % du prix) + 15 % du prix si détention de plus de 5 ans (forfait travaux) − amortissements déduits.
-- **Amortissements déduits** : depuis la loi de finances 2025 (cessions à partir du 15/02/2025), les amortissements effectivement déduits sont réintégrés ; ceux mis en report ne le sont pas, ni ceux du mobilier. Pour une année dont le stock du comptable est saisi : dotation + report de début − stock du comptable ; sinon les amortissements utilisés calculés. Seules les années antérieures à l'année de la vente sont comptées. Pour les années futures (simulation) : hypothèse annuelle saisie.
+- **Amortissements déduits** : depuis la loi de finances 2025 (cessions à partir du 15/02/2025), les amortissements effectivement déduits minorent le prix d'acquisition ; ceux mis en report ne le sont pas. Pour une année dont le stock du comptable est saisi : dotation + report de début − stock du comptable ; sinon les amortissements utilisés calculés. Seules les années antérieures à l'année de la vente sont comptées, à partir de l'année de mise en location. Pour les années postérieures à la date de mise à jour des données (simulation) : hypothèse annuelle saisie. Comme l'Excel de référence, Locapilote réintègre le total des amortissements déduits, sans isoler ceux du mobilier ni des travaux (voir « Point ouvert » ci-dessous).
 - Plus-value = MAX(0, prix de cession − prix d'acquisition corrigé).
 - Abattement impôt sur le revenu : 0 avant 6 ans, 6 % par an de la 6e à la 21e année, 100 % au-delà (la 22e année ajoute 4 %).
-- Abattement prélèvements sociaux : 1,65 % par an de la 6e à la 21e année, 28 % à 22 ans, puis 9 % par an, 100 % après 30 ans.
-- Impôt = plus-value × (1 − abattement IR) × 19 % + plus-value × (1 − abattement PS) × 17,2 %. Surtaxe au-delà de 50 000 € de plus-value imposable : non calculée, signalée.
+- Abattement prélèvements sociaux : 1,65 % par an de la 6e à la 21e année, 28 % à 22 ans (la 22e ajoute 1,60 %), puis 9 % par an, 100 % après 30 ans.
+- Impôt = plus-value × (1 − abattement IR) × 19 % + plus-value × (1 − abattement PS) × 17,2 % (taux modifiables dans les hypothèses), arrondi au centime. Surtaxe au-delà de 50 000 € de plus-value imposable à l'impôt sur le revenu : non calculée, signalée.
 
-**Exonération pour remploi** (première cession d'un logement autre que la résidence principale, CGI art. 150 U II 1° bis) : condition remplie si la vente a lieu au moins 4 ans (de date à date) après la fin d'occupation comme résidence principale ; impôt évité = impôt × part du prix réinvestie dans une résidence principale sous 24 mois.
+**Exonération pour remploi** (première cession d'un logement autre que la résidence principale, CGI art. 150 U II 1° bis) : condition remplie si la vente a lieu au moins 4 ans (de date à date) après la fin d'occupation comme résidence principale ; sans objet si le bien n'a jamais été la résidence principale. Impôt évité = impôt × part du prix réinvestie dans une résidence principale sous 24 mois. Les autres conditions (première cession, pas d'autre résidence principale détenue dans les 4 ans) ne sont pas vérifiées : à confirmer avec le notaire.
+
+**Point ouvert** (à trancher par le product owner) : la notice 2048-IMM vise les « amortissements du prix d'acquisition » du logement, et exclut ceux des travaux (déjà retirés du montant réel des travaux, ligne 23). Le mobilier n'est pas dans le prix d'acquisition retenu (prix hors mobilier). L'Excel de référence, et donc `expected.json`, réintègre le total des amortissements déduits, mobilier et travaux compris. Isoler la part du bâtiment demanderait de répartir les amortissements utilisés entre composants.
 
 ## 6. Vendre quand : bilan depuis l'achat
 
-Flux mensuels, du mois d'acquisition à la date de vente :
+Moteur : `src/engine/core/irr.ts`.
 
-- loyer évité pendant l'occupation comme résidence principale (hypothèse indexée chaque année, au prorata des jours du mois) ;
-- échéances de prêt (toutes, y compris avant la location) ;
+Flux mensuels, du mois d'acquisition au dernier mois dont le 15 précède ou égale la date de vente, datés du 15 du mois :
+
+- loyer évité pendant l'occupation comme résidence principale : loyer à l'achat × (1 + indexation)^(années pleines depuis l'achat), au prorata des jours du mois passés entre l'achat et la fin de la résidence principale ;
+- échéances de prêt (toutes, y compris avant la location et après la date de mise à jour) ;
 - dépenses payées avant la location (saisies à part) ;
-- mouvements réels du journal jusqu'à la date de mise à jour ;
-- après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, indexée chaque année.
+- mouvements réels du journal jusqu'à la date de mise à jour (recettes − dépenses, transferts et dépôt exclus) ;
+- pour les mois commençant après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, × (1 + évolution)^(année du mois − année de la date de mise à jour).
 
-Plus l'apport à la date d'achat (négatif) et la somme nette de la vente moins les frais de l'année de vente.
+Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme nette de la vente (sans l'exonération pour remploi) moins les frais de l'année de vente.
+
+Les flux calculés (loyer évité, projection) ne sont pas arrondis au centime, comme dans l'Excel ; ils le sont à l'affichage.
 
 - Gain total = somme des flux. TRI = taux annuel qui annule la valeur actuelle des flux datés (XIRR, base 365 jours).
-- Rendement de l'attente entre deux scénarios = (gain du scénario − gain du précédent) / somme nette du précédent / (écart de dates en années).
+- D'ici la vente (mois commençant après la date de mise à jour) : nombre de mois ; cash-flow à remettre = échéances + projection − frais de l'année de vente ; capital remboursé = capital des échéances datées après la date de mise à jour et au plus tard à la vente.
+- Rendement de l'attente entre deux scénarios (triés par date) = (gain du scénario − gain du précédent) / somme nette du précédent / (écart de dates en jours / 365).
+
+**Comparaison à un placement de référence** (taux et libellé saisis dans ⚙ Paramètres, sans valeur par défaut) : gain par rapport au placement = Σ flux × (1 + taux)^(jours entre le flux et la date de vente / 365), c'est-à-dire la valeur à la date de vente de tous les flux du propriétaire, chacun capitalisé (ou actualisé) au taux du placement. Positif : le bien a rapporté plus que si chaque somme versée ou reçue avait été placée à ce taux. Il vaut 0 quand le taux du placement est égal au TRI (test automatique). Hors fiscalité du placement.
+
+**Synthèse, « si je vends aujourd'hui »** : même calcul pour une vente à la date du jour au prix de la valeur estimée du bien (Mon bien) ; affiché dans le bloc Rentabilité, dans la colonne de la dernière année.
+
+## Sources des règles de la plus-value (§ 5)
+
+Vérifiées le 02/11/2026 directement sur impots.gouv.fr et bofip.impots.gouv.fr. Légifrance n'a pas pu être consulté depuis l'environnement de développement (page de vérification anti-robot) : les articles du CGI cités sont ceux mentionnés par ces pages officielles.
+
+- **Taux 19 % et 17,2 %, abattements pour durée de détention** : [impots.gouv.fr, plus-values imposées](https://www.impots.gouv.fr/particulier/plus-values-imposees) (« impôt sur le revenu au taux de 19 % » ; « taux global de 17,2 % » ; « 6 % pour chaque année de détention au-delà de la cinquième et jusqu'à la vingt-et-unième ; 4 % pour la vingt-deuxième année révolue ») ; [BOI-RFPI-PVI-20-20 § 70](https://bofip.impots.gouv.fr/bofip/292-PGP.html/identifiant=BOI-RFPI-PVI-20-20-20230718) (prélèvements sociaux : « 1,65 % pour chaque année de détention au-delà de la cinquième et jusqu'à la vingt-et-unième ; 1,60 % pour la vingt-deuxième année de détention ; 9 % pour chaque année au-delà de la vingt-deuxième »).
+- **Prélèvements sociaux en 2026 : 17,2 % maintenu pour les plus-values immobilières** : la LFSS pour 2026 (art. 12 ; CSS art. L136-8) porte la CSG de 9,2 % à 10,6 % sur les revenus du patrimoine, mais « les revenus fonciers, les plus-values immobilières, l'assurance-vie, l'épargne logement restent soumis au taux de 9,2 % » ([brochure pratique IR 2026, principales nouveautés](https://www.impots.gouv.fr/www2/fichiers/documentation/brochure/ir_2026/pdf_som/nouveautes.pdf)). Le formulaire [2048-IMM-SD de 2026 (05-2026)](https://www.impots.gouv.fr/sites/default/files/formulaires/2048-imm/2026/2048-imm_5457.pdf) applique CSG 9,2 % + CRDS 0,5 % + prélèvement de solidarité 7,5 % = 17,2 %, et l'impôt à 19 %. À noter : les revenus de location meublée (BIC), eux, passent à 18,6 % (à reprendre pour l'impôt estimé, voir le backlog).
+- **Frais d'acquisition 7,5 % et forfait travaux 15 %** : CGI art. 150 VB II ; formulaire 2048-IMM 2026, lignes 22 et 23 (« montant réel ou fixé à 7,5 % du prix d'acquisition » ; « montant forfaitaire égal à 15 % du prix d'acquisition si immeuble bâti détenu depuis plus de 5 ans »).
+- **Réintégration des amortissements (LF 2025, art. 84 ; CGI art. 150 VB III)** : « pour les ventes réalisées à partir du 15 février 2025, si vous étiez au régime réel, les amortissements déduits pendant la location sont retirés du prix d'achat initial », sauf certaines résidences gérées (étudiants, seniors) ([FAQ location meublée, mars 2026](https://www.impots.gouv.fr/sites/default/files/media/1_metier/5_international/actualite/faq-lmnp-03_2026.pdf) ; [impots.gouv.fr, vente d'un bien loué meublé](https://www.impots.gouv.fr/particulier/questions/je-vends-un-bien-immobilier-donne-en-location-meublee-comment-se-calcule-la), modifié le 10/07/2026). Notice [2048-IMM-NOT-SD](https://www.impots.gouv.fr/sites/default/files/formulaires/2048-imm/2025/2048-imm_5091.pdf), ligne 25 : « les amortissements du prix d'acquisition admis en déduction en application de l'article 39 C du CGI viennent en minoration de celui-ci » ; ceux des dépenses de travaux ne sont pas à reporter ligne 25 (voir le point ouvert du § 5).
+- **Exonération pour remploi (CGI art. 150 U II 1° bis)** : [BOI-RFPI-PVI-10-40-30](https://bofip.impots.gouv.fr/bofip/7284-PGP.html/identifiant=BOI-RFPI-PVI-10-40-30-20210707) : le cédant ne doit pas avoir été « propriétaire de sa résidence principale au cours des quatre années précédant la cession » ; remploi sous 24 mois ; exonération « dans la limite de la fraction du prix de cession » remployée (remploi partiel : exonération au prorata).
+- **Surtaxe sur les plus-values élevées** : CGI art. 1609 nonies G, au-delà de 50 000 € de plus-value imposable ; non calculée par Locapilote.
 
 ## 7. Type de location et régime fiscal (Biens)
 

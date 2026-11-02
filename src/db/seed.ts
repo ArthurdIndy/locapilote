@@ -403,5 +403,7 @@ export function parseSeed(raw: RawSeed): Dataset {
     accountantFilings,
     preRentalExpenses,
     assumptions,
+    // Pas de placement de référence par défaut : chacun saisit le sien (⚙ Paramètres).
+    householdSettings: [],
   };
 }

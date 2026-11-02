@@ -5,7 +5,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Sujet | Description | Origine |
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
-| Rentabilité réelle : TRI et comparaison à un placement | Voir le détail ci-dessous ; à intégrer à l'itération 4 avec US11 | Demande d'Arthur, 01/11/2026 |
+| Rentabilité réelle : TRI et comparaison à un placement | Voir le détail ci-dessous ; à intégrer à l'itération 4 avec US11 | Demande d'Arthur, 01/11/2026 · **fait à l'itération 4a** |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis** |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
@@ -49,7 +49,7 @@ Le résultat fiscal (US09) n'est pas de l'argent : c'est la base de l'impôt. Po
 - **Cash-flow après impôt** = cash-flow − impôt estimé, dans la synthèse ; mensualisé comme le cash-flow.
 - Calcul simplifié, signalé comme tel : pas de calcul complet du barème, ni de quotient familial.
 
-À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (17,2 %, ou taux relevé par une loi de finances récente), barème en vigueur, imputation d'un déficit.
+À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (18,6 % depuis la LFSS 2026 d'après la brochure IR 2026 d'impots.gouv.fr, à confirmer ; les plus-values immobilières restent à 17,2 %), barème en vigueur, imputation d'un déficit.
 
 ## Rentabilité réelle : TRI et comparaison à un placement (itération 4, avec US11)
 

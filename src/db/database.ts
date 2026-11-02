@@ -15,6 +15,7 @@ import type {
   Asset,
   Category,
   Dataset,
+  HouseholdSettings,
   IsoDate,
   Loan,
   LoanInstallment,
@@ -26,7 +27,7 @@ import type {
 } from '../engine/types';
 import { defaultAssumptions } from './defaultAssumptions';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export class LocapiloteDb extends Dexie {
   properties!: Table<Property, string>;
@@ -40,6 +41,7 @@ export class LocapiloteDb extends Dexie {
   accountantFilings!: Table<AccountantFiling, [string, number]>;
   preRentalExpenses!: Table<PreRentalExpense, number>;
   assumptions!: Table<PropertyAssumptions, string>;
+  householdSettings!: Table<HouseholdSettings, string>;
 
   constructor(name = 'locapilote') {
     super(name);
@@ -69,6 +71,8 @@ export class LocapiloteDb extends Dexie {
             if (!asset.id) asset.id = crypto.randomUUID();
           });
       });
+    // Version 3 (US11) : paramètres du foyer (placement de référence).
+    this.version(3).stores({ householdSettings: 'id' });
   }
 
   /** Les tables, dans l'ordre du `Dataset`. */
@@ -84,6 +88,7 @@ export class LocapiloteDb extends Dexie {
       this.accountantFilings,
       this.preRentalExpenses,
       this.assumptions,
+      this.householdSettings,
     ];
   }
 
@@ -100,6 +105,7 @@ export class LocapiloteDb extends Dexie {
       accountantFilings: await this.accountantFilings.toArray(),
       preRentalExpenses: await this.preRentalExpenses.toArray(),
       assumptions: await this.assumptions.toArray(),
+      householdSettings: await this.householdSettings.toArray(),
     }));
   }
 
@@ -117,6 +123,7 @@ export class LocapiloteDb extends Dexie {
       await this.accountantFilings.bulkAdd(data.accountantFilings);
       await this.preRentalExpenses.bulkAdd(data.preRentalExpenses);
       await this.assumptions.bulkAdd(data.assumptions);
+      await this.householdSettings.bulkAdd(data.householdSettings);
     });
   }
 
@@ -226,6 +233,19 @@ export class LocapiloteDb extends Dexie {
       const current = (await this.assumptions.get(propertyId)) ?? defaultAssumptions(propertyId);
       await this.assumptions.put({ ...current, dataAsOf });
     });
+  }
+
+  /** Enregistre les hypothèses de simulation d'un bien (vente, projection, scénarios). */
+  async saveAssumptions(assumptions: PropertyAssumptions): Promise<void> {
+    await this.transaction('rw', [this.assumptions, this.properties], async () => {
+      if (!(await this.properties.get(assumptions.propertyId))) throw new Error('Bien inconnu');
+      await this.assumptions.put(assumptions);
+    });
+  }
+
+  /** Enregistre les paramètres du foyer (placement de référence). */
+  async saveHouseholdSettings(settings: HouseholdSettings): Promise<void> {
+    await this.householdSettings.put(settings);
   }
 }
 

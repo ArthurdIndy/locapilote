@@ -14,6 +14,9 @@ import { formatDate, formatEuros, formatMonths, formatPercent } from '../format'
 import { propertyHref, routeHref } from '../router';
 import { useOpenDetails } from '../openDetails';
 import { DataAsOfBar } from './DataAsOfBar';
+import { referenceInvestment, saleToday } from '../saleSummary';
+import type { ReferenceInvestment, SaleSimulation } from '../../engine/sale-simulation';
+import { SaleDisclaimer } from './SaleDisclaimer';
 import { PropertyTitle } from '../components/PropertyTitle';
 
 interface Props {
@@ -74,7 +77,34 @@ function groupRows(
   }));
 }
 
-function buildSections(groups: Groups, propertyId: string): Section[] {
+/** Rentabilité réelle « si je vends aujourd'hui », affichée dans la colonne de la dernière année. */
+interface RealReturn {
+  sale: SaleSimulation | null;
+  reference: ReferenceInvestment | null;
+  lastYear: number;
+}
+
+function realReturnLines({ sale, reference, lastYear }: RealReturn): Line[] {
+  const onlyLast = (y: YearSynthesis, text: () => string) => (y.year === lastYear ? text() : '—');
+  return [
+    {
+      label: 'TRI si je vends aujourd’hui',
+      value: (y) => onlyLast(y, () => percent(sale?.balance.irr ?? null)),
+      strong: true,
+    },
+    {
+      label: reference
+        ? `Gain par rapport au placement (${reference.label ? `${reference.label}, ` : ''}${formatPercent(reference.rate)})`
+        : 'Gain par rapport au placement',
+      value: (y) =>
+        onlyLast(y, () => (reference ? euros(sale?.gainOverReference ?? null) : 'à renseigner')),
+      signed: (y) => (y.year === lastYear ? (sale?.gainOverReference ?? 0) : 0),
+      strong: true,
+    },
+  ];
+}
+
+function buildSections(groups: Groups, propertyId: string, realReturn: RealReturn): Section[] {
   const coOwnership = (y: YearSynthesis) =>
     coOwnershipChargesBorne(groups.byYear.get(y.year) ?? []);
   return [
@@ -148,6 +178,7 @@ function buildSections(groups: Groups, propertyId: string): Section[] {
           value: (y) => percent(y.netYield),
           strong: true,
         },
+        ...realReturnLines(realReturn),
       ],
     },
     {
@@ -224,7 +255,10 @@ export function SynthesisPage({ data, property, today }: Props) {
         .map((g) => g.group),
     );
   const groups: Groups = { byYear, income: groupNames('income'), expense: groupNames('expense') };
-  const sections = [...buildSections(groups, property.id), fiscalSection(taxResults)];
+  const sale = saleToday(data, property, today);
+  const reference = referenceInvestment(data);
+  const realReturn: RealReturn = { sale, reference, lastYear: lastYear?.year ?? 0 };
+  const sections = [...buildSections(groups, property.id, realReturn), fiscalSection(taxResults)];
 
   return (
     <div className="stack">
@@ -360,8 +394,59 @@ export function SynthesisPage({ data, property, today }: Props) {
               </section>
             ))}
           </div>
+          <RealReturnHelp sale={sale} reference={reference} property={property} today={today} />
         </>
       )}
+    </div>
+  );
+}
+
+/** Phrase d'aide sous la synthèse : « ton argent t'a rapporté X % par an, contre Y %… ». */
+function RealReturnHelp({
+  sale,
+  reference,
+  property,
+  today,
+}: {
+  sale: SaleSimulation | null;
+  reference: ReferenceInvestment | null;
+  property: Property;
+  today: string;
+}) {
+  if (!sale || sale.balance.irr === null) {
+    return (
+      <p className="muted small" data-testid="aide-rentabilite">
+        TRI si je vends aujourd’hui : indique la valeur estimée du bien dans{' '}
+        <a href={propertyHref('informations')}>Mon bien</a> pour le calculer.
+      </p>
+    );
+  }
+  const irr = formatPercent(sale.balance.irr);
+  return (
+    <div className="card stack real-return" data-testid="aide-rentabilite">
+      <p>
+        Si tu vendais aujourd’hui ({formatDate(today)}), au prix estimé de{' '}
+        {formatEuros(property.estimatedValue)} :{' '}
+        {reference ? (
+          <>
+            ton argent t’a rapporté <strong>{irr} par an</strong>, contre{' '}
+            {formatPercent(reference.rate)} pour le placement de référence
+            {reference.label ? ` (${reference.label})` : ''}.
+          </>
+        ) : (
+          <>
+            ton argent t’a rapporté <strong>{irr} par an</strong>. Renseigne un placement de
+            référence dans <a href={routeHref('parametres')}>⚙ Paramètres</a> pour comparer.
+          </>
+        )}
+      </p>
+      <p className="muted small">
+        TRI : rendement annuel de l’argent que tu as mis (apport, échéances, dépenses), loyer évité
+        et loyers compris, en revendant au prix estimé après impôt sur la plus-value. Autres dates
+        et prix dans <a href={routeHref('simulations')}>Simulations › Vente</a>. Hors fiscalité du
+        placement de référence.
+      </p>
+      <SaleDisclaimer />
     </div>
   );
 }

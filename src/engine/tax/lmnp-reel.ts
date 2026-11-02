@@ -278,3 +278,56 @@ export function reconcile(
     return { line, tool, accountant, gap, comment, status };
   });
 }
+
+// ---------- Amortissements déduits, à réintégrer dans la plus-value (§ 5) ----------
+
+/** Origine du montant déduit d'une année : comptable, calcul de l'outil, ou hypothèse. */
+export type DeductedDepreciationOrigin = 'accountant' | 'computed' | 'assumption';
+
+export interface DeductedDepreciationYear {
+  year: number;
+  /** Amortissements effectivement déduits cette année-là, en centimes. */
+  amount: Cents;
+  origin: DeductedDepreciationOrigin;
+}
+
+/**
+ * Amortissements effectivement déduits, année par année, de la mise en location à l'année
+ * précédant la vente (ceux de l'année de la vente ne sont pas comptés). Depuis la loi de
+ * finances pour 2025 (cessions à partir du 15/02/2025), ils minorent le prix d'acquisition ;
+ * ceux mis en report ne sont pas réintégrés.
+ *
+ * - année dont le stock du comptable est saisi : dotation + report de début − stock du comptable ;
+ * - autre année jusqu'à la date de mise à jour : amortissements utilisés calculés par l'outil ;
+ * - année postérieure (simulation) : hypothèse annuelle saisie.
+ */
+export function deductedDepreciationByYear(
+  data: Dataset,
+  property: Property,
+  dataAsOf: IsoDate,
+  saleYear: number,
+  assumedPerYear: Cents,
+): DeductedDepreciationYear[] {
+  if (!property.rentalStartDate) return [];
+  const summary = new Map(lmnpReelSummary(data, property, dataAsOf).map((y) => [y.year, y]));
+  const lastDataYear = Number(dataAsOf.slice(0, 4));
+  const rows: DeductedDepreciationYear[] = [];
+  for (let year = Number(property.rentalStartDate.slice(0, 4)); year < saleYear; year++) {
+    if (year > lastDataYear) {
+      rows.push({ year, amount: assumedPerYear, origin: 'assumption' });
+      continue;
+    }
+    const y = summary.get(year);
+    if (!y) continue;
+    if (y.accountantCarryforward !== null) {
+      rows.push({
+        year,
+        amount: y.depreciation + y.carryforwardStart - y.accountantCarryforward,
+        origin: 'accountant',
+      });
+    } else {
+      rows.push({ year, amount: y.depreciationUsed, origin: 'computed' });
+    }
+  }
+  return rows;
+}

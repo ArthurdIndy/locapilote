@@ -97,7 +97,7 @@ test('chaque entrée ouvre sa page', async ({ page }) => {
     ['Mouvements', 'Mouvements · Appartement exemple'],
     ['Synthèse', 'Synthèse · Appartement exemple'],
     ['Fiscalité', 'Fiscalité · Appartement exemple'],
-    ['Simulations', 'Simulations'],
+    ['Simulations', 'Simulations · Appartement exemple'],
     ['Mon bien', 'Mon bien · Appartement exemple'],
     ['Paramètres', 'Paramètres'],
     ['Accueil', 'Mes biens'],
@@ -350,14 +350,11 @@ test('ajouter un bien : bouton en haut de Mon bien, à droite du titre', async (
   await expect(title).toBeVisible();
 });
 
-test('Simulations : page d’attente qui annonce la vente et le budget', async ({
-  page,
-}, testInfo) => {
+test('Simulations : la vente (US11), et le budget annoncé', async ({ page }, testInfo) => {
   await goTo(page, 'Simulations');
   const main = page.getByRole('main');
-  await expect(main).toContainText('Vente');
-  await expect(main).toContainText('Budget');
-  await expect(main).toContainText('itération 4');
+  await expect(main.getByRole('heading', { name: 'Vente', exact: true })).toBeVisible();
+  await expect(main).toContainText('Budget prévisionnel : prochainement');
   await capture(page, testInfo, 'it3bis-simulations');
 });
 

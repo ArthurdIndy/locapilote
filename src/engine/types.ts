@@ -225,6 +225,22 @@ export interface PropertyAssumptions {
   dataAsOf: IsoDate;
 }
 
+/**
+ * Paramètres du foyer (communs à tous les biens). Une seule ligne, d'identifiant `household`.
+ */
+export interface HouseholdSettings {
+  id: 'household';
+  /**
+   * Placement de référence pour juger la rentabilité réelle : taux annuel (0.03 pour 3 %),
+   * `null` tant qu'il n'est pas saisi (aucune valeur imposée).
+   */
+  referenceRate: number | null;
+  /** Libellé libre du placement (« fonds euros », « ETF »…). */
+  referenceLabel: string;
+}
+
+export const HOUSEHOLD_SETTINGS_ID = 'household';
+
 /** L'ensemble des données d'un utilisateur. */
 export interface Dataset {
   properties: Property[];
@@ -237,4 +253,6 @@ export interface Dataset {
   accountantFilings: AccountantFiling[];
   preRentalExpenses: PreRentalExpense[];
   assumptions: PropertyAssumptions[];
+  /** Paramètres du foyer : au plus une ligne. */
+  householdSettings: HouseholdSettings[];
 }

@@ -42,6 +42,7 @@ function normalize(data: Dataset): Dataset {
     ),
     preRentalExpenses: data.preRentalExpenses,
     assumptions: by((a: Dataset['assumptions'][number]) => a.propertyId)(data.assumptions),
+    householdSettings: data.householdSettings,
   };
 }
 
@@ -66,7 +67,14 @@ describe('sauvegarde complète (US18)', () => {
       source: null,
       comment: 'Ligne 1\nLigne 2',
     });
+    // Et le placement de référence (paramètre du foyer, US11).
+    await db.saveHouseholdSettings({
+      id: 'household',
+      referenceRate: 0.035,
+      referenceLabel: 'Fonds euros',
+    });
     const before = await db.readAll();
+    expect(before.householdSettings).toHaveLength(1);
     const file = serializeBackup(buildBackup(before, new Date('2026-10-31T12:00:00Z')));
 
     // Import dans une autre base, qui contenait déjà d'autres données.
@@ -128,9 +136,33 @@ describe('sauvegarde complète (US18)', () => {
     expect(new Set(data.assets.map((a) => a.id)).size).toBe(5);
   });
 
+  it('lit une sauvegarde de la version 2 (avant les paramètres du foyer)', () => {
+    const v2 = JSON.parse(serializeBackup(buildBackup(loadTestDataset())));
+    v2.formatVersion = 2;
+    delete v2.data.householdSettings;
+    expect(parseBackup(JSON.stringify(v2)).data.householdSettings).toEqual([]);
+  });
+
   it('refuse une sauvegarde d’une version future', () => {
     const backup = { ...buildBackup(loadTestDataset()), formatVersion: 99 };
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/plus récente/);
+  });
+});
+
+describe('hypothèses de simulation (US11)', () => {
+  it('enregistre les scénarios de vente d’un bien, et refuse un bien inconnu', async () => {
+    await startWithTestDataset(db);
+    const [assumptions] = await db.assumptions.toArray();
+    await db.saveAssumptions({
+      ...assumptions!,
+      saleScenarios: [{ date: '2030-06-30', price: 30000000 }],
+    });
+    expect((await db.assumptions.get('APPART-01'))!.saleScenarios).toEqual([
+      { date: '2030-06-30', price: 30000000 },
+    ]);
+    await expect(db.saveAssumptions({ ...assumptions!, propertyId: 'inconnu' })).rejects.toThrow(
+      /Bien/,
+    );
   });
 });
 

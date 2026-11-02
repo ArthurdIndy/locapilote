@@ -94,7 +94,9 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
         )}
         {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
         {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
-        {route === 'simulations' && <SimulationsPage />}
+        {route === 'simulations' && (
+          <SimulationsPage data={data} property={current} today={today} />
+        )}
         {route === 'mon-bien' && (
           <MyPropertyPage
             data={data}
@@ -151,7 +153,7 @@ function Layout({ route, children }: LayoutProps) {
                   className="settings-link"
                   href={routeHref('parametres')}
                   aria-label="Paramètres"
-                  title="Paramètres : données (export, import, jeu de test)"
+                  title="Paramètres : placement de référence, données (export, import, jeu de test)"
                   aria-current={route === 'parametres' ? 'page' : undefined}
                 >
                   ⚙
