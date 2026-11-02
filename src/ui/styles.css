@@ -1346,14 +1346,19 @@ ul.warning {
 }
 
 .sale-table th[scope='row'] {
-  min-width: 220px;
+  min-width: 180px;
+}
+
+.sale-table td {
+  white-space: normal;
 }
 
 .scenario-actions {
-  display: inline-flex;
+  display: flex;
   gap: 4px;
   margin-top: 4px;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .assumptions-grid {
