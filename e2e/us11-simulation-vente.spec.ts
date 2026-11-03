@@ -136,6 +136,13 @@ test('le détail du calcul de la plus-value se déplie (⊕)', async ({ page }, 
   await expect(
     cell(page, phone, '− Amortissements déduits à réintégrer', SCENARIOS[0]!),
   ).toHaveText(eur(r['− Amortissements déduits à réintégrer']!));
+  // Note sous la ligne : le total des amortissements est réintégré (comme l'Excel).
+  const note = page
+    .getByText(
+      'Inclut les amortissements de tous les composants (mobilier, équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer : à confirmer avec le notaire.',
+    )
+    .filter({ visible: true });
+  await expect(note).toHaveCount(phone ? 3 : 1);
   await expect(cell(page, phone, 'Plus-value brute', SCENARIOS[1]!)).toHaveText(
     eur(num('Plus-value brute', 1)),
   );
@@ -256,11 +263,14 @@ test('placement de référence : saisi dans ⚙ Paramètres, comparé partout', 
   );
   if (phone) {
     const card = page.getByRole('region', { name: 'Année 2026' });
-    await expect(card.getByText('TRI si je vends aujourd’hui')).toBeVisible();
+    await expect(card.getByText('TRI si je vends aujourd’hui (au 01/11/2026)')).toBeVisible();
     await expect(
       card.getByText(`Gain par rapport au placement (fonds euros, ${pct(0.03)})`),
     ).toBeVisible();
   } else {
+    await expect(
+      page.getByRole('rowheader', { name: 'TRI si je vends aujourd’hui (au 01/11/2026)' }),
+    ).toBeVisible();
     const row = page.locator('table[aria-label="Synthèse annuelle"] tr').filter({
       has: page.getByRole('rowheader', {
         name: `Gain par rapport au placement (fonds euros, ${pct(0.03)})`,

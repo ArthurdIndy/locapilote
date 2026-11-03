@@ -50,7 +50,13 @@ interface Row {
   signed?: (c: Column) => number;
   details?: { id: string; rows: Row[] };
   help?: string;
+  /** Note courte affichée sous la ligne (détail déplié). */
+  note?: string;
 }
+
+/** Les amortissements réintégrés sont le total déduit (comme l'Excel de référence). */
+const DEPRECIATION_NOTE =
+  'Inclut les amortissements de tous les composants (mobilier, équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer : à confirmer avec le notaire.';
 
 interface Section {
   title: string;
@@ -88,6 +94,7 @@ function buildSections(reference: ReferenceInvestment | null, hasTaxModule: bool
         {
           label: '− Amortissements déduits à réintégrer',
           value: (c) => minus(gain(c)!.depreciationDeducted),
+          note: DEPRECIATION_NOTE,
         },
         { label: 'Prix d’acquisition corrigé', value: (c) => euros(gain(c)!.adjustedCost) },
         { label: 'Plus-value brute', value: (c) => euros(gain(c)!.grossGain) },
@@ -415,12 +422,19 @@ export function SalePage({ data, property, today }: Props) {
                       {row.details &&
                         details.isOpen(row.details.id) &&
                         row.details.rows.map((d) => (
-                          <tr key={d.label} className="detail">
-                            <th scope="row">{d.label}</th>
-                            {columns.map((c) => (
-                              <td key={c.index}>{d.value(c)}</td>
-                            ))}
-                          </tr>
+                          <Fragment key={d.label}>
+                            <tr className="detail">
+                              <th scope="row">{d.label}</th>
+                              {columns.map((c) => (
+                                <td key={c.index}>{d.value(c)}</td>
+                              ))}
+                            </tr>
+                            {d.note && (
+                              <tr className="detail detail-note">
+                                <td colSpan={columns.length + 1}>{d.note}</td>
+                              </tr>
+                            )}
+                          </Fragment>
                         ))}
                     </Fragment>
                   ))}
@@ -454,10 +468,17 @@ export function SalePage({ data, property, today }: Props) {
                           {row.details &&
                             details.isOpen(row.details.id) &&
                             row.details.rows.map((d) => (
-                              <div key={d.label} className="detail">
-                                <dt>{d.label}</dt>
-                                <dd>{d.value(c)}</dd>
-                              </div>
+                              <Fragment key={d.label}>
+                                <div className="detail">
+                                  <dt>{d.label}</dt>
+                                  <dd>{d.value(c)}</dd>
+                                </div>
+                                {d.note && (
+                                  <div className="detail detail-note">
+                                    <dt>{d.note}</dt>
+                                  </div>
+                                )}
+                              </Fragment>
                             ))}
                         </Fragment>
                       ))}

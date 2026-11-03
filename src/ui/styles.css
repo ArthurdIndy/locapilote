@@ -1376,3 +1376,12 @@ ul.warning {
 .real-return p {
   margin: 0;
 }
+
+.synthesis-table tr.detail-note td,
+.year-lines .detail-note dt {
+  text-align: left;
+  white-space: normal;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
+}

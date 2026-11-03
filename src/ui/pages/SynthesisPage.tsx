@@ -82,13 +82,14 @@ interface RealReturn {
   sale: SaleSimulation | null;
   reference: ReferenceInvestment | null;
   lastYear: number;
+  today: string;
 }
 
-function realReturnLines({ sale, reference, lastYear }: RealReturn): Line[] {
+function realReturnLines({ sale, reference, lastYear, today }: RealReturn): Line[] {
   const onlyLast = (y: YearSynthesis, text: () => string) => (y.year === lastYear ? text() : '—');
   return [
     {
-      label: 'TRI si je vends aujourd’hui',
+      label: `TRI si je vends aujourd’hui (au ${formatDate(today)})`,
       value: (y) => onlyLast(y, () => percent(sale?.balance.irr ?? null)),
       strong: true,
     },
@@ -257,7 +258,7 @@ export function SynthesisPage({ data, property, today }: Props) {
   const groups: Groups = { byYear, income: groupNames('income'), expense: groupNames('expense') };
   const sale = saleToday(data, property, today);
   const reference = referenceInvestment(data);
-  const realReturn: RealReturn = { sale, reference, lastYear: lastYear?.year ?? 0 };
+  const realReturn: RealReturn = { sale, reference, lastYear: lastYear?.year ?? 0, today };
   const sections = [...buildSections(groups, property.id, realReturn), fiscalSection(taxResults)];
 
   return (
