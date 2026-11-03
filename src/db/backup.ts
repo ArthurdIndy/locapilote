@@ -3,7 +3,7 @@
  *
  * {
  *   "application": "locapilote",
- *   "formatVersion": 3,          // = version du schéma de la base au moment de l'export
+ *   "formatVersion": 4,          // = version du schéma de la base au moment de l'export
  *   "exportedAt": "2026-10-31T17:00:00.000Z",
  *   "data": { properties: [...], categories: [...], transactions: [...], ... }
  * }
@@ -15,6 +15,9 @@
  * Version 2 → 3 (US11) : la liste `householdSettings` (paramètres du foyer : placement de
  * référence) apparaît ; vide à la lecture d'une sauvegarde plus ancienne.
  *
+ * Version 3 → 4 (US11 recentrée) : hypothèses de vente simplifiées et frais d'acquisition réels
+ * sur la fiche du bien (voir `migrations.ts`).
+ *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
 import {
@@ -25,6 +28,7 @@ import {
   type Dataset,
 } from '../engine/types';
 import { SCHEMA_VERSION } from './database';
+import { upgradeDataToV4 } from './migrations';
 
 export const BACKUP_APPLICATION = 'locapilote';
 
@@ -97,7 +101,8 @@ export function parseBackup(text: string): Backup {
     );
   }
   const v2 = version < 2 ? upgradeFromV1(json.data) : json.data;
-  const data = version < 3 ? { ...v2, householdSettings: v2.householdSettings ?? [] } : v2;
+  const v3 = version < 3 ? { ...v2, householdSettings: v2.householdSettings ?? [] } : v2;
+  const data = version < 4 ? upgradeDataToV4(v3) : v3;
   for (const key of DATASET_KEYS) {
     const table = data[key];
     if (!Array.isArray(table) || !table.every(isRow)) {

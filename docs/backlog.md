@@ -5,7 +5,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Sujet | Description | Origine |
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
-| Rentabilité réelle : TRI et comparaison à un placement | Voir le détail ci-dessous ; à intégrer à l'itération 4 avec US11 | Demande d'Arthur, 01/11/2026 · **fait à l'itération 4a** |
+| Rentabilité réelle : TRI, gain total et comparaison à un placement | Voir le détail ci-dessous. **Moteur prêt et testé à l'itération 4a ; affichage reporté** (retiré de Simulations › Vente et de la Synthèse à la recette du 03/11/2026), par exemple sur l'Accueil ou dans un « mode investisseur » | Demande d'Arthur, 01/11/2026 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis** |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
@@ -52,7 +52,10 @@ Le résultat fiscal (US09) n'est pas de l'argent : c'est la base de l'impôt. Po
 
 À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (18,6 % depuis la LFSS 2026 d'après la brochure IR 2026 d'impots.gouv.fr, à confirmer ; les plus-values immobilières restent à 17,2 %), barème en vigueur, imputation d'un déficit.
 
-## Rentabilité réelle : TRI et comparaison à un placement (itération 4, avec US11)
+## Rentabilité réelle : TRI et comparaison à un placement (moteur prêt, affichage reporté)
+
+**État au 03/11/2026** : le moteur calcule le bilan depuis l'achat (loyer évité compris), le gain total, le TRI et le gain par rapport à un placement (`src/engine/core/irr.ts`, testés contre `data/expected.json`). À la recette de l'itération 4a, Arthur a retiré ces indicateurs de l'écran, ainsi que la saisie du loyer évité et du placement de référence (la table des paramètres du foyer reste, vide, dans les données) : Simulations › Vente se limite à « combien je touche, combien d'impôt, ai-je intérêt à attendre ». Reste à décider où les afficher : sur l'Accueil (US21), ou dans un mode « investisseur » ; il faudra alors rétablir la saisie du loyer évité et du placement.
+
 
 « En tant que propriétaire, je veux savoir si mon investissement vaut le coup, c'est-à-dire s'il rapporte plus que mon argent placé ailleurs. »
 

@@ -26,8 +26,9 @@ import type {
   Transaction,
 } from '../engine/types';
 import { defaultAssumptions } from './defaultAssumptions';
+import { upgradeAssumptionsToV4 } from './migrations';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export class LocapiloteDb extends Dexie {
   properties!: Table<Property, string>;
@@ -73,6 +74,28 @@ export class LocapiloteDb extends Dexie {
       });
     // Version 3 (US11) : paramètres du foyer (placement de référence).
     this.version(3).stores({ householdSettings: 'id' });
+    // Version 4 (US11 recentrée) : taux de la plus-value en constantes, frais d'acquisition réels
+    // sur la fiche du bien, valeurs de projection en calcul automatique quand elles valaient 0.
+    // (La table des paramètres du foyer reste, vide : le placement de référence n'est plus saisi.)
+    this.version(4)
+      .stores({})
+      .upgrade(async (tx) => {
+        const costs = new Map<string, number>();
+        const rows = (await tx.table('assumptions').toArray()) as Record<string, unknown>[];
+        for (const row of rows) {
+          const { assumptions, actualAcquisitionCosts } = upgradeAssumptionsToV4(row);
+          costs.set(assumptions.propertyId, actualAcquisitionCosts);
+          await tx.table('assumptions').put(assumptions);
+        }
+        await tx
+          .table('properties')
+          .toCollection()
+          .modify((p: Partial<Property>) => {
+            if (p.actualAcquisitionCosts === undefined) {
+              p.actualAcquisitionCosts = costs.get(p.id ?? '') ?? 0;
+            }
+          });
+      });
   }
 
   /** Les tables, dans l'ordre du `Dataset`. */

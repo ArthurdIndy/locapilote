@@ -362,6 +362,10 @@ export function parseSeed(raw: RawSeed): Dataset {
     throw new Error('Le jeu de test doit contenir exactement un bien');
   }
   const h = raw.hypotheses;
+  // Frais d'acquisition réels : sur la fiche du bien (Mon bien) depuis la version 4.
+  firstProperty.actualAcquisitionCosts = eurosToCents(h.revente.frais_acquisition_reels);
+  // Les valeurs de projection du jeu de test sont gardées comme « valeurs modifiées » : la
+  // somme nette et l'impôt retombent ainsi sur expected.json (le calcul automatique s'en écarte).
   const assumptions = [
     {
       propertyId: firstProperty.id,
@@ -369,9 +373,6 @@ export function parseSeed(raw: RawSeed): Dataset {
         agencyFeesRate: h.revente.frais_agence_pct_prix,
         otherSaleCosts: eurosToCents(h.revente.frais_divers_vente),
         earlyRepaymentPenalty: eurosToCents(h.revente.indemnites_remboursement_anticipe),
-        actualAcquisitionCosts: eurosToCents(h.revente.frais_acquisition_reels),
-        incomeTaxRate: h.revente.taux_ir_plus_value,
-        socialChargesRate: h.revente.taux_ps_plus_value,
       },
       projection: {
         avoidedRentMonthlyAtPurchase: eurosToCents(h.projection.loyer_evite_mensuel_a_l_achat),
@@ -384,7 +385,8 @@ export function parseSeed(raw: RawSeed): Dataset {
         mainResidenceReinvestedShare: h.projection.part_prix_reinvestie_rp,
         otherDebts: eurosToCents(h.projection.autres_dettes),
       },
-      saleScenarios: h.scenarios_vente.map((s) => ({
+      // Un seul scénario à l'ouverture : le premier du jeu de test (les autres servent aux tests).
+      saleScenarios: h.scenarios_vente.slice(0, 1).map((s) => ({
         date: isoDate(s.date, 'Scénario de vente'),
         price: eurosToCents(s.prix),
       })),

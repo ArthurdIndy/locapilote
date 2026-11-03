@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Dataset } from '../engine/types';
 import { BackupError, buildBackup, parseBackup, serializeBackup } from './backup';
@@ -185,5 +186,61 @@ describe('enregistrement d’un mouvement', () => {
     await expect(db.saveTransaction({ ...base, categoryId: 'inconnue' })).rejects.toThrow(
       /Catégorie/,
     );
+  });
+});
+
+describe('migration de la base vers la version 4 (US11 recentrée)', () => {
+  it('reprend les hypothèses saisies et reporte les frais d’acquisition sur le bien', async () => {
+    const name = `test-${n}-v3`;
+    const old = new Dexie(name);
+    old.version(3).stores({
+      properties: 'id',
+      categories: 'id',
+      transactions: 'id, propertyId, date, categoryId',
+      loans: 'id, propertyId',
+      loanInstallments: '[loanId+number], loanId',
+      assets: '++, propertyId, id',
+      accountantCarryforwards: '[propertyId+year], propertyId',
+      accountantFilings: '[propertyId+year], propertyId',
+      preRentalExpenses: '++, propertyId',
+      assumptions: 'propertyId',
+      householdSettings: 'id',
+    });
+    const property = { ...loadTestDataset().properties[0]! };
+    delete property.actualAcquisitionCosts;
+    await old.table('properties').add(property);
+    await old.table('assumptions').add({
+      propertyId: property.id,
+      sale: {
+        agencyFeesRate: 0,
+        otherSaleCosts: 167400,
+        earlyRepaymentPenalty: 0,
+        actualAcquisitionCosts: 2790000,
+        incomeTaxRate: 0.19,
+        socialChargesRate: 0.172,
+      },
+      projection: {
+        avoidedRentMonthlyAtPurchase: 0,
+        avoidedRentIndexation: 0,
+        netRentMonthly: 0,
+        annualExpensesExcludingLoan: 0,
+        annualGrowth: 0,
+        depreciationDeductedPerYear: 418500,
+        saleYearCosts: 0,
+        mainResidenceReinvestedShare: 0,
+        otherDebts: 0,
+      },
+      saleScenarios: [],
+      dataAsOf: '',
+    });
+    old.close();
+
+    const upgraded = new LocapiloteDb(name);
+    const a = (await upgraded.assumptions.get(property.id))!;
+    expect(a.sale).toEqual({ agencyFeesRate: 0, otherSaleCosts: 167400, earlyRepaymentPenalty: 0 });
+    expect(a.projection.depreciationDeductedPerYear).toBe(418500);
+    expect(a.projection.netRentMonthly).toBeNull();
+    expect((await upgraded.properties.get(property.id))!.actualAcquisitionCosts).toBe(2790000);
+    await upgraded.delete();
   });
 });

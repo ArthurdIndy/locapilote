@@ -1,8 +1,8 @@
 import type { IsoDate, PropertyAssumptions } from '../engine/types';
 
 /**
- * Hypothèses d'un bien qui n'en a pas encore : tout à zéro, sauf les taux légaux d'imposition
- * de la plus-value (19 % et 17,2 %). Elles deviendront modifiables avec les simulations (US11).
+ * Hypothèses d'un bien qui n'en a pas encore : frais de vente à zéro, valeurs de projection en
+ * calcul automatique (`null`), aucun scénario (Simulations › Vente en crée un par défaut).
  * `dataAsOf` vide = date du jour (voir `effectiveDataAsOf`).
  */
 export function defaultAssumptions(
@@ -15,19 +15,16 @@ export function defaultAssumptions(
       agencyFeesRate: 0,
       otherSaleCosts: 0,
       earlyRepaymentPenalty: 0,
-      actualAcquisitionCosts: 0,
-      incomeTaxRate: 0.19,
-      socialChargesRate: 0.172,
     },
     projection: {
       avoidedRentMonthlyAtPurchase: 0,
       avoidedRentIndexation: 0,
-      netRentMonthly: 0,
-      annualExpensesExcludingLoan: 0,
-      annualGrowth: 0,
-      depreciationDeductedPerYear: 0,
-      saleYearCosts: 0,
-      mainResidenceReinvestedShare: 0,
+      netRentMonthly: null,
+      annualExpensesExcludingLoan: null,
+      annualGrowth: null,
+      depreciationDeductedPerYear: null,
+      saleYearCosts: null,
+      mainResidenceReinvestedShare: null,
       otherDebts: 0,
     },
     saleScenarios: [],

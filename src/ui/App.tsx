@@ -153,7 +153,7 @@ function Layout({ route, children }: LayoutProps) {
                   className="settings-link"
                   href={routeHref('parametres')}
                   aria-label="Paramètres"
-                  title="Paramètres : placement de référence, données (export, import, jeu de test)"
+                  title="Paramètres : données (export, import, jeu de test)"
                   aria-current={route === 'parametres' ? 'page' : undefined}
                 >
                   ⚙

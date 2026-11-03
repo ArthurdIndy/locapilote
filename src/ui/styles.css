@@ -1335,30 +1335,49 @@ ul.warning {
 
 /* ---------- Simulations › Vente (US11) ---------- */
 
-.sale-table thead th {
-  vertical-align: top;
-}
-
-.scenario-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.sale-table th[scope='row'] {
-  min-width: 180px;
-}
-
-.sale-table td {
-  white-space: normal;
+.sale-card > .toolbar h3 {
+  margin: 0;
+  font-size: 1.15rem;
 }
 
 .scenario-actions {
-  display: flex;
+  display: inline-flex;
   gap: 4px;
-  margin-top: 4px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+}
+
+.sale-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.sale-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sale-detail {
+  padding: 4px 0 8px 12px;
+  border-left: 3px solid var(--border);
+}
+
+.inline-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.inline-value input {
+  width: 5.5em;
 }
 
 .assumptions-grid {
@@ -1373,12 +1392,87 @@ ul.warning {
   font-weight: inherit;
 }
 
-.real-return p {
+.compare-table th[scope='row'] {
+  text-align: left;
+}
+
+.compare-table tr.selected th,
+.compare-table tr.selected td {
+  background: var(--accent-soft);
+}
+
+.compare-table thead th {
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+.compare-table {
+  font-size: 0.88rem;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 6px 5px;
+}
+
+.compare-table .button.small {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.compare-table td.waiting {
+  white-space: normal;
+  text-align: left;
+  min-width: 150px;
+}
+
+.compare-table .scenario-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.compare-table .button.link[aria-pressed='true'] {
+  font-weight: 700;
+}
+
+.scenario-list {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scenario-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.scenario-line.selected {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.scenario-line-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .synthesis-table tr.detail-note td,
-.year-lines .detail-note dt {
+.year-lines .detail-note dt,
+.sale-detail .detail-note dt {
   text-align: left;
   white-space: normal;
   font-size: 0.8rem;

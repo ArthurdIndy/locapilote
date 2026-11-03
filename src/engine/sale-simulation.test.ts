@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import expected from '../../data/expected.json';
+import seed from '../../data/seed.json';
 import { loadTestDataset } from '../db/testDataset';
 import { gainOverReference, xirr } from './core/irr';
 import { centsToEuros } from './money';
 import {
   isSaleSimulation,
   simulateSale,
+  waitingGainBetween,
   waitingYieldBetween,
   type SaleSimulation,
 } from './sale-simulation';
@@ -19,6 +21,11 @@ const dataset = loadTestDataset();
 const property = dataset.properties[0]!;
 const assumptions = dataset.assumptions[0]!;
 const dataAsOf = assumptions.dataAsOf;
+/** Les trois scénarios de seed.json (le jeu de test chargé n'importe que le premier). */
+const SEED_SCENARIOS = seed.hypotheses.scenarios_vente.map((s) => ({
+  date: s.date,
+  price: Math.round(s.prix * 100),
+}));
 
 function simulate(index: number, rate: number | null = null): SaleSimulation {
   const result = simulateSale(
@@ -26,7 +33,7 @@ function simulate(index: number, rate: number | null = null): SaleSimulation {
     property,
     assumptions,
     dataAsOf,
-    assumptions.saleScenarios[index]!,
+    SEED_SCENARIOS[index]!,
     rate === null ? null : { rate, label: 'test' },
   );
   if (!isSaleSimulation(result)) throw new Error(result.error);
@@ -49,12 +56,9 @@ function expectRate(rate: number | null, target: number) {
 }
 
 describe('scénarios « Vendre quand » du jeu de test (expected.json)', () => {
-  it('le jeu de test contient les trois scénarios', () => {
-    expect(assumptions.saleScenarios.map((s) => s.date)).toEqual([
-      '2027-06-30',
-      '2028-06-30',
-      '2029-06-30',
-    ]);
+  it('seed.json contient trois scénarios ; le jeu de test chargé n’importe que le premier', () => {
+    expect(SEED_SCENARIOS.map((s) => s.date)).toEqual(['2027-06-30', '2028-06-30', '2029-06-30']);
+    expect(assumptions.saleScenarios).toEqual([SEED_SCENARIOS[0]]);
   });
 
   const LINES: [string, (s: SaleSimulation) => number, 'eur' | 'rate' | 'raw'][] = [
@@ -127,6 +131,13 @@ describe('scénarios « Vendre quand » du jeu de test (expected.json)', () => {
     });
   });
 
+  it('gain de l’attente entre deux scénarios (onglet Vendre quand, ligne « Gain en plus »)', () => {
+    // (somme nette − somme nette précédente) + cash-flow remis entre les deux dates :
+    // 5 276,52 € puis 4 730,15 € dans data/jeu-de-test.xlsx (Vendre quand, D58 et E58).
+    expectEuros(waitingGainBetween(scenarios[0]!, scenarios[1]!), 5276.52439555728);
+    expectEuros(waitingGainBetween(scenarios[1]!, scenarios[2]!), 4730.15169979016);
+  });
+
   it('rendement de l’attente entre deux scénarios', () => {
     // (gain − gain précédent) / somme nette précédente / années d'attente (onglet Vendre quand).
     expectRate(waitingYieldBetween(scenarios[0]!, scenarios[1]!), 0.0288581898093851);
@@ -191,7 +202,7 @@ describe('bloc « revente » de expected.json (scénario 1)', () => {
 describe('comparaison à un placement de référence', () => {
   it('avec un taux égal au TRI, le gain par rapport au placement vaut 0 €', () => {
     for (const s of scenarios) {
-      const withReference = simulate(assumptions.saleScenarios.indexOf(s.scenario), s.balance.irr);
+      const withReference = simulate(SEED_SCENARIOS.indexOf(s.scenario), s.balance.irr);
       expect(Math.abs(withReference.gainOverReference!)).toBeLessThan(0.5); // < 1 centime à l'arrondi
     }
   });
@@ -258,7 +269,7 @@ describe('règles de la plus-value des particuliers', () => {
       { ...property, taxRegime: 'lmnp-micro-bic' },
       assumptions,
       dataAsOf,
-      assumptions.saleScenarios[1]!,
+      SEED_SCENARIOS[1]!,
     );
     expect(isSaleSimulation(s) && s.capitalGain).toBeNull();
   });

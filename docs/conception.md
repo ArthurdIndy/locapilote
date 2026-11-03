@@ -48,7 +48,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US08 | Suivi | Voir par bien et par année recettes, dépenses, cash-flow, enrichissement, rendements | Mêmes chiffres que l'Excel de référence | Must |
 | US09 | Fiscalité | Obtenir le récapitulatif LMNP réel | Retombe sur les comptes du comptable, écarts expliqués | Must |
 | US10 | Fiscalité | Obtenir le montant à déclarer en micro-BIC, micro-foncier ou réel foncier | La case de la déclaration est indiquée | Should |
-| US11 | Simulations | Comparer plusieurs dates et prix de vente | Mêmes chiffres que l'onglet « Vendre quand » | Must |
+| US11 | Simulations | Savoir combien je toucherais en vendant, combien d'impôt je paierais, et si j'ai intérêt à attendre | Un scénario à l'ouverture (vente dans 12 mois à la valeur estimée) ; somme nette et impôt sur la plus-value mêmes que l'onglet « Vendre quand » ; comparaison avec d'autres dates et gain de l'attente en euros ; TRI et comparaison à un placement calculés mais pas affichés (backlog) | Must |
 | US12 | Simulations | Construire un budget prévisionnel et suivre l'écart avec le réel | Écart par catégorie, mois par mois | Must |
 | US13 | Simulations | Simuler un achat | Projection sur 10 ans, micro et réel comparés | Should |
 | US14 | Simulations | Comparer micro et réel pour un bien existant | Différence d'impôt par année | Could |

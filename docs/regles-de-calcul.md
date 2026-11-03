@@ -105,46 +105,61 @@ Vérifiées le 01/11/2026. Les sites officiels n'étaient pas consultables direc
 
 Moteur : `src/engine/core/sale.ts` (somme perçue, commun à tous les régimes), `src/engine/tax/capital-gain/` (un module de plus-value par régime : `private-individuals.ts` pour les règles des particuliers, `index.ts` pour le choix du module ; seul le LMNP réel est disponible, les autres régimes affichent « non calculé »), assemblés par `src/engine/sale-simulation.ts`. Testé contre les blocs « revente » et « vendre_quand » de `data/expected.json`.
 
-**Somme perçue** = prix − frais d'agence (% du prix) − frais divers de vente − capital restant dû à la date de vente (tous les prêts du bien, échéances datées au plus tard ce jour-là) − indemnités de remboursement anticipé − impôt sur la plus-value. Somme disponible pour le prochain achat = somme nette − autres dettes (hypothèse).
+**Écran (Simulations › Vente)** : il répond à « combien je touche, combien d'impôt, ai-je intérêt à attendre ». Un scénario à l'ouverture : celui du bien, ou à défaut une vente dans 12 mois au prix de la valeur estimée (Mon bien). Le jeu de test n'importe que le premier de ses trois scénarios ; les trois servent aux tests. Saisis par l'utilisateur, dans « Paramètres de vente » : frais d'agence (% du prix), frais divers de vente, indemnités de remboursement anticipé. Frais d'acquisition réels : fiche du bien (Mon bien). Les autres valeurs sont calculées (§ 6) ou sont des constantes.
+
+**Somme perçue** = prix − frais d'agence (% du prix) − frais divers de vente − capital restant dû à la date de vente (tous les prêts du bien, échéances datées au plus tard ce jour-là) − indemnités de remboursement anticipé − impôt sur la plus-value. (Le moteur calcule aussi la somme disponible pour le prochain achat = somme nette − autres dettes ; elle n'est pas affichée.)
 
 **Plus-value** (régime des particuliers, applicable au LMNP) :
 
 - Durée de détention = années pleines (révolues) entre la date d'acquisition et la date de vente (comme DATEDIF « y »).
 - Prix de cession = prix − frais d'agence − frais divers.
 - Prix d'acquisition corrigé = prix d'achat hors mobilier + MAX(frais d'acquisition réels, 7,5 % du prix) + 15 % du prix si détention de plus de 5 ans (forfait travaux) − amortissements déduits.
-- **Amortissements déduits** : depuis la loi de finances 2025 (cessions à partir du 15/02/2025), les amortissements effectivement déduits minorent le prix d'acquisition ; ceux mis en report ne le sont pas. Pour une année dont le stock du comptable est saisi : dotation + report de début − stock du comptable ; sinon les amortissements utilisés calculés. Seules les années antérieures à l'année de la vente sont comptées, à partir de l'année de mise en location. Pour les années postérieures à la date de mise à jour des données (simulation) : hypothèse annuelle saisie. Comme l'Excel de référence, Locapilote réintègre le total des amortissements déduits, sans isoler ceux du mobilier ni des travaux (voir « Point ouvert » ci-dessous).
+- **Amortissements déduits** : depuis la loi de finances 2025 (cessions à partir du 15/02/2025), les amortissements effectivement déduits minorent le prix d'acquisition ; ceux mis en report ne le sont pas. Pour une année dont le stock du comptable est saisi : dotation + report de début − stock du comptable ; sinon les amortissements utilisés calculés. Seules les années antérieures à l'année de la vente sont comptées, à partir de l'année de mise en location. Pour les années postérieures à la date de mise à jour des données (simulation) : par défaut, les amortissements déduits de la dernière année complète (même règle : stock du comptable s'il est saisi), modifiables dans le détail ⊕ de la plus-value. Comme l'Excel de référence, Locapilote réintègre le total des amortissements déduits, sans isoler ceux du mobilier ni des travaux (voir « Point ouvert » ci-dessous).
 - Plus-value = MAX(0, prix de cession − prix d'acquisition corrigé).
 - Abattement impôt sur le revenu : 0 avant 6 ans, 6 % par an de la 6e à la 21e année, 100 % au-delà (la 22e année ajoute 4 %).
 - Abattement prélèvements sociaux : 1,65 % par an de la 6e à la 21e année, 28 % à 22 ans (la 22e ajoute 1,60 %), puis 9 % par an, 100 % après 30 ans.
-- Impôt = plus-value × (1 − abattement IR) × 19 % + plus-value × (1 − abattement PS) × 17,2 % (taux modifiables dans les hypothèses), arrondi au centime. Surtaxe au-delà de 50 000 € de plus-value imposable à l'impôt sur le revenu : non calculée, signalée.
+- Impôt = plus-value × (1 − abattement IR) × 19 % + plus-value × (1 − abattement PS) × 17,2 %, arrondi au centime. Les deux taux sont des constantes du module fiscal (`INCOME_TAX_RATE`, `SOCIAL_CHARGES_RATE` dans `private-individuals.ts`), sourcées ci-dessous. Surtaxe au-delà de 50 000 € de plus-value imposable à l'impôt sur le revenu : non calculée, signalée.
 
-**Exonération pour remploi** (première cession d'un logement autre que la résidence principale, CGI art. 150 U II 1° bis) : condition remplie si la vente a lieu au moins 4 ans (de date à date) après la fin d'occupation comme résidence principale ; sans objet si le bien n'a jamais été la résidence principale. Impôt évité = impôt × part du prix réinvestie dans une résidence principale sous 24 mois. Les autres conditions (première cession, pas d'autre résidence principale détenue dans les 4 ans) ne sont pas vérifiées : à confirmer avec le notaire.
+**Exonération pour remploi** (première cession d'un logement autre que la résidence principale, CGI art. 150 U II 1° bis) : condition remplie si la vente a lieu au moins 4 ans (de date à date) après la fin d'occupation comme résidence principale ; sans objet si le bien n'a jamais été la résidence principale. Impôt évité = impôt × part du prix réinvestie dans une résidence principale sous 24 mois (100 % par défaut, modifiable dans la ligne du remploi). Affichage : « Exonéré si tu réinvestis dans ta résidence principale (impôt évité : X €) » si la condition est remplie, sinon « Exonération possible à partir du JJ/MM/AAAA » ; rien si le bien n'a jamais été la résidence principale. Les autres conditions (première cession, pas d'autre résidence principale détenue dans les 4 ans) ne sont pas vérifiées : à confirmer avec le notaire.
 
 **Point ouvert** (décision d'Arthur du 03/11/2026 : on garde le total, comme l'Excel ; le calcul « logement seul » est au backlog) : la notice 2048-IMM vise les « amortissements du prix d'acquisition » du logement, et exclut ceux des travaux (déjà retirés du montant réel des travaux, ligne 23). Le mobilier n'est pas dans le prix d'acquisition retenu (prix hors mobilier). L'Excel de référence, et donc `expected.json`, réintègre le total des amortissements déduits, mobilier et travaux compris. L'écran le signale sous la ligne « Amortissements déduits à réintégrer » du détail de la plus-value, avec un renvoi au notaire.
 
-## 6. Vendre quand : bilan depuis l'achat
+## 6. Vendre quand : d'ici la vente, gain de l'attente, bilan depuis l'achat
 
-Moteur : `src/engine/core/irr.ts`.
+Moteur : `src/engine/core/irr.ts` (bilan, gain de l'attente, TRI), `src/engine/sale-defaults.ts` (valeurs calculées).
 
-Flux mensuels, du mois d'acquisition au dernier mois dont le 15 précède ou égale la date de vente, datés du 15 du mois :
+**Valeurs calculées automatiquement** (chacune remplaçable par une valeur modifiée ; vide = calcul automatique) :
 
-- loyer évité pendant l'occupation comme résidence principale : loyer à l'achat × (1 + indexation)^(années pleines depuis l'achat), au prorata des jours du mois passés entre l'achat et la fin de la résidence principale ;
+- loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, hors investissements (« À amortir ») et dépenses à qualifier (« À valider »). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours). Le budget (US12) les fournira à l'itération 4b ;
+- évolution annuelle des loyers et des charges : 1,5 % ;
+- frais de l'année de la vente : honoraires du comptable (catégories dont le nom contient « comptab ») de la dernière année complète ;
+- amortissements déduits des années futures : voir § 5 ;
+- part du prix réinvestie : 100 %.
+
+Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : recettes 1 160,06 €/mois, dépenses 7 812,51 €/an, amortissements 7 307,73 €/an (2025), frais 558 €.
+
+**Mise à jour (version 4 des données)** : les valeurs non nulles déjà saisies sont reprises comme valeurs modifiées ; celles à 0 passent en calcul automatique ; les taux de 19 % et 17,2 % sortent des hypothèses ; les frais d'acquisition réels passent sur la fiche du bien.
+
+**Flux mensuels** du mois d'acquisition au dernier mois dont le 15 précède ou égale la date de vente, datés du 15 du mois :
+
+- loyer évité pendant l'occupation comme résidence principale : loyer à l'achat × (1 + indexation)^(années pleines depuis l'achat), au prorata des jours du mois passés entre l'achat et la fin de la résidence principale (hypothèse du moteur, non affichée ni saisie à l'écran) ;
 - échéances de prêt (toutes, y compris avant la location et après la date de mise à jour) ;
 - dépenses payées avant la location (saisies à part) ;
 - mouvements réels du journal jusqu'à la date de mise à jour (recettes − dépenses, transferts et dépôt exclus) ;
 - pour les mois commençant après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, × (1 + évolution)^(année du mois − année de la date de mise à jour).
 
-Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme nette de la vente (sans l'exonération pour remploi) moins les frais de l'année de vente.
+Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme nette de la vente (sans l'exonération pour remploi) moins les frais de l'année de vente. Les flux calculés (loyer évité, projection) ne sont pas arrondis au centime, comme dans l'Excel ; ils le sont à l'affichage.
 
-Les flux calculés (loyer évité, projection) ne sont pas arrondis au centime, comme dans l'Excel ; ils le sont à l'affichage.
+**Affiché à l'écran** :
 
-- Gain total = somme des flux. TRI = taux annuel qui annule la valeur actuelle des flux datés (XIRR, base 365 jours).
-- D'ici la vente (mois commençant après la date de mise à jour) : nombre de mois ; cash-flow à remettre = échéances + projection − frais de l'année de vente ; capital remboursé = capital des échéances datées après la date de mise à jour et au plus tard à la vente.
-- Rendement de l'attente entre deux scénarios (triés par date) = (gain du scénario − gain du précédent) / somme nette du précédent / (écart de dates en jours / 365).
+- D'ici la vente (mois commençant après la date de mise à jour) : cash-flow à remettre = échéances + projection − frais de l'année de vente, et ce montant par mois ; « X € à remettre d'ici la vente (Y €/mois) ».
+- **Gain de l'attente** entre deux scénarios triés par date = (somme nette du scénario − somme nette du précédent) + (cash-flow d'ici la vente du scénario − celui du précédent), c'est-à-dire la somme nette en plus moins le cash-flow remis entre les deux dates. Formulé « attendre jusqu'au JJ/MM/AAAA te rapporte X € de plus » (ou « te coûte X € »). Il retrouve la ligne « Gain en plus par rapport au scénario précédent » de l'onglet Vendre quand (5 276,52 € et 4 730,15 €, à 0,01 € près) : avec des scénarios postérieurs à la date des données, les autres flux sont identiques.
 
-**Comparaison à un placement de référence** (taux et libellé saisis dans ⚙ Paramètres, sans valeur par défaut) : gain par rapport au placement = Σ flux × (1 + taux)^(jours entre le flux et la date de vente / 365), c'est-à-dire la valeur à la date de vente de tous les flux du propriétaire, chacun capitalisé (ou actualisé) au taux du placement. Positif : le bien a rapporté plus que si chaque somme versée ou reçue avait été placée à ce taux. Il vaut 0 quand le taux du placement est égal au TRI (test automatique). Hors fiscalité du placement.
+**Calculé par le moteur, non affiché** (décision produit du 03/11/2026 ; voir le backlog) :
 
-**Synthèse, « si je vends aujourd'hui »** : même calcul pour une vente à la date du jour au prix de la valeur estimée du bien (Mon bien) ; affiché dans le bloc Rentabilité, dans la colonne de la dernière année.
+- Gain total = somme des flux. TRI = taux annuel qui annule la valeur actuelle des flux datés (XIRR, base 365 jours). Testés contre `expected.json`.
+- Rendement de l'attente en % = (gain total du scénario − celui du précédent) / somme nette du précédent / (écart de dates en jours / 365).
+- Gain par rapport à un placement de référence au taux r = Σ flux × (1 + r)^(jours entre le flux et la date de vente / 365) ; il vaut 0 quand r est égal au TRI (test automatique). La table des paramètres du foyer reste dans les données, vide.
 
 ## Sources des règles de la plus-value (§ 5)
 

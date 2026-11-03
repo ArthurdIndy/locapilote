@@ -13,6 +13,16 @@ import type { Cents, IsoDate } from '../../types';
 export const ACQUISITION_COSTS_FLAT_RATE = 0.075;
 /** Forfait travaux : 15 % du prix d'achat, après plus de 5 ans de détention (150 VB II 4°). */
 export const WORKS_FLAT_RATE = 0.15;
+/**
+ * Taux d'imposition de la plus-value immobilière des particuliers (vérifiés le 02/11/2026) :
+ * impôt sur le revenu 19 % (CGI art. 200 B) ; prélèvements sociaux 17,2 %, maintenus en 2026
+ * pour les plus-values immobilières (LFSS 2026 art. 12 : la CSG reste à 9,2 % pour elles ;
+ * formulaire 2048-IMM 2026 : CSG 9,2 % + CRDS 0,5 % + prélèvement de solidarité 7,5 %).
+ * Sources détaillées : docs/regles-de-calcul.md § 5.
+ */
+export const INCOME_TAX_RATE = 0.19;
+export const SOCIAL_CHARGES_RATE = 0.172;
+
 /** Surtaxe sur les plus-values élevées (CGI art. 1609 nonies G) : au-delà de 50 000 €. */
 export const HIGH_GAIN_SURTAX_THRESHOLD: Cents = 5_000_000;
 
@@ -26,8 +36,9 @@ export interface CapitalGainInput {
   actualAcquisitionCosts: Cents;
   /** Amortissements à réintégrer (0 hors LMNP réel). */
   depreciationDeducted: number;
-  incomeTaxRate: number;
-  socialChargesRate: number;
+  /** Taux modifiables pour les tests ; par défaut les taux légaux ci-dessus. */
+  incomeTaxRate?: number;
+  socialChargesRate?: number;
 }
 
 export interface CapitalGain {
@@ -92,8 +103,8 @@ export function privateCapitalGain(input: CapitalGainInput): CapitalGain {
   const psAllowance = socialChargesAllowance(holdingYears);
   const taxableForIncomeTax = grossGain * (1 - irAllowance);
   const taxableForSocialCharges = grossGain * (1 - psAllowance);
-  const incomeTax = taxableForIncomeTax * input.incomeTaxRate;
-  const socialCharges = taxableForSocialCharges * input.socialChargesRate;
+  const incomeTax = taxableForIncomeTax * (input.incomeTaxRate ?? INCOME_TAX_RATE);
+  const socialCharges = taxableForSocialCharges * (input.socialChargesRate ?? SOCIAL_CHARGES_RATE);
   return {
     holdingYears,
     netSalePrice: input.netSalePrice,

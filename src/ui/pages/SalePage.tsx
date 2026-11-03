@@ -1,14 +1,21 @@
-import { Fragment, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { db } from '../../db/database';
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
+import { addMonths } from '../../engine/dates';
+import type { Resolved } from '../../engine/sale-defaults';
 import {
   isSaleSimulation,
   simulateSale,
-  waitingYieldBetween,
-  type ReferenceInvestment,
+  waitingGainBetween,
   type SaleSimulation,
 } from '../../engine/sale-simulation';
-import type { Dataset, Property, SaleScenario } from '../../engine/types';
+import type {
+  Dataset,
+  Property,
+  PropertyAssumptions,
+  ProjectionAssumptions,
+  SaleScenario,
+} from '../../engine/types';
 import { DisclosureButton } from '../components/DisclosureButton';
 import {
   centsToInput,
@@ -17,12 +24,14 @@ import {
   formatPercent,
   isPlausibleDate,
   parseEurosInput,
+  parsePercentInput,
+  rateToInput,
 } from '../format';
 import { useOpenDetails } from '../openDetails';
-import { propertyHref, routeHref } from '../router';
-import { assumptionsOf, referenceInvestment } from '../saleSummary';
-import { SaleAssumptionsForm } from './SaleAssumptionsForm';
+import { propertyHref } from '../router';
+import { assumptionsOf } from '../saleSummary';
 import { SaleDisclaimer } from './SaleDisclaimer';
+import { SaleSettings } from './SaleSettings';
 
 interface Props {
   data: Dataset;
@@ -30,241 +39,90 @@ interface Props {
   today: string;
 }
 
-const euros = (cents: number | null) => (cents === null ? '—' : formatEuros(Math.round(cents)));
-const percent = (rate: number | null) => (rate === null ? '—' : formatPercent(rate));
+const euros = (cents: number) => formatEuros(Math.round(cents));
 const minus = (cents: number) => euros(cents === 0 ? 0 : -cents);
 
-/** Un scénario calculé, avec sa place dans la liste enregistrée (pour le modifier). */
-interface Column {
+/** Un scénario calculé, avec sa place dans la liste enregistrée. */
+interface Row {
   index: number;
   sim: SaleSimulation;
-  /** Rendement de l'attente par rapport au scénario précédent (par date). */
+  /** Gain de l'attente par rapport au scénario précédent (par date) ; `null` pour le premier. */
   waiting: number | null;
-  first: boolean;
 }
 
-interface Row {
-  label: string;
-  value: (c: Column) => string;
-  strong?: boolean;
-  signed?: (c: Column) => number;
-  details?: { id: string; rows: Row[] };
-  help?: string;
-  /** Note courte affichée sous la ligne (détail déplié). */
-  note?: string;
+/** « attendre jusqu'au 30/06/2028 te rapporte 5 276,52 € de plus » (ou « te coûte »). */
+function waitingText(row: Row): string {
+  if (row.waiting === null) return '—';
+  const date = formatDate(row.sim.scenario.date);
+  const amount = euros(Math.abs(row.waiting));
+  return row.waiting >= 0
+    ? `attendre jusqu’au ${date} te rapporte ${amount} de plus`
+    : `attendre jusqu’au ${date} te coûte ${amount}`;
 }
 
-/** Les amortissements réintégrés sont le total déduit (comme l'Excel de référence). */
-const DEPRECIATION_NOTE =
-  'Inclut les amortissements de tous les composants (mobilier, équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer : à confirmer avec le notaire.';
-
-interface Section {
-  title: string;
-  rows: Row[];
-}
-
-const REINVESTMENT_LABEL = {
-  met: 'Oui',
-  'not-met': 'Non',
-  'not-applicable': 'Sans objet',
-} as const;
-
-function buildSections(reference: ReferenceInvestment | null, hasTaxModule: boolean): Section[] {
-  const gain = (c: Column) => c.sim.capitalGain;
-  const taxDetails: Row[] = hasTaxModule
-    ? [
-        { label: 'Durée de détention', value: (c) => `${gain(c)!.holdingYears} ans` },
-        {
-          label: 'Prix de cession (prix − frais de vente)',
-          value: (c) => euros(gain(c)!.netSalePrice),
-        },
-        {
-          label: 'Prix d’achat du logement (hors mobilier)',
-          value: (c) => euros(gain(c)!.purchasePrice),
-        },
-        {
-          label: '+ Frais d’acquisition (réels ou forfait 7,5 %)',
-          value: (c) =>
-            `${euros(gain(c)!.acquisitionCosts)}${gain(c)!.acquisitionCostsIsFlat ? ' (forfait)' : ''}`,
-        },
-        {
-          label: '+ Forfait travaux 15 % (plus de 5 ans)',
-          value: (c) => euros(gain(c)!.worksAllowance),
-        },
-        {
-          label: '− Amortissements déduits à réintégrer',
-          value: (c) => minus(gain(c)!.depreciationDeducted),
-          note: DEPRECIATION_NOTE,
-        },
-        { label: 'Prix d’acquisition corrigé', value: (c) => euros(gain(c)!.adjustedCost) },
-        { label: 'Plus-value brute', value: (c) => euros(gain(c)!.grossGain) },
-        {
-          label: 'Abattement pour durée de détention (impôt sur le revenu)',
-          value: (c) => percent(gain(c)!.incomeTaxAllowance),
-        },
-        {
-          label: 'Abattement pour durée de détention (prélèvements sociaux)',
-          value: (c) => percent(gain(c)!.socialChargesAllowance),
-        },
-        { label: 'Impôt sur le revenu', value: (c) => euros(gain(c)!.incomeTax) },
-        { label: 'Prélèvements sociaux', value: (c) => euros(gain(c)!.socialCharges) },
-        {
-          label: 'Surtaxe (plus-value imposable > 50 000 €)',
-          value: (c) => (gain(c)!.surtaxApplies ? 'À calculer (non comptée)' : 'Non'),
-        },
-      ]
-    : [];
-  return [
-    {
-      title: 'Somme perçue',
-      rows: [
-        { label: 'Prix de vente', value: (c) => euros(c.sim.proceeds.price) },
-        { label: '− Frais d’agence', value: (c) => minus(c.sim.proceeds.agencyFees) },
-        { label: '− Frais divers de vente', value: (c) => minus(c.sim.proceeds.otherSaleCosts) },
-        { label: '− Capital restant dû', value: (c) => minus(c.sim.proceeds.outstandingPrincipal) },
-        {
-          label: '− Indemnités de remboursement anticipé',
-          value: (c) => minus(c.sim.proceeds.earlyRepaymentPenalty),
-        },
-        {
-          label: '− Impôt sur la plus-value',
-          value: (c) => (c.sim.capitalGain ? minus(c.sim.tax) : 'non calculé'),
-          ...(hasTaxModule ? { details: { id: 'plus-value', rows: taxDetails } } : {}),
-        },
-        {
-          label: 'Somme nette perçue',
-          value: (c) => euros(c.sim.netProceeds),
-          strong: true,
-        },
-        { label: '− Autres dettes à rembourser', value: (c) => minus(c.sim.otherDebts) },
-        {
-          label: 'Somme disponible pour le prochain achat',
-          value: (c) => euros(c.sim.available),
-        },
-      ],
-    },
-    {
-      title: 'Exonération pour remploi',
-      rows: [
-        {
-          label: 'Condition des 4 ans',
-          value: (c) => {
-            const r = c.sim.reinvestment;
-            if (r.condition === 'not-met' && r.eligibleFrom)
-              return `Non (dès le ${formatDate(r.eligibleFrom)})`;
-            return REINVESTMENT_LABEL[r.condition];
-          },
-        },
-        {
-          label: 'Impôt évité si le prix est réinvesti',
-          value: (c) => euros(c.sim.reinvestment.avoidedTax),
-        },
-        {
-          label: 'Somme nette avec remploi',
-          value: (c) => euros(c.sim.netWithReinvestment),
-          strong: true,
-        },
-      ],
-    },
-    {
-      title: 'D’ici la vente',
-      rows: [
-        {
-          label: 'Mois entre la mise à jour et la vente',
-          value: (c) => String(c.sim.balance.monthsUntilSale),
-        },
-        {
-          label: 'Cash-flow à remettre d’ici la vente',
-          value: (c) => euros(c.sim.balance.cashFlowUntilSale),
-          signed: (c) => c.sim.balance.cashFlowUntilSale,
-          strong: true,
-        },
-        {
-          label: 'Soit par mois',
-          value: (c) =>
-            c.sim.balance.monthsUntilSale > 0
-              ? euros(c.sim.balance.cashFlowUntilSale / c.sim.balance.monthsUntilSale)
-              : '—',
-          signed: (c) => c.sim.balance.cashFlowUntilSale,
-        },
-        {
-          label: 'Capital remboursé sur la période',
-          value: (c) => euros(c.sim.balance.principalRepaidUntilSale),
-        },
-      ],
-    },
-    {
-      title: 'Bilan depuis l’achat',
-      rows: [
-        {
-          label: 'Gain total depuis l’achat',
-          value: (c) => euros(c.sim.balance.totalGain),
-          signed: (c) => c.sim.balance.totalGain,
-          strong: true,
-        },
-        {
-          label: 'TRI (rendement annuel de ton apport)',
-          value: (c) => percent(c.sim.balance.irr),
-          strong: true,
-        },
-        {
-          label: reference
-            ? `Gain par rapport au placement (${reference.label ? `${reference.label}, ` : ''}${formatPercent(reference.rate)})`
-            : 'Gain par rapport au placement',
-          value: (c) => (reference ? euros(c.sim.gainOverReference) : 'à renseigner'),
-          signed: (c) => c.sim.gainOverReference ?? 0,
-          strong: true,
-        },
-        {
-          label: 'Rendement annuel de l’attente',
-          value: (c) => (c.first ? '—' : percent(c.waiting)),
-          help: 'Gain en plus par rapport au scénario précédent, rapporté à la somme nette que tu aurais touchée en vendant plus tôt, par année d’attente. À comparer au taux de ton futur prêt ou au placement.',
-        },
-      ],
-    },
-  ];
-}
-
-function signClass(row: Row, c: Column): string | undefined {
-  if (!row.signed) return undefined;
-  const v = Math.round(row.signed(c));
-  return v < 0 ? 'negative' : v > 0 ? 'positive' : undefined;
+/** Cash-flow d'ici la vente : « 2 515,02 € à remettre d'ici la vente (314,38 €/mois) ». */
+function cashFlowText(sim: SaleSimulation): string {
+  const { cashFlowUntilSale: total, monthsUntilSale: months } = sim.balance;
+  const perMonth = months > 0 ? ` (${euros(Math.abs(total) / months)}/mois)` : '';
+  return total <= 0
+    ? `${euros(-total)} à remettre d’ici la vente${perMonth}`
+    : `${euros(total)} reçus d’ici la vente${perMonth}`;
 }
 
 type Editing = { mode: 'new' } | { mode: 'edit'; index: number } | null;
 
-/** Simulations › Vente : comparer plusieurs dates et prix de vente (US11). */
+/**
+ * Simulations › Vente (US11) : combien je touche, combien d'impôt, ai-je intérêt à attendre.
+ * Un scénario à l'ouverture ; d'autres dates se comparent dans un tableau compact.
+ */
 export function SalePage({ data, property, today }: Props) {
   const details = useOpenDetails('locapilote.vente.detailsOuverts');
   const [editing, setEditing] = useState<Editing>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
 
   const assumptions = assumptionsOf(data, property);
   const asOf = effectiveDataAsOf(data.assumptions, property.id, today);
-  const reference = referenceInvestment(data);
   const scenarios = assumptions.saleScenarios;
 
-  const results = scenarios.map((scenario, index) => ({
-    index,
-    scenario,
-    result: simulateSale(data, property, assumptions, asOf.date, scenario, reference),
-  }));
-  const valid = results
+  // Aucun scénario : on en crée un par défaut (vente dans 12 mois, à la valeur estimée).
+  const creating = useRef(false);
+  const needsDefault = scenarios.length === 0 && property.estimatedValue > 0;
+  useEffect(() => {
+    if (!needsDefault || creating.current) return;
+    creating.current = true;
+    void db
+      .saveAssumptions({
+        ...assumptions,
+        saleScenarios: [{ date: addMonths(today, 12), price: property.estimatedValue }],
+      })
+      .finally(() => {
+        creating.current = false;
+      });
+  }, [needsDefault, assumptions, today, property.estimatedValue]);
+
+  const saveAssumptions = (next: PropertyAssumptions) => db.saveAssumptions(next);
+  const saveScenarios = (next: SaleScenario[]) =>
+    saveAssumptions({ ...assumptions, saleScenarios: next });
+  const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
+    saveAssumptions({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
+
+  const valid = scenarios
+    .map((scenario, index) => ({
+      index,
+      result: simulateSale(data, property, assumptions, asOf.date, scenario),
+    }))
     .filter((r) => isSaleSimulation(r.result))
     .map((r) => ({ index: r.index, sim: r.result as SaleSimulation }))
     .sort((a, b) => a.sim.scenario.date.localeCompare(b.sim.scenario.date) || a.index - b.index);
-  const columns: Column[] = valid.map((v, i) => ({
+  const rows: Row[] = valid.map((v, i) => ({
     ...v,
-    first: i === 0,
-    waiting: i === 0 ? null : waitingYieldBetween(valid[i - 1]!.sim, v.sim),
+    waiting: i === 0 ? null : waitingGainBetween(valid[i - 1]!.sim, v.sim),
   }));
-  const invalid = results.filter((r) => !isSaleSimulation(r.result));
-  const hasTaxModule = columns.some((c) => c.sim.capitalGain !== null);
-  const sections = buildSections(reference, hasTaxModule);
-  const surtax = columns.some((c) => c.sim.capitalGain?.surtaxApplies);
-
-  const saveScenarios = (next: SaleScenario[]) =>
-    db.saveAssumptions({ ...assumptions, saleScenarios: next });
+  const current = rows.find((r) => r.index === selected) ?? rows[0] ?? null;
+  const invalid = scenarios
+    .map((scenario, index) => ({ scenario, index }))
+    .filter(({ index }) => !valid.some((v) => v.index === index));
 
   const remove = async (index: number) => {
     const s = scenarios[index]!;
@@ -273,7 +131,8 @@ export function SalePage({ data, property, today }: Props) {
     );
     if (!ok) return;
     await saveScenarios(scenarios.filter((_, i) => i !== index));
-    if (editing?.mode === 'edit') setEditing(null);
+    setEditing(null);
+    setSelected(null);
     setMessage(`Scénario du ${formatDate(s.date)} supprimé.`);
   };
 
@@ -282,48 +141,22 @@ export function SalePage({ data, property, today }: Props) {
     setEditing(next);
   };
 
-  const scenarioName = (c: Column) => `du ${formatDate(c.sim.scenario.date)}`;
-
-  const actions = (c: Column) => (
-    <span className="scenario-actions">
-      <button
-        type="button"
-        className="button small"
-        aria-label={`Modifier le scénario ${scenarioName(c)}`}
-        onClick={() => startEdit({ mode: 'edit', index: c.index })}
-      >
-        Modifier
-      </button>
-      <button
-        type="button"
-        className="button small danger"
-        aria-label={`Supprimer le scénario ${scenarioName(c)}`}
-        onClick={() => remove(c.index)}
-      >
-        Supprimer
-      </button>
-    </span>
-  );
+  const scenarioName = (r: Row) => `du ${formatDate(r.sim.scenario.date)}`;
 
   return (
     <div className="stack">
       <div className="toolbar">
         <h3>Vente</h3>
-        {!editing && (
+        {!editing && current && (
           <button
             type="button"
             className="button primary"
             onClick={() => startEdit({ mode: 'new' })}
           >
-            Ajouter un scénario
+            Comparer avec une autre date
           </button>
         )}
       </div>
-      <p className="muted small">
-        Compare plusieurs dates et prix de vente : ce que tu toucherais, l’impôt sur la plus-value,
-        ce qu’il faudra remettre d’ici là, et ce que le bien t’aura rapporté depuis l’achat. Données
-        réelles jusqu’au {formatDate(asOf.date)}, projection au-delà (hypothèses ci-dessous).
-      </p>
 
       {message && (
         <p className="success" role="status">
@@ -343,6 +176,7 @@ export function SalePage({ data, property, today }: Props) {
                 ? scenarios.map((s, i) => (i === editing.index ? scenario : s))
                 : [...scenarios, scenario];
             await saveScenarios(next);
+            setSelected(editing.mode === 'edit' ? editing.index : next.length - 1);
             setEditing(null);
             setMessage(
               editing.mode === 'edit'
@@ -356,7 +190,7 @@ export function SalePage({ data, property, today }: Props) {
       {property.taxRegime !== 'lmnp-reel' && (
         <p className="card warning">
           Le calcul de l’impôt sur la plus-value n’est pas encore disponible pour le régime de ce
-          bien : il est compté à 0 dans la somme nette et le TRI.
+          bien : il est compté à 0 dans la somme nette.
         </p>
       )}
 
@@ -374,178 +208,526 @@ export function SalePage({ data, property, today }: Props) {
         </div>
       )}
 
-      {columns.length === 0 ? (
-        <p className="card muted">
-          Aucun scénario de vente pour l’instant. Clique sur « Ajouter un scénario » et indique une
-          date et un prix de vente.
-        </p>
+      {!current ? (
+        property.estimatedValue > 0 ? (
+          <p className="card muted">Préparation de la simulation…</p>
+        ) : (
+          <p className="card">
+            Indique la valeur estimée du bien dans{' '}
+            <a href={propertyHref('informations')}>Mon bien</a> : la simulation part d’une vente
+            dans 12 mois à ce prix, que tu pourras modifier.
+          </p>
+        )
       ) : (
         <>
-          {/* Grand écran : un tableau, une colonne par scénario. */}
-          <div className="synthesis-wide">
-            <table className="synthesis-table sale-table" aria-label="Scénarios de vente">
-              <thead>
-                <tr>
-                  <th scope="col">
-                    <span className="visually-hidden">Indicateur</span>
-                  </th>
-                  {columns.map((c) => (
-                    <th key={c.index} scope="col">
-                      <span className="scenario-head">
-                        <span>Vente le {formatDate(c.sim.scenario.date)}</span>
-                        <span className="muted small">{formatEuros(c.sim.scenario.price)}</span>
-                      </span>
-                      {actions(c)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              {sections.map((section) => (
-                <tbody key={section.title}>
-                  <tr className="section-row">
-                    <th scope="rowgroup" colSpan={columns.length + 1}>
-                      {section.title}
-                    </th>
-                  </tr>
-                  {section.rows.map((row) => (
-                    <Fragment key={row.label}>
-                      <tr className={row.strong ? 'strong' : undefined}>
-                        <th scope="row" title={row.help}>
-                          <RowLabel row={row} details={details} />
+          {rows.length >= 2 && (
+            <>
+              {/* Grand écran : un tableau compact, une ligne par scénario. */}
+              <div className="synthesis-wide">
+                <table
+                  className="synthesis-table compare-table"
+                  aria-label="Comparaison des dates de vente"
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">Date de vente</th>
+                      <th scope="col">Prix</th>
+                      <th scope="col">Somme nette</th>
+                      <th scope="col">Impôt</th>
+                      <th scope="col">À remettre d’ici la vente</th>
+                      <th scope="col">Gain de l’attente</th>
+                      <th scope="col">
+                        <span className="visually-hidden">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={r.index} className={r === current ? 'selected' : undefined}>
+                        <th scope="row">
+                          <button
+                            type="button"
+                            className="button link"
+                            aria-pressed={r === current}
+                            aria-label={`Afficher le scénario ${scenarioName(r)}`}
+                            onClick={() => setSelected(r.index)}
+                          >
+                            {formatDate(r.sim.scenario.date)}
+                          </button>
                         </th>
-                        {columns.map((c) => (
-                          <td key={c.index} className={signClass(row, c)}>
-                            {row.value(c)}
-                          </td>
-                        ))}
+                        <td>{euros(r.sim.scenario.price)}</td>
+                        <td>{euros(r.sim.netProceeds)}</td>
+                        <td>{r.sim.capitalGain ? euros(r.sim.tax) : 'non calculé'}</td>
+                        <td>{euros(Math.max(0, -r.sim.balance.cashFlowUntilSale))}</td>
+                        <td
+                          className={
+                            r.waiting === null
+                              ? 'waiting'
+                              : r.waiting >= 0
+                                ? 'waiting positive'
+                                : 'waiting negative'
+                          }
+                        >
+                          {waitingText(r)}
+                        </td>
+                        <td>
+                          <span className="scenario-actions">
+                            <button
+                              type="button"
+                              className="button small"
+                              aria-label={`Modifier le scénario ${scenarioName(r)}`}
+                              onClick={() => startEdit({ mode: 'edit', index: r.index })}
+                            >
+                              Modifier
+                            </button>
+                            <button
+                              type="button"
+                              className="button small danger"
+                              aria-label={`Supprimer le scénario ${scenarioName(r)}`}
+                              onClick={() => remove(r.index)}
+                            >
+                              Supprimer
+                            </button>
+                          </span>
+                        </td>
                       </tr>
-                      {row.details &&
-                        details.isOpen(row.details.id) &&
-                        row.details.rows.map((d) => (
-                          <Fragment key={d.label}>
-                            <tr className="detail">
-                              <th scope="row">{d.label}</th>
-                              {columns.map((c) => (
-                                <td key={c.index}>{d.value(c)}</td>
-                              ))}
-                            </tr>
-                            {d.note && (
-                              <tr className="detail detail-note">
-                                <td colSpan={columns.length + 1}>{d.note}</td>
-                              </tr>
-                            )}
-                          </Fragment>
-                        ))}
-                    </Fragment>
-                  ))}
-                </tbody>
-              ))}
-            </table>
-          </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          {/* Téléphone : une carte par scénario. */}
-          <div className="synthesis-narrow stack">
-            {columns.map((c) => (
-              <section
-                key={c.index}
-                className="card year-card"
-                aria-label={`Scénario ${scenarioName(c)}`}
+              {/* Téléphone : une liste de lignes courtes ; un appui affiche le scénario. */}
+              <ul
+                className="synthesis-narrow scenario-list"
+                aria-label="Comparaison des dates de vente"
               >
-                <h3>Vente le {formatDate(c.sim.scenario.date)}</h3>
-                <p className="muted">Prix : {formatEuros(c.sim.scenario.price)}</p>
-                {sections.map((section) => (
-                  <div key={section.title}>
-                    <h4>{section.title}</h4>
-                    <dl className="year-lines">
-                      {section.rows.map((row) => (
-                        <Fragment key={row.label}>
-                          <div className={row.strong ? 'strong' : undefined}>
-                            <dt>
-                              <RowLabel row={row} details={details} />
-                            </dt>
-                            <dd className={signClass(row, c)}>{row.value(c)}</dd>
-                          </div>
-                          {row.details &&
-                            details.isOpen(row.details.id) &&
-                            row.details.rows.map((d) => (
-                              <Fragment key={d.label}>
-                                <div className="detail">
-                                  <dt>{d.label}</dt>
-                                  <dd>{d.value(c)}</dd>
-                                </div>
-                                {d.note && (
-                                  <div className="detail detail-note">
-                                    <dt>{d.note}</dt>
-                                  </div>
-                                )}
-                              </Fragment>
-                            ))}
-                        </Fragment>
-                      ))}
-                    </dl>
-                  </div>
+                {rows.map((r) => (
+                  <li key={r.index}>
+                    <button
+                      type="button"
+                      className={r === current ? 'scenario-line selected' : 'scenario-line'}
+                      aria-pressed={r === current}
+                      aria-label={`Afficher le scénario ${scenarioName(r)}`}
+                      onClick={() => setSelected(r.index)}
+                    >
+                      <span className="scenario-line-head">
+                        <strong>{formatDate(r.sim.scenario.date)}</strong>
+                        <span>{euros(r.sim.netProceeds)}</span>
+                      </span>
+                      {r.waiting !== null && (
+                        <span className={r.waiting >= 0 ? 'small positive' : 'small negative'}>
+                          {waitingText(r)}
+                        </span>
+                      )}
+                    </button>
+                  </li>
                 ))}
-                <div className="actions">{actions(c)}</div>
-              </section>
-            ))}
-          </div>
+              </ul>
+            </>
+          )}
 
-          <ul className="muted small notes">
-            {!reference && (
-              <li>
-                Pour comparer à un placement (fonds euros, ETF…), renseigne son taux dans{' '}
-                <a href={routeHref('parametres')}>⚙ Paramètres</a>.
-              </li>
-            )}
-            {reference && (
-              <li>
-                Gain par rapport au placement : ce que le bien t’a rapporté de plus (ou de moins) à
-                la date de vente que si chaque somme versée ou reçue avait été placée à{' '}
-                {formatPercent(reference.rate)} par an. Hors fiscalité du placement.
-              </li>
-            )}
-            <li>
-              Gain total et TRI : apport, loyer évité pendant que tu y habitais, échéances du prêt,
-              dépenses, loyers, puis la somme nette de la vente (sans l’exonération pour remploi),
-              moins les frais de l’année de la vente.
-            </li>
-            <li>
-              Rendement de l’attente : gain en plus par rapport au scénario précédent, rapporté à la
-              somme nette de ce scénario, par année d’attente.
-            </li>
-            <li>
-              Remploi : première vente d’un logement autre que ta résidence principale, sans avoir
-              été propriétaire de ta résidence principale dans les 4 ans avant la vente, prix
-              réinvesti dans ta résidence principale sous 24 mois. Seule la condition des 4 ans est
-              vérifiée, à partir de la fin d’occupation de ce bien (
-              <a href={propertyHref('informations')}>Mon bien</a>).
-            </li>
-            {surtax && (
-              <li className="error-text">
-                Plus-value imposable supérieure à 50 000 € : une surtaxe s’ajoute, elle n’est pas
-                calculée ici.
-              </li>
-            )}
-          </ul>
+          <ScenarioCard
+            row={current}
+            canDelete={rows.length >= 2}
+            details={details}
+            property={property}
+            onEdit={() => startEdit({ mode: 'edit', index: current.index })}
+            onDelete={() => remove(current.index)}
+            onSaveProjection={saveProjection}
+          />
         </>
       )}
 
-      <SaleAssumptionsForm assumptions={assumptions} property={property} />
+      <SaleSettings assumptions={assumptions} />
 
       <SaleDisclaimer />
     </div>
   );
 }
 
-function RowLabel({ row, details }: { row: Row; details: ReturnType<typeof useOpenDetails> }) {
-  if (!row.details) return <>{row.label}</>;
-  const { id } = row.details;
+interface CardProps {
+  row: Row;
+  canDelete: boolean;
+  details: ReturnType<typeof useOpenDetails>;
+  property: Property;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSaveProjection: (patch: Partial<ProjectionAssumptions>) => Promise<void>;
+}
+
+/** Carte du scénario affiché : somme nette et impôt en avant, puis remploi et cash-flow. */
+function ScenarioCard({
+  row,
+  canDelete,
+  details,
+  property,
+  onEdit,
+  onDelete,
+  onSaveProjection,
+}: CardProps) {
+  const { sim } = row;
+  const gain = sim.capitalGain;
+  const r = sim.resolved;
+  const name = `du ${formatDate(sim.scenario.date)}`;
+  const toggle = (id: string, label: string) => (
+    <DisclosureButton label={label} open={details.isOpen(id)} onToggle={() => details.toggle(id)} />
+  );
+
   return (
-    <DisclosureButton
-      label={row.label}
-      open={details.isOpen(id)}
-      onToggle={() => details.toggle(id)}
-    />
+    <section className="card stack sale-card" aria-label="Scénario affiché">
+      <div className="toolbar">
+        <h3>
+          Si tu vends le {formatDate(sim.scenario.date)} à {euros(sim.scenario.price)}
+        </h3>
+        <span className="scenario-actions">
+          <button
+            type="button"
+            className="button small"
+            aria-label={`Modifier le scénario ${name}`}
+            onClick={onEdit}
+          >
+            Modifier
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              className="button small danger"
+              aria-label={`Supprimer le scénario ${name}`}
+              onClick={onDelete}
+            >
+              Supprimer
+            </button>
+          )}
+        </span>
+      </div>
+
+      <div className="sale-highlights">
+        <div className="highlight">
+          <span className="highlight-label">Somme nette perçue</span>
+          <span className="highlight-value" data-testid="somme-nette">
+            {euros(sim.netProceeds)}
+          </span>
+        </div>
+        <div className="highlight">
+          <span className="highlight-label">Impôt sur la plus-value</span>
+          <span className="highlight-value" data-testid="impot">
+            {gain ? euros(sim.tax) : 'non calculé'}
+          </span>
+          {gain?.surtaxApplies && (
+            <span className="small error-text">
+              Plus-value imposable supérieure à 50 000 € : surtaxe en plus, non calculée.
+            </span>
+          )}
+        </div>
+      </div>
+
+      <ReinvestmentLine sim={sim} onSaveProjection={onSaveProjection} />
+
+      <div className="sale-line" data-testid="cash-flow">
+        <span>{cashFlowText(sim)}</span>
+        {toggle('projection', 'Calcul')}
+      </div>
+      {details.isOpen('projection') && (
+        <div className="sale-detail stack">
+          <p className="muted small">
+            Échéances du prêt et projection des loyers et des dépenses, des mois suivant la date des
+            données ({formatDate(r.journalWindow?.to ?? sim.scenario.date)}) jusqu’à la vente, plus
+            les frais de l’année de la vente. Valeurs calculées à partir du journal ; tu peux les
+            modifier (vide = calcul automatique).
+          </p>
+          <div className="assumptions-grid">
+            <OverrideField
+              label="Loyer net projeté (€ / mois)"
+              kind="euros"
+              resolved={r.netRentMonthly}
+              help={
+                r.journalWindow
+                  ? `Recettes du ${formatDate(r.journalWindow.from)} au ${formatDate(r.journalWindow.to)} / 12.`
+                  : 'Bien pas encore loué.'
+              }
+              onSave={(v) => onSaveProjection({ netRentMonthly: v })}
+            />
+            <OverrideField
+              label="Dépenses projetées (€ / an, hors prêt)"
+              kind="euros"
+              resolved={r.annualExpensesExcludingLoan}
+              help="Dépenses payées sur les 12 mois, hors investissements et dépenses à qualifier."
+              onSave={(v) => onSaveProjection({ annualExpensesExcludingLoan: v })}
+            />
+            <OverrideField
+              label="Évolution annuelle des loyers et des charges (%)"
+              kind="percent"
+              resolved={r.annualGrowth}
+              onSave={(v) => onSaveProjection({ annualGrowth: v })}
+            />
+            <OverrideField
+              label="Frais de l’année de la vente (€)"
+              kind="euros"
+              resolved={r.saleYearCosts}
+              help={`Honoraires du comptable de ${r.lastCompleteYear}.`}
+              onSave={(v) => onSaveProjection({ saleYearCosts: v })}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="sale-line">{toggle('somme-percue', 'Somme perçue')}</div>
+      {details.isOpen('somme-percue') && (
+        <dl className="year-lines sale-detail">
+          <Line label="Prix de vente" value={euros(sim.proceeds.price)} />
+          <Line label="− Frais d’agence" value={minus(sim.proceeds.agencyFees)} />
+          <Line label="− Frais divers de vente" value={minus(sim.proceeds.otherSaleCosts)} />
+          <Line label="− Capital restant dû" value={minus(sim.proceeds.outstandingPrincipal)} />
+          <Line
+            label="− Indemnités de remboursement anticipé"
+            value={minus(sim.proceeds.earlyRepaymentPenalty)}
+          />
+          <Line label="− Impôt sur la plus-value" value={gain ? minus(sim.tax) : 'non calculé'} />
+          <Line label="Somme nette perçue" value={euros(sim.netProceeds)} strong />
+        </dl>
+      )}
+
+      {gain && (
+        <>
+          <div className="sale-line">{toggle('plus-value', 'Calcul de la plus-value')}</div>
+          {details.isOpen('plus-value') && (
+            <div className="sale-detail stack">
+              <dl className="year-lines">
+                <Line label="Durée de détention" value={`${gain.holdingYears} ans`} />
+                <Line
+                  label="Prix de cession (prix − frais de vente)"
+                  value={euros(gain.netSalePrice)}
+                />
+                <Line
+                  label="Prix d’achat du logement (hors mobilier)"
+                  value={euros(gain.purchasePrice)}
+                />
+                <Line
+                  label="+ Frais d’acquisition (réels ou forfait 7,5 %)"
+                  value={`${euros(gain.acquisitionCosts)}${gain.acquisitionCostsIsFlat ? ' (forfait)' : ''}`}
+                />
+                <Line
+                  label="+ Forfait travaux 15 % (plus de 5 ans)"
+                  value={euros(gain.worksAllowance)}
+                />
+                <Line
+                  label="− Amortissements déduits à réintégrer"
+                  value={minus(gain.depreciationDeducted)}
+                />
+                <div className="detail detail-note">
+                  <dt>
+                    Inclut les amortissements de tous les composants (mobilier, équipements,
+                    travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer :
+                    à confirmer avec le notaire.
+                  </dt>
+                </div>
+                <Line label="Prix d’acquisition corrigé" value={euros(gain.adjustedCost)} />
+                <Line label="Plus-value brute" value={euros(gain.grossGain)} />
+                <Line
+                  label="Abattement pour durée de détention (impôt sur le revenu)"
+                  value={formatPercent(gain.incomeTaxAllowance)}
+                />
+                <Line
+                  label="Abattement pour durée de détention (prélèvements sociaux)"
+                  value={formatPercent(gain.socialChargesAllowance)}
+                />
+                <Line label="Impôt sur le revenu (19 %)" value={euros(gain.incomeTax)} />
+                <Line label="Prélèvements sociaux (17,2 %)" value={euros(gain.socialCharges)} />
+                <Line label="Impôt sur la plus-value" value={euros(sim.tax)} strong />
+              </dl>
+              <p className="muted small">
+                Frais d’acquisition réels :{' '}
+                {property.actualAcquisitionCosts
+                  ? euros(property.actualAcquisitionCosts)
+                  : 'non renseignés (forfait de 7,5 %)'}
+                , dans <a href={propertyHref('informations')}>Mon bien</a>. Amortissements des
+                années passées : stock du comptable s’il est saisi, sinon calcul de la page
+                Fiscalité.
+              </p>
+              {gain.depreciationYears.some((y) => y.origin === 'assumption') && (
+                <div className="assumptions-grid">
+                  <OverrideField
+                    label="Amortissements déduits par an, années futures (€)"
+                    kind="euros"
+                    resolved={r.depreciationDeductedPerYear}
+                    help={`Par défaut, ceux de ${r.lastCompleteYear}.`}
+                    onSave={(v) => onSaveProjection({ depreciationDeductedPerYear: v })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function Line({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className={strong ? 'strong' : undefined}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+/** Ligne du remploi, avec la part du prix réinvestie (100 % par défaut) modifiable. */
+function ReinvestmentLine({
+  sim,
+  onSaveProjection,
+}: {
+  sim: SaleSimulation;
+  onSaveProjection: (patch: Partial<ProjectionAssumptions>) => Promise<void>;
+}) {
+  const r = sim.reinvestment;
+  if (r.condition === 'not-applicable') return null;
+  if (r.condition === 'not-met') {
+    return (
+      <p className="sale-line" data-testid="remploi">
+        Exonération possible à partir du {formatDate(r.eligibleFrom!)}
+      </p>
+    );
+  }
+  return (
+    <div className="sale-line reinvestment" data-testid="remploi">
+      <span>
+        Exonéré si tu réinvestis dans ta résidence principale (impôt évité : {euros(r.avoidedTax)})
+      </span>
+      <InlineValue
+        label="Part du prix réinvestie (%)"
+        kind="percent"
+        value={sim.resolved.reinvestedShare.value}
+        onSave={(v) => onSaveProjection({ mainResidenceReinvestedShare: v === 1 ? null : v })}
+      />
+    </div>
+  );
+}
+
+type Kind = 'euros' | 'percent';
+
+const toInput = (kind: Kind, value: number) =>
+  kind === 'euros' ? centsToInput(Math.round(value)) : rateToInput(value);
+const parse = (kind: Kind, text: string) =>
+  kind === 'euros' ? parseEurosInput(text) : parsePercentInput(text);
+const show = (kind: Kind, value: number) =>
+  kind === 'euros' ? euros(value) : formatPercent(value);
+
+/** Petit champ enregistré en quittant le champ (ou avec Entrée). */
+function InlineValue({
+  label,
+  kind,
+  value,
+  onSave,
+}: {
+  label: string;
+  kind: Kind;
+  value: number;
+  onSave: (value: number) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState(toInput(kind, value));
+  const [source, setSource] = useState(value);
+  if (source !== value) {
+    setSource(value);
+    setDraft(toInput(kind, value));
+  }
+  const commit = () => {
+    const parsed = parse(kind, draft);
+    if (parsed === null || parsed < 0 || (kind === 'percent' && parsed > 1)) {
+      setDraft(toInput(kind, value));
+      return;
+    }
+    if (parsed !== value) void onSave(parsed);
+  };
+  return (
+    <label className="inline-value">
+      <span>{label}</span>
+      <input
+        className="amount"
+        inputMode="decimal"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          }
+        }}
+      />
+    </label>
+  );
+}
+
+/**
+ * Valeur calculée automatiquement, modifiable : vide = calcul automatique. Enregistrée en
+ * quittant le champ (ou avec Entrée).
+ */
+function OverrideField({
+  label,
+  kind,
+  resolved,
+  help,
+  onSave,
+}: {
+  label: string;
+  kind: Kind;
+  resolved: Resolved;
+  help?: string;
+  onSave: (value: number | null) => Promise<void>;
+}) {
+  const initial = resolved.modified ? toInput(kind, resolved.value) : '';
+  const [draft, setDraft] = useState(initial);
+  const [source, setSource] = useState(resolved);
+  const [error, setError] = useState<string | null>(null);
+  if (source.value !== resolved.value || source.modified !== resolved.modified) {
+    setSource(resolved);
+    setDraft(initial);
+  }
+  const commit = () => {
+    const text = draft.trim();
+    if (text === '') {
+      setError(null);
+      if (resolved.modified) void onSave(null);
+      return;
+    }
+    const parsed = parse(kind, text);
+    if (parsed === null || parsed < 0) {
+      setError(kind === 'euros' ? 'Montant invalide.' : 'Taux invalide.');
+      return;
+    }
+    setError(null);
+    if (!resolved.modified || parsed !== resolved.value) void onSave(parsed);
+  };
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <input
+        className="amount"
+        inputMode="decimal"
+        value={draft}
+        placeholder={toInput(kind, resolved.automatic)}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          }
+        }}
+      />
+      <span className="muted small">
+        {resolved.modified
+          ? `Valeur modifiée (calcul automatique : ${show(kind, resolved.automatic)}).`
+          : `Calcul automatique : ${show(kind, resolved.automatic)}.`}
+        {help ? ` ${help}` : ''}
+      </span>
+      {error && (
+        <span className="error-text" role="alert">
+          {error}
+        </span>
+      )}
+    </label>
   );
 }
 
@@ -592,7 +774,7 @@ function ScenarioForm({ property, initial, onCancel, onSave }: ScenarioFormProps
 
   return (
     <form className="card form" onSubmit={submit} noValidate aria-label="Scénario de vente">
-      <h2>{initial ? 'Modifier le scénario' : 'Nouveau scénario de vente'}</h2>
+      <h2>{initial ? 'Modifier le scénario' : 'Comparer avec une autre date'}</h2>
       <div className="row">
         <label className="field">
           <span>Date de vente *</span>

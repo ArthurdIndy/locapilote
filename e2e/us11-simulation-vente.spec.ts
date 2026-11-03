@@ -1,15 +1,20 @@
-/** Recette US11 : simulation de vente et rentabilité réelle (TRI, comparaison à un placement). */
-import type { Locator, Page } from '@playwright/test';
+/**
+ * Recette US11 (recentrée) : Simulations › Vente répond à « combien je touche, combien d'impôt,
+ * ai-je intérêt à attendre ». Chiffres comparés à data/expected.json (bloc « vendre_quand »).
+ */
+import type { Page } from '@playwright/test';
 import {
   capture,
+  createProperty,
   eur,
   expect,
   expected,
   expectNoHorizontalScroll,
   goTo,
+  goToProperty,
   isPhone,
   openSettings,
-  pct,
+  startEmpty,
   startWithTestData,
   test,
 } from './helpers';
@@ -18,282 +23,295 @@ type Column = (string | number)[];
 const vq = expected.vendre_quand as Record<string, Column>;
 const num = (label: string, i: number) => vq[label]![i] as number;
 
-const SCENARIOS = ['30/06/2027', '30/06/2028', '30/06/2029'];
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[\s\u202f\u00a0]/g, '\\s');
-}
-
-/** Valeur affichée d'une ligne pour un scénario (colonne du tableau, ou carte sur téléphone). */
-function cell(page: Page, phone: boolean, label: string, scenario: string): Locator {
-  const labelText = new RegExp(`^${escapeRegExp(label)}[⊕⊖]?$`);
-  if (phone) {
-    return page
-      .getByRole('region', { name: `Scénario du ${scenario}` })
-      .locator('.year-lines > div')
-      .filter({ has: page.locator('dt').getByText(labelText) })
-      .locator('dd');
-  }
-  const table = page.locator('table[aria-label="Scénarios de vente"]');
-  return table
-    .locator('tbody tr')
-    .filter({ has: page.getByRole('rowheader', { name: labelText }) })
-    .locator('td')
-    .nth(SCENARIOS.indexOf(scenario));
-}
+/** La carte du scénario affiché. */
+const card = (page: Page) => page.getByRole('region', { name: 'Scénario affiché' });
 
 async function goToSale(page: Page): Promise<void> {
   await goTo(page, 'Simulations');
   await expect(
     page.getByRole('heading', { name: 'Simulations · Appartement exemple' }),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Vente', exact: true })).toBeVisible();
+  await expect(card(page)).toBeVisible();
 }
 
-test.beforeEach(async ({ page }) => {
-  await startWithTestData(page);
-});
+/** Ajoute un scénario de comparaison (date ISO, prix en euros). */
+async function compareWith(page: Page, date: string, price: string): Promise<void> {
+  await page.getByRole('button', { name: 'Comparer avec une autre date' }).click();
+  const form = page.getByRole('form', { name: 'Scénario de vente' });
+  await form.getByLabel('Date de vente *').fill(date);
+  await form.getByLabel('Prix de vente net vendeur (€) *').fill(price);
+  await form.getByRole('button', { name: 'Ajouter le scénario' }).click();
+  const [y, m, d] = date.split('-');
+  await expect(page.getByText(`Scénario du ${d}/${m}/${y} ajouté.`)).toBeVisible();
+}
 
-test('les trois scénarios du jeu de test retombent sur expected.json', async ({
+/** Ouvre un détail replié (⊕) de la carte, s'il est fermé. */
+async function open(page: Page, label: string): Promise<void> {
+  const button = card(page).getByRole('button', { name: label, exact: true });
+  if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+}
+
+/** Valeur d'une ligne d'un détail de la carte. */
+function line(page: Page, label: string) {
+  return card(page)
+    .locator('.year-lines > div')
+    .filter({ has: page.locator('dt').getByText(label, { exact: true }) })
+    .locator('dd');
+}
+
+test('le jeu de test : un seul scénario, somme nette et impôt en avant', async ({
   page,
 }, testInfo) => {
-  const phone = isPhone(testInfo);
+  await startWithTestData(page);
   await goToSale(page);
-  const checks: [string, (i: number) => string][] = [
-    ['Somme nette perçue', (i) => eur(num('Somme nette perçue', i))],
-    ['− Impôt sur la plus-value', (i) => eur(num('− Impôt sur la plus-value', i))],
-    ['Somme nette avec remploi', (i) => eur(num('Somme nette avec remploi', i))],
-    ['− Capital restant dû', (i) => eur(num('− Capital restant dû', i))],
-    [
-      'Cash-flow à remettre d’ici la vente',
-      (i) => eur(num('Cash-flow à remettre de votre poche (total)', i)),
-    ],
-    ['Gain total depuis l’achat', (i) => eur(num("Gain total depuis l'achat", i))],
-    [
-      'TRI (rendement annuel de ton apport)',
-      (i) => pct(num('TRI (rendement annuel de votre apport)', i)),
-    ],
-  ];
-  for (const [i, scenario] of SCENARIOS.entries()) {
-    for (const [label, value] of checks) {
-      // « −0,00 € » s'affiche « 0,00 € ».
-      await expect(cell(page, phone, label, scenario)).toHaveText(
-        value(i).replace('-0,00', '0,00'),
-      );
-    }
+  const c = card(page);
+  await expect(c.getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 30/06/2027 à 279 000,00 €',
+  );
+  await expect(c.getByTestId('somme-nette')).toHaveText(eur(num('Somme nette perçue', 0)));
+  await expect(c.getByTestId('impot')).toHaveText(eur(0));
+  // Remploi : condition des 4 ans non remplie le 30/06/2027.
+  await expect(c.getByTestId('remploi')).toHaveText('Exonération possible à partir du 01/11/2027');
+  // Cash-flow à remettre d'ici la vente : 2 515,02 € sur 8 mois.
+  await expect(c.getByTestId('cash-flow')).toContainText(
+    `${eur(-num('Cash-flow à remettre de votre poche (total)', 0))} à remettre d’ici la vente (${eur(-num('Soit par mois', 0))}/mois)`,
+  );
+  // Un seul scénario : pas de tableau de comparaison.
+  await expect(page.getByLabel('Comparaison des dates de vente')).toHaveCount(0);
+
+  // Détails et paramètres repliés par défaut.
+  for (const label of ['Calcul', 'Somme perçue', 'Calcul de la plus-value']) {
+    await expect(c.getByRole('button', { name: label, exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   }
-  // Rendement de l'attente (onglet Vendre quand) : 2,89 % puis 2,48 %.
-  await expect(cell(page, phone, 'Rendement annuel de l’attente', SCENARIOS[1]!)).toHaveText(
-    pct(0.0288581898093851),
+  const settings = page.getByRole('region', { name: 'Paramètres de vente' });
+  await expect(settings.getByRole('button', { name: 'Paramètres de vente' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
   );
-  await expect(cell(page, phone, 'Rendement annuel de l’attente', SCENARIOS[2]!)).toHaveText(
-    pct(0.0248334201321662),
+  await expect(settings.getByTestId('resume-parametres')).toHaveText(
+    /Frais d’agence 0,00\s%\s· frais divers de vente 1\s674,00\s€ · indemnités de remboursement anticipé 0,00\s€/,
   );
-  // Remploi : condition des 4 ans remplie à partir du 01/11/2027.
-  await expect(cell(page, phone, 'Condition des 4 ans', SCENARIOS[0]!)).toHaveText(
-    'Non (dès le 01/11/2027)',
-  );
-  await expect(cell(page, phone, 'Condition des 4 ans', SCENARIOS[1]!)).toHaveText('Oui');
-  // Sans placement de référence, la comparaison invite à le renseigner.
-  await expect(cell(page, phone, 'Gain par rapport au placement', SCENARIOS[0]!)).toHaveText(
-    'à renseigner',
-  );
-  await expect(page.getByText(/renseigne son taux dans/)).toBeVisible();
+  // Sortis de l'écran : TRI, gain total, placement, loyer évité, autres dettes.
+  const main = page.getByRole('main');
+  for (const text of ['TRI', 'Gain total', 'placement', 'Loyer évité', 'Autres dettes']) {
+    await expect(main.getByText(text)).toHaveCount(0);
+  }
   // Mentions.
   await expect(
     page.getByText(/pas un conseil fiscal ni un conseil en investissement/),
   ).toBeVisible();
   await expect(page.getByText(/à confirmer avec un notaire/)).toBeVisible();
-
-  if (phone) {
-    // Un scénario par carte.
-    await expect(page.getByRole('region', { name: /^Scénario du / })).toHaveCount(3);
-    await expectNoHorizontalScroll(page);
-  }
-  await capture(page, testInfo, 'us11-scenarios-jeu-de-test');
+  if (isPhone(testInfo)) await expectNoHorizontalScroll(page);
+  await capture(page, testInfo, 'us11-scenario-jeu-de-test');
 });
 
-test('le détail du calcul de la plus-value se déplie (⊕)', async ({ page }, testInfo) => {
-  const phone = isPhone(testInfo);
-  await goToSale(page);
-  const toggle = page
-    .getByRole('button', { name: '− Impôt sur la plus-value', exact: true })
-    .filter({ visible: true })
-    .first();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-  await expect(cell(page, phone, 'Plus-value brute', SCENARIOS[1]!)).toHaveCount(0);
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+test('sans scénario : vente dans 12 mois à la valeur estimée, sinon invitation à la saisir', async ({
+  page,
+}, testInfo) => {
+  await startEmpty(page);
+  await createProperty(page, 'Studio des tests', { rentalStart: '2021-01-01' });
+  await goTo(page, 'Simulations');
+  await expect(page.getByText(/Indique la valeur estimée du bien/)).toBeVisible();
 
-  const r = expected.revente as Record<string, number>;
-  await expect(cell(page, phone, 'Durée de détention', SCENARIOS[0]!)).toHaveText('9 ans');
-  await expect(
-    cell(page, phone, 'Prix d’achat du logement (hors mobilier)', SCENARIOS[0]!),
-  ).toHaveText(eur(r["Prix d'acquisition du logement (hors mobilier)"]!));
-  await expect(
-    cell(page, phone, '+ Forfait travaux 15 % (plus de 5 ans)', SCENARIOS[0]!),
-  ).toHaveText(eur(r['+ Forfait travaux 15 % (détention de plus de 5 ans)']!));
-  await expect(
-    cell(page, phone, '− Amortissements déduits à réintégrer', SCENARIOS[0]!),
-  ).toHaveText(eur(r['− Amortissements déduits à réintégrer']!));
-  // Note sous la ligne : le total des amortissements est réintégré (comme l'Excel).
-  const note = page
-    .getByText(
-      'Inclut les amortissements de tous les composants (mobilier, équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer : à confirmer avec le notaire.',
-    )
-    .filter({ visible: true });
-  await expect(note).toHaveCount(phone ? 3 : 1);
-  await expect(cell(page, phone, 'Plus-value brute', SCENARIOS[1]!)).toHaveText(
-    eur(num('Plus-value brute', 1)),
+  await goToProperty(page, 'Informations');
+  await page.getByRole('button', { name: 'Modifier' }).click();
+  await page.getByText('Plus de détails').click();
+  await page.getByLabel('Valeur estimée (€)').fill('180000');
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('Bien « Studio des tests » modifié.')).toBeVisible();
+
+  await goTo(page, 'Simulations');
+  // Horloge figée au 01/11/2026 : vente le 01/11/2027.
+  await expect(card(page).getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 01/11/2027 à 180 000,00 €',
   );
-  await expect(
-    cell(page, phone, 'Abattement pour durée de détention (impôt sur le revenu)', SCENARIOS[1]!),
-  ).toHaveText(pct(0.3));
-  await expect(
-    cell(page, phone, 'Abattement pour durée de détention (prélèvements sociaux)', SCENARIOS[1]!),
-  ).toHaveText(pct(0.0825));
-  await capture(page, testInfo, 'us11-detail-plus-value');
-
-  // Il se replie, et l'état est mémorisé.
+  // Le scénario par défaut est enregistré : il reste après rechargement.
   await page.reload();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  await toggle.click();
-  await expect(cell(page, phone, 'Plus-value brute', SCENARIOS[1]!)).toHaveCount(0);
-});
-
-test('créer, modifier et supprimer un scénario de vente', async ({ page }, testInfo) => {
-  const phone = isPhone(testInfo);
-  await goToSale(page);
-
-  // Créer.
-  await page.getByRole('button', { name: 'Ajouter un scénario' }).click();
-  const form = page.getByRole('form', { name: 'Scénario de vente' });
-  await form.getByLabel('Date de vente *').fill('2030-06-30');
-  await form.getByLabel('Prix de vente net vendeur (€) *').fill('290000');
-  await form.getByRole('button', { name: 'Ajouter le scénario' }).click();
-  await expect(page.getByText('Scénario du 30/06/2030 ajouté.')).toBeVisible();
-  const added = phone
-    ? page.getByRole('region', { name: 'Scénario du 30/06/2030' })
-    : page.getByRole('columnheader', { name: /Vente le 30\/06\/2030/ });
-  await expect(added).toBeVisible();
-  await expect(added).toContainText('290 000,00 €');
-  await capture(page, testInfo, 'us11-scenario-ajoute');
-
-  // Une date avant l'achat est refusée.
-  await page.getByRole('button', { name: 'Ajouter un scénario' }).click();
-  await form.getByLabel('Date de vente *').fill('2016-01-01');
-  await form.getByRole('button', { name: 'Ajouter le scénario' }).click();
-  await expect(form.getByRole('alert')).toContainText('doit suivre la date d’acquisition');
-  await form.getByRole('button', { name: 'Annuler' }).click();
-
-  // Modifier : le prix passe à 300 000 €, la somme nette suit.
-  await page
-    .getByRole('button', { name: 'Modifier le scénario du 30/06/2030' })
-    .filter({ visible: true })
-    .click();
-  await expect(form.getByLabel('Prix de vente net vendeur (€) *')).toHaveValue('290000');
-  await form.getByLabel('Prix de vente net vendeur (€) *').fill('300000');
-  await form.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(page.getByText('Scénario du 30/06/2030 modifié.')).toBeVisible();
-  await expect(added).toContainText('300 000,00 €');
-
-  // Supprimer (confirmation acceptée).
-  await page
-    .getByRole('button', { name: 'Supprimer le scénario du 30/06/2030' })
-    .filter({ visible: true })
-    .click();
-  await expect(page.getByText('Scénario du 30/06/2030 supprimé.')).toBeVisible();
-  await expect(added).toHaveCount(0);
-
-  // La suppression est enregistrée : un des scénarios du jeu de test aussi.
-  await page
-    .getByRole('button', { name: 'Supprimer le scénario du 30/06/2029' })
-    .filter({ visible: true })
-    .click();
-  // On attend que la suppression soit enregistrée avant de recharger la page.
-  await expect(page.getByText('Scénario du 30/06/2029 supprimé.')).toBeVisible();
-  await page.reload();
-  const remaining = phone
-    ? page.getByRole('region', { name: /^Scénario du / })
-    : page.getByRole('columnheader', { name: /^Vente le / });
-  await expect(remaining).toHaveCount(2);
-});
-
-test('les hypothèses de vente se modifient à l’écran', async ({ page }, testInfo) => {
-  const phone = isPhone(testInfo);
-  await goToSale(page);
-  await page.getByRole('button', { name: 'Hypothèses de vente' }).click();
-  const form = page.getByRole('form', { name: 'Hypothèses de vente' });
-  await expect(form.getByLabel('Frais divers de vente (€)')).toHaveValue('1674');
-  await expect(form.getByLabel('Taux des prélèvements sociaux sur la plus-value (%)')).toHaveValue(
-    '17,2',
+  await expect(card(page).getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 01/11/2027 à 180 000,00 €',
   );
-  // 1 000 € de frais de vente en plus : la somme nette du scénario 1 baisse d'autant.
-  await form.getByLabel('Frais divers de vente (€)').fill('2674');
-  await form.getByRole('button', { name: 'Enregistrer les hypothèses' }).click();
-  await expect(page.getByText('Hypothèses enregistrées')).toBeVisible();
-  await expect(cell(page, phone, 'Somme nette perçue', SCENARIOS[0]!)).toHaveText(
-    eur(num('Somme nette perçue', 0) - 1000),
-  );
-  await capture(page, testInfo, 'us11-hypotheses');
+  await capture(page, testInfo, 'us11-scenario-par-defaut');
 });
 
-test('placement de référence : saisi dans ⚙ Paramètres, comparé partout', async ({
+test('comparer avec d’autres dates : tableau, gain de l’attente, modifier, supprimer', async ({
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
-  // Synthèse, sans placement : le TRI s'affiche, la comparaison invite à le renseigner.
-  await goTo(page, 'Synthèse');
-  const help = page.getByTestId('aide-rentabilite');
-  await expect(help).toContainText(/ton argent t’a rapporté \d+,\d\d\s%\spar an/);
-  await expect(help).toContainText('Renseigne un placement de référence');
+  await startWithTestData(page);
+  await goToSale(page);
+  await compareWith(page, '2028-06-30', '279000');
+  await compareWith(page, '2029-06-30', '279000');
 
-  // Saisie du placement.
-  await openSettings(page);
-  const form = page.getByRole('form', { name: 'Placement de référence' });
-  await expect(form.getByLabel('Taux annuel (%)')).toHaveValue('');
-  await form.getByLabel('Libellé').fill('fonds euros');
-  await form.getByLabel('Taux annuel (%)').fill('3');
-  await form.getByRole('button', { name: 'Enregistrer le placement' }).click();
-  await expect(page.getByText(`fonds euros à ${pct(0.03)} par an`)).toBeVisible();
-  await capture(page, testInfo, 'us11-placement-parametres');
+  // Le dernier ajouté s'affiche dans la carte.
+  await expect(card(page).getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 30/06/2029 à 279 000,00 €',
+  );
+  await expect(card(page).getByTestId('somme-nette')).toHaveText(eur(num('Somme nette perçue', 2)));
+  await expect(card(page).getByTestId('impot')).toHaveText(eur(num('Impôt sur la plus-value', 2)));
 
-  // Synthèse : TRI si je vends aujourd'hui et gain par rapport au placement.
-  await goTo(page, 'Synthèse');
-  await expect(help).toContainText(
-    `contre ${pct(0.03)} pour le placement de référence (fonds euros)`,
+  const comparison = page.getByLabel('Comparaison des dates de vente').filter({ visible: true });
+  await expect(comparison).toBeVisible();
+  // Gain de l'attente 2027 → 2028 : 8 131,59 € de somme nette en plus − 2 855,07 € remis.
+  await expect(comparison).toContainText(
+    `attendre jusqu’au 30/06/2028 te rapporte ${eur(5276.52)} de plus`,
+  );
+  await expect(comparison).toContainText(
+    /attendre jusqu’au 30\/06\/2029 te rapporte 4\s730,1\d\s€ de plus/,
   );
   if (phone) {
-    const card = page.getByRole('region', { name: 'Année 2026' });
-    await expect(card.getByText('TRI si je vends aujourd’hui (au 01/11/2026)')).toBeVisible();
-    await expect(
-      card.getByText(`Gain par rapport au placement (fonds euros, ${pct(0.03)})`),
-    ).toBeVisible();
-  } else {
-    await expect(
-      page.getByRole('rowheader', { name: 'TRI si je vends aujourd’hui (au 01/11/2026)' }),
-    ).toBeVisible();
-    const row = page.locator('table[aria-label="Synthèse annuelle"] tr').filter({
-      has: page.getByRole('rowheader', {
-        name: `Gain par rapport au placement (fonds euros, ${pct(0.03)})`,
-      }),
-    });
-    await expect(row.locator('td').last()).toHaveText(/^\d[\d\s\u202f]*,\d\d\s€$/);
-  }
-  await capture(page, testInfo, 'us11-synthese-rentabilite');
-
-  // Simulations › Vente : le gain par rapport au placement de chaque scénario, positif
-  // (TRI d'environ 4,5 à 5 %, au-dessus de 3 %).
-  await goToSale(page);
-  for (const scenario of SCENARIOS) {
-    const value = cell(
-      page,
-      phone,
-      `Gain par rapport au placement (fonds euros, ${pct(0.03)})`,
-      scenario,
+    await expect(comparison.getByRole('listitem')).toHaveCount(3);
+    await expect(comparison.getByRole('listitem').first()).toContainText(
+      eur(num('Somme nette perçue', 0)),
     );
-    await expect(value).toHaveText(/^\d[\d\s\u202f]*,\d\d\s€$/);
-    await expect(value).toHaveClass(/positive/);
+  } else {
+    const rows = comparison.locator('tbody tr');
+    await expect(rows).toHaveCount(3);
+    const second = rows.nth(1);
+    await expect(second).toContainText(eur(num('Somme nette perçue', 1)));
+    await expect(second).toContainText(eur(num('Impôt sur la plus-value', 1)));
+    await expect(second).toContainText(eur(-num('Cash-flow à remettre de votre poche (total)', 1)));
   }
-  await capture(page, testInfo, 'us11-vente-avec-placement');
+  if (phone) await expectNoHorizontalScroll(page);
+  await capture(page, testInfo, 'us11-comparaison');
+
+  // Un clic sur une ligne l'affiche dans la carte.
+  await comparison.getByRole('button', { name: 'Afficher le scénario du 30/06/2028' }).click();
+  await expect(card(page).getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 30/06/2028 à 279 000,00 €',
+  );
+  await expect(card(page).getByTestId('remploi')).toContainText(
+    `Exonéré si tu réinvestis dans ta résidence principale (impôt évité : ${eur(num('Impôt évité si le prix est réinvesti', 1))})`,
+  );
+
+  // Modifier : le prix passe à 290 000 €.
+  await page
+    .getByRole('button', { name: 'Modifier le scénario du 30/06/2028' })
+    .filter({ visible: true })
+    .first()
+    .click();
+  const form = page.getByRole('form', { name: 'Scénario de vente' });
+  await expect(form.getByLabel('Prix de vente net vendeur (€) *')).toHaveValue('279000');
+  await form.getByLabel('Prix de vente net vendeur (€) *').fill('290000');
+  await form.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('Scénario du 30/06/2028 modifié.')).toBeVisible();
+  await expect(card(page).getByRole('heading', { level: 3 })).toHaveText(
+    'Si tu vends le 30/06/2028 à 290 000,00 €',
+  );
+
+  // Supprimer (confirmation acceptée), et la suppression est enregistrée. Sur téléphone, les
+  // boutons sont dans la carte du scénario affiché : on affiche d'abord celui à supprimer.
+  await comparison.getByRole('button', { name: 'Afficher le scénario du 30/06/2029' }).click();
+  await page
+    .getByRole('button', { name: 'Supprimer le scénario du 30/06/2029' })
+    .filter({ visible: true })
+    .first()
+    .click();
+  await expect(page.getByText('Scénario du 30/06/2029 supprimé.')).toBeVisible();
+  await page.reload();
+  await expect(comparison).toBeVisible();
+  await expect(comparison).not.toContainText('30/06/2029');
+  await expect(comparison).toContainText('30/06/2028');
+});
+
+test('les détails ⊕ : somme perçue, plus-value, valeurs calculées', async ({ page }, testInfo) => {
+  await startWithTestData(page);
+  await goToSale(page);
+  await compareWith(page, '2028-06-30', '279000');
+
+  await open(page, 'Somme perçue');
+  await expect(line(page, '− Capital restant dû')).toHaveText(eur(num('− Capital restant dû', 1)));
+  await expect(line(page, '− Frais divers de vente')).toHaveText(eur(-1674));
+
+  await open(page, 'Calcul de la plus-value');
+  const r = expected.revente as Record<string, number>;
+  await expect(line(page, 'Durée de détention')).toHaveText('10 ans');
+  await expect(line(page, 'Prix d’achat du logement (hors mobilier)')).toHaveText(
+    eur(r["Prix d'acquisition du logement (hors mobilier)"]!),
+  );
+  await expect(line(page, '+ Frais d’acquisition (réels ou forfait 7,5 %)')).toHaveText(
+    eur(r["+ Frais d'acquisition (réels ou forfait 7,5 %, le plus élevé)"]!),
+  );
+  await expect(line(page, '− Amortissements déduits à réintégrer')).toHaveText(
+    eur(num('− Amortissements déduits (années avant celle de la vente)', 1)),
+  );
+  await expect(
+    card(page).getByText(
+      'Inclut les amortissements de tous les composants (mobilier, équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à réintégrer : à confirmer avec le notaire.',
+    ),
+  ).toBeVisible();
+  await expect(line(page, 'Plus-value brute')).toHaveText(eur(num('Plus-value brute', 1)));
+  // Années futures : la valeur du jeu de test (4 185 €) est une valeur modifiée.
+  await expect(
+    card(page).getByLabel('Amortissements déduits par an, années futures (€)'),
+  ).toHaveValue('4185');
+  await expect(
+    card(page).getByText(/Valeur modifiée \(calcul automatique : 7\s307,73\s€\)/),
+  ).toBeVisible();
+
+  await open(page, 'Calcul');
+  await expect(card(page).getByLabel('Loyer net projeté (€ / mois)')).toHaveValue('1056,61');
+  await expect(
+    card(page).getByText(/Valeur modifiée \(calcul automatique : 1\s160,06\s€\)/),
+  ).toBeVisible();
+  await expect(card(page).getByText(/Honoraires du comptable de 2025/)).toBeVisible();
+  await capture(page, testInfo, 'us11-details');
+
+  // Vider un champ revient au calcul automatique : le cash-flow d'ici la vente change.
+  const before = await card(page).getByTestId('cash-flow').textContent();
+  await card(page).getByLabel('Loyer net projeté (€ / mois)').fill('');
+  await card(page).getByLabel('Loyer net projeté (€ / mois)').press('Enter');
+  await expect(card(page).getByText(/^Calcul automatique : 1\s160,06\s€/)).toBeVisible();
+  await expect(card(page).getByTestId('cash-flow')).not.toHaveText(before!);
+});
+
+test('remploi : part du prix réinvestie modifiable dans la ligne', async ({ page }) => {
+  await startWithTestData(page);
+  await goToSale(page);
+  await compareWith(page, '2028-06-30', '279000');
+  const share = card(page).getByLabel('Part du prix réinvestie (%)');
+  await expect(share).toHaveValue('100');
+  await share.fill('50');
+  await share.press('Enter');
+  // Impôt de 356,83 € : la moitié est évitée.
+  await expect(card(page).getByTestId('remploi')).toContainText(`impôt évité : ${eur(178.42)}`);
+});
+
+test('paramètres de vente : repliés, modifiables, la somme nette suit', async ({
+  page,
+}, testInfo) => {
+  await startWithTestData(page);
+  await goToSale(page);
+  const settings = page.getByRole('region', { name: 'Paramètres de vente' });
+  await settings.getByRole('button', { name: 'Paramètres de vente' }).click();
+  const form = settings.getByRole('form', { name: 'Paramètres de vente' });
+  await expect(form.getByRole('textbox')).toHaveCount(3);
+  await expect(form.getByLabel('Frais divers de vente (€)')).toHaveValue('1674');
+  await form.getByLabel('Frais divers de vente (€)').fill('2674');
+  await form.getByRole('button', { name: 'Enregistrer les paramètres' }).click();
+  await expect(page.getByText('Paramètres de vente enregistrés.')).toBeVisible();
+  await expect(card(page).getByTestId('somme-nette')).toHaveText(
+    eur(num('Somme nette perçue', 0) - 1000),
+  );
+  await expect(settings.getByTestId('resume-parametres')).toContainText(/2\s674,00\s€/);
+  await capture(page, testInfo, 'us11-parametres-vente');
+});
+
+test('frais d’acquisition réels dans Mon bien ; Synthèse et ⚙ sans TRI ni placement', async ({
+  page,
+}, testInfo) => {
+  await startWithTestData(page);
+  await goToProperty(page, 'Informations');
+  await expect(page.getByRole('region', { name: 'Informations du bien' })).toContainText(
+    `Frais d’acquisition réels (plus-value)${eur(27900)}`,
+  );
+  await goTo(page, 'Synthèse');
+  await expect(page.getByRole('heading', { name: 'Synthèse · Appartement exemple' })).toBeVisible();
+  await expect(page.getByRole('main').getByText(/TRI|placement/)).toHaveCount(0);
+  await openSettings(page);
+  await expect(page.getByRole('main').getByText(/placement/i)).toHaveCount(0);
+  await capture(page, testInfo, 'us11-synthese-sans-tri');
 });

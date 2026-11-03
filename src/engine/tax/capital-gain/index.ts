@@ -7,7 +7,7 @@
  *   plus-values professionnelles et aura son propre module.
  */
 import { LMNP_REEL, deductedDepreciationByYear, type DeductedDepreciationYear } from '../lmnp-reel';
-import type { Cents, Dataset, IsoDate, Property, PropertyAssumptions } from '../../types';
+import type { Cents, Dataset, IsoDate, Property } from '../../types';
 import { privateCapitalGain, type CapitalGain } from './private-individuals';
 
 export interface CapitalGainResult extends CapitalGain {
@@ -18,7 +18,8 @@ export interface CapitalGainResult extends CapitalGain {
 export interface CapitalGainContext {
   data: Dataset;
   property: Property;
-  assumptions: PropertyAssumptions;
+  /** Amortissements déduits par an pour les années futures (saisis ou calculés). */
+  assumedDepreciationPerYear: Cents;
   dataAsOf: IsoDate;
   saleDate: IsoDate;
   netSalePrice: Cents;
@@ -30,7 +31,7 @@ export type CapitalGainModule = (context: CapitalGainContext) => CapitalGainResu
 const lmnpReelCapitalGain: CapitalGainModule = ({
   data,
   property,
-  assumptions,
+  assumedDepreciationPerYear,
   dataAsOf,
   saleDate,
   netSalePrice,
@@ -40,17 +41,15 @@ const lmnpReelCapitalGain: CapitalGainModule = ({
     property,
     dataAsOf,
     Number(saleDate.slice(0, 4)),
-    assumptions.projection.depreciationDeductedPerYear,
+    assumedDepreciationPerYear,
   );
   const gain = privateCapitalGain({
     acquisitionDate: property.acquisitionDate,
     saleDate,
     netSalePrice,
     purchasePrice: property.purchasePrice - property.furnitureIncluded,
-    actualAcquisitionCosts: assumptions.sale.actualAcquisitionCosts,
+    actualAcquisitionCosts: property.actualAcquisitionCosts ?? 0,
     depreciationDeducted: depreciationYears.reduce((sum, y) => sum + y.amount, 0),
-    incomeTaxRate: assumptions.sale.incomeTaxRate,
-    socialChargesRate: assumptions.sale.socialChargesRate,
   });
   return { ...gain, depreciationYears };
 };

@@ -8,7 +8,7 @@
  * référence, et arrondis seulement à l'affichage.
  */
 import { addDays, addMonths, daysBetween, fullYearsBetween, startOfMonth, yearOf } from '../dates';
-import type { Cents, Dataset, IsoDate, ProjectionAssumptions, Property } from '../types';
+import type { Cents, Dataset, IsoDate, Property } from '../types';
 import { installmentTotal } from './loan';
 
 /** Flux daté : positif = argent reçu ou économisé, négatif = argent versé. */
@@ -34,10 +34,20 @@ export interface MonthFlow {
   total: number;
 }
 
+/** Valeurs de projection (déjà résolues : saisies ou calculées automatiquement). */
+export interface ProjectionValues {
+  avoidedRentMonthlyAtPurchase: Cents;
+  avoidedRentIndexation: number;
+  netRentMonthly: number;
+  annualExpensesExcludingLoan: number;
+  annualGrowth: number;
+  saleYearCosts: Cents;
+}
+
 export interface OwnerBalanceInput {
   data: Dataset;
   property: Property;
-  projection: ProjectionAssumptions;
+  projection: ProjectionValues;
   /** Date de mise à jour des données : au-delà, on projette. */
   dataAsOf: IsoDate;
   saleDate: IsoDate;
@@ -76,7 +86,7 @@ function signedAmount(direction: string, amount: Cents): Cents {
 function avoidedRent(
   monthStart: IsoDate,
   property: Property,
-  projection: ProjectionAssumptions,
+  projection: ProjectionValues,
 ): number {
   const end = property.mainResidenceEndDate;
   if (!end || monthStart >= end) return 0;
@@ -240,4 +250,20 @@ export function waitingYield(
   const days = daysBetween(previous.date, next.date);
   if (days <= 0 || previous.netSaleProceeds === 0) return null;
   return (next.totalGain - previous.totalGain) / previous.netSaleProceeds / (days / 365);
+}
+
+/**
+ * Gain de l'attente entre deux scénarios de vente (triés par date), en centimes : somme nette en
+ * plus, diminuée du cash-flow remis entre les deux dates (négatif quand il faut remettre de
+ * l'argent). Positif : attendre rapporte ; négatif : attendre coûte.
+ */
+export function waitingGain(
+  previous: { netSaleProceeds: number; cashFlowUntilSale: number },
+  next: { netSaleProceeds: number; cashFlowUntilSale: number },
+): number {
+  return (
+    next.netSaleProceeds -
+    previous.netSaleProceeds +
+    (next.cashFlowUntilSale - previous.cashFlowUntilSale)
+  );
 }

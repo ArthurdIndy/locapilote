@@ -3,7 +3,14 @@
  * l'achat, TRI) et le module de plus-value du régime du bien. Voir docs/regles-de-calcul.md
  * § 5 et § 6.
  */
-import { gainOverReference, ownerBalance, waitingYield, type OwnerBalance } from './core/irr';
+import {
+  gainOverReference,
+  ownerBalance,
+  waitingGain,
+  waitingYield,
+  type OwnerBalance,
+} from './core/irr';
+import { resolveSaleAssumptions, type ResolvedSaleAssumptions } from './sale-defaults';
 import { saleProceeds, type SaleProceeds } from './core/sale';
 import { capitalGainModuleFor, type CapitalGainResult } from './tax/capital-gain';
 import {
@@ -20,6 +27,8 @@ export interface ReferenceInvestment {
 
 export interface SaleSimulation {
   scenario: SaleScenario;
+  /** Hypothèses retenues, valeurs calculées automatiquement comprises. */
+  resolved: ResolvedSaleAssumptions;
   proceeds: SaleProceeds;
   /** `null` : pas encore de module de plus-value pour le régime du bien (impôt compté à 0). */
   capitalGain: CapitalGainResult | null;
@@ -50,12 +59,13 @@ export function simulateSale(
 ): SaleSimulation | { error: SaleSimulationError } {
   if (scenario.date <= property.acquisitionDate) return { error: 'sale-before-acquisition' };
   const proceeds = saleProceeds(data, property, assumptions.sale, scenario);
+  const resolved = resolveSaleAssumptions(data, property, assumptions, dataAsOf);
   const module = capitalGainModuleFor(property);
   const capitalGain = module
     ? module({
         data,
         property,
-        assumptions,
+        assumedDepreciationPerYear: resolved.depreciationDeductedPerYear.value,
         dataAsOf,
         saleDate: scenario.date,
         netSalePrice: proceeds.netSalePrice,
@@ -67,18 +77,19 @@ export function simulateSale(
     scenario.date,
     property.mainResidenceEndDate,
     tax,
-    assumptions.projection.mainResidenceReinvestedShare,
+    resolved.reinvestedShare.value,
   );
   const balance = ownerBalance({
     data,
     property,
-    projection: assumptions.projection,
+    projection: resolved.projection,
     dataAsOf,
     saleDate: scenario.date,
     netSaleProceeds: netProceeds,
   });
   return {
     scenario,
+    resolved,
     proceeds,
     capitalGain,
     tax,
@@ -109,5 +120,19 @@ export function waitingYieldBetween(previous: SaleSimulation, next: SaleSimulati
       netSaleProceeds: previous.netProceeds,
     },
     { date: next.scenario.date, totalGain: next.balance.totalGain },
+  );
+}
+
+/**
+ * Gain de l'attente d'un scénario par rapport au précédent (scénarios triés par date) : somme
+ * nette en plus, moins le cash-flow remis entre les deux dates.
+ */
+export function waitingGainBetween(previous: SaleSimulation, next: SaleSimulation): number {
+  return waitingGain(
+    {
+      netSaleProceeds: previous.netProceeds,
+      cashFlowUntilSale: previous.balance.cashFlowUntilSale,
+    },
+    { netSaleProceeds: next.netProceeds, cashFlowUntilSale: next.balance.cashFlowUntilSale },
   );
 }

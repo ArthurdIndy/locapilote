@@ -1,0 +1,73 @@
+import { describe, expect, it } from 'vitest';
+import { loadTestDataset } from '../db/testDataset';
+import { defaultAssumptions } from '../db/defaultAssumptions';
+import { accountantFees, journalLastTwelveMonths, resolveSaleAssumptions } from './sale-defaults';
+
+const dataset = loadTestDataset();
+const property = dataset.properties[0]!;
+const saved = dataset.assumptions[0]!;
+const dataAsOf = saved.dataAsOf; // 2026-10-25
+const automatic = defaultAssumptions(property.id, dataAsOf);
+
+describe('valeurs de la simulation de vente calculées automatiquement', () => {
+  const r = resolveSaleAssumptions(dataset, property, automatic, dataAsOf);
+
+  it('loyer net et dépenses : 12 derniers mois du journal (26/10/2025 au 25/10/2026)', () => {
+    expect(r.journalWindow).toEqual({ from: '2025-10-26', to: '2026-10-25' });
+    const journal = journalLastTwelveMonths(dataset, property, dataAsOf)!;
+    expect(journal.income).toBe(1392070); // 13 920,70 € de recettes
+    expect(journal.expenses).toBe(781251); // 7 812,51 € de dépenses (hors investissements)
+    expect(r.netRentMonthly.value).toBeCloseTo(1392070 / 12, 6);
+    expect(r.annualExpensesExcludingLoan.value).toBe(781251);
+    expect(r.netRentMonthly.modified).toBe(false);
+  });
+
+  it('évolution annuelle 1,5 %, part réinvestie 100 %', () => {
+    expect(r.annualGrowth.value).toBe(0.015);
+    expect(r.reinvestedShare.value).toBe(1);
+  });
+
+  it('amortissements des années futures : ceux de la dernière année complète (2025)', () => {
+    // 2025 : dotation 9 297,34 + report 1 834,69 − stock du comptable 3 824,30.
+    expect(r.lastCompleteYear).toBe(2025);
+    expect(r.depreciationDeductedPerYear.value).toBe(730773);
+  });
+
+  it('frais de l’année de la vente : honoraires du comptable de 2025', () => {
+    expect(accountantFees(dataset, property, 2025)).toBe(55800);
+    expect(r.saleYearCosts.value).toBe(55800);
+  });
+
+  it('un bien loué depuis moins de 12 mois : montants annualisés', () => {
+    const recent = { ...property, rentalStartDate: '2026-04-27' }; // 182 jours
+    const journal = journalLastTwelveMonths(dataset, recent, dataAsOf)!;
+    expect(journal.from).toBe('2026-04-27');
+    const raw = journalLastTwelveMonths(dataset, property, dataAsOf);
+    expect(journal.income).toBeLessThan(raw!.income * 1.2);
+    expect(journal.income).toBeGreaterThan(0);
+  });
+
+  it('les valeurs du jeu de test sont gardées comme valeurs modifiées', () => {
+    const s = resolveSaleAssumptions(dataset, property, saved, dataAsOf);
+    expect(s.netRentMonthly).toMatchObject({ value: 105661, modified: true });
+    expect(s.annualExpensesExcludingLoan).toMatchObject({ value: 559860, modified: true });
+    expect(s.annualGrowth).toMatchObject({ value: 0.015, modified: true });
+    expect(s.depreciationDeductedPerYear).toMatchObject({
+      value: 418500,
+      modified: true,
+      automatic: 730773,
+    });
+    expect(s.saleYearCosts).toMatchObject({ value: 55800, modified: true });
+  });
+
+  it('sans mise en location : pas de projection', () => {
+    const r2 = resolveSaleAssumptions(
+      dataset,
+      { ...property, rentalStartDate: null },
+      automatic,
+      dataAsOf,
+    );
+    expect(r2.journalWindow).toBeNull();
+    expect(r2.netRentMonthly.value).toBe(0);
+  });
+});

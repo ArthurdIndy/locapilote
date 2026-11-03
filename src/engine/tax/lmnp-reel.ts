@@ -331,3 +331,21 @@ export function deductedDepreciationByYear(
   }
   return rows;
 }
+
+/**
+ * Amortissements déduits par an pour les années futures, par défaut : ceux de la dernière année
+ * complète (année précédant la date de mise à jour, ou cette année si la date est un 31/12),
+ * selon la même règle que les années passées (stock du comptable s'il est saisi).
+ */
+export function lastCompleteYearDeductedDepreciation(
+  data: Dataset,
+  property: Property,
+  dataAsOf: IsoDate,
+): { year: number; amount: Cents } {
+  const dataYear = Number(dataAsOf.slice(0, 4));
+  const year = dataAsOf.endsWith('-12-31') ? dataYear : dataYear - 1;
+  const row = deductedDepreciationByYear(data, property, dataAsOf, year + 1, 0).find(
+    (y) => y.year === year,
+  );
+  return { year, amount: row?.amount ?? 0 };
+}

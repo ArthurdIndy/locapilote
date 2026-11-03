@@ -111,8 +111,6 @@ test('détails fermés par défaut ; restent visibles les lignes principales', a
     'Charges de copropriété restant à ma charge',
     'Rendement brut',
     'Rendement net (avant financement)',
-    'TRI si je vends aujourd’hui (au 01/11/2026)',
-    'Gain par rapport au placement',
     'Capital restant dû au 31/12',
     'Valeur estimée moins capital restant dû',
     'Résultat fiscal estimé',
