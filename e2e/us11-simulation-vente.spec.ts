@@ -210,6 +210,8 @@ test('créer, modifier et supprimer un scénario de vente', async ({ page }, tes
     .getByRole('button', { name: 'Supprimer le scénario du 30/06/2029' })
     .filter({ visible: true })
     .click();
+  // On attend que la suppression soit enregistrée avant de recharger la page.
+  await expect(page.getByText('Scénario du 30/06/2029 supprimé.')).toBeVisible();
   await page.reload();
   const remaining = phone
     ? page.getByRole('region', { name: /^Scénario du / })
