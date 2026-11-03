@@ -134,8 +134,22 @@ describe('scénarios « Vendre quand » du jeu de test (expected.json)', () => {
   it('gain de l’attente entre deux scénarios (onglet Vendre quand, ligne « Gain en plus »)', () => {
     // (somme nette − somme nette précédente) + cash-flow remis entre les deux dates :
     // 5 276,52 € puis 4 730,15 € dans data/jeu-de-test.xlsx (Vendre quand, D58 et E58).
-    expectEuros(waitingGainBetween(scenarios[0]!, scenarios[1]!), 5276.52439555728);
-    expectEuros(waitingGainBetween(scenarios[1]!, scenarios[2]!), 4730.15169979016);
+    expectEuros(waitingGainBetween(scenarios[0]!, scenarios[1]!)!, 5276.52439555728);
+    expectEuros(waitingGainBetween(scenarios[1]!, scenarios[2]!)!, 4730.15169979016);
+  });
+
+  it('pas de gain de l’attente entre deux scénarios à la même date (seul le prix change)', () => {
+    const sameDate = (price: number) => {
+      const r = simulateSale(dataset, property, assumptions, dataAsOf, {
+        date: '2027-06-30',
+        price,
+      });
+      if (!isSaleSimulation(r)) throw new Error(r.error);
+      return r;
+    };
+    expect(waitingGainBetween(sameDate(27900000), sameDate(30000000))).toBeNull();
+    // Une date antérieure non plus (le tableau est trié par date).
+    expect(waitingGainBetween(scenarios[1]!, scenarios[0]!)).toBeNull();
   });
 
   it('rendement de l’attente entre deux scénarios', () => {

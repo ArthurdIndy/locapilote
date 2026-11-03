@@ -1479,3 +1479,7 @@ ul.warning {
   font-style: italic;
   color: var(--muted);
 }
+
+.block {
+  display: block;
+}

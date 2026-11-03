@@ -154,6 +154,7 @@ Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme ne
 
 - D'ici la vente (mois commençant après la date de mise à jour) : cash-flow à remettre = échéances + projection − frais de l'année de vente, et ce montant par mois ; « X € à remettre d'ici la vente (Y €/mois) ».
 - **Gain de l'attente** entre deux scénarios triés par date = (somme nette du scénario − somme nette du précédent) + (cash-flow d'ici la vente du scénario − celui du précédent), c'est-à-dire la somme nette en plus moins le cash-flow remis entre les deux dates. Formulé « attendre jusqu'au JJ/MM/AAAA te rapporte X € de plus » (ou « te coûte X € »). Il retrouve la ligne « Gain en plus par rapport au scénario précédent » de l'onglet Vendre quand (5 276,52 € et 4 730,15 €, à 0,01 € près) : avec des scénarios postérieurs à la date des données, les autres flux sont identiques.
+- Le gain de l'attente n'est calculé que si la date du scénario est strictement postérieure à celle du scénario précédent ; sinon le moteur renvoie `null` et l'écran affiche « — » avec l'aide « même date que la ligne précédente : pas d'attente » (deux scénarios à la même date ne diffèrent que par le prix). Tableau trié par date, puis par prix croissant pour une même date ; en-tête « Gain de l'attente (par rapport à la ligne précédente) ».
 
 **Calculé par le moteur, non affiché** (décision produit du 03/11/2026 ; voir le backlog) :
 

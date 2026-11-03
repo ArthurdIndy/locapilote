@@ -324,3 +324,35 @@ test('frais d’acquisition réels dans Mon bien ; Synthèse et ⚙ sans TRI ni 
   await expect(page.getByRole('main').getByText(/placement/i)).toHaveCount(0);
   await capture(page, testInfo, 'us11-synthese-sans-tri');
 });
+
+test('deux scénarios à la même date : pas de gain de l’attente, tri par prix croissant', async ({
+  page,
+}, testInfo) => {
+  const phone = isPhone(testInfo);
+  await startWithTestData(page);
+  await goToSale(page);
+  // Le jeu de test a déjà le 30/06/2027 à 279 000 € ; on ajoute la même date à 300 000 €.
+  await compareWith(page, '2027-06-30', '300000');
+  const comparison = page.getByLabel('Comparaison des dates de vente').filter({ visible: true });
+  await expect(comparison).not.toContainText('attendre jusqu’au');
+  if (phone) {
+    const items = comparison.getByRole('listitem');
+    await expect(items).toHaveCount(2);
+    // Prix croissant : 279 000 € d'abord (somme nette la plus faible).
+    await expect(items.nth(0)).toContainText(eur(num('Somme nette perçue', 0)));
+    await expect(items.nth(1)).toContainText('— même date que la ligne précédente : pas d’attente');
+  } else {
+    await expect(
+      comparison.getByRole('columnheader', {
+        name: 'Gain de l’attente (par rapport à la ligne précédente)',
+      }),
+    ).toBeVisible();
+    const rows = comparison.locator('tbody tr');
+    await expect(rows.nth(0).locator('td').first()).toHaveText(eur(279000));
+    await expect(rows.nth(1).locator('td').first()).toHaveText(eur(300000));
+    await expect(rows.nth(1).locator('td.waiting')).toHaveText(
+      '—même date que la ligne précédente : pas d’attente',
+    );
+  }
+  await capture(page, testInfo, 'us11-meme-date');
+});

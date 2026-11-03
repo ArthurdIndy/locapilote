@@ -255,12 +255,15 @@ export function waitingYield(
 /**
  * Gain de l'attente entre deux scénarios de vente (triés par date), en centimes : somme nette en
  * plus, diminuée du cash-flow remis entre les deux dates (négatif quand il faut remettre de
- * l'argent). Positif : attendre rapporte ; négatif : attendre coûte.
+ * l'argent). Positif : attendre rapporte ; négatif : attendre coûte. `null` si la date du
+ * scénario n'est pas strictement postérieure à celle du précédent : il n'y a pas d'attente (deux
+ * scénarios à la même date ne diffèrent que par le prix).
  */
 export function waitingGain(
-  previous: { netSaleProceeds: number; cashFlowUntilSale: number },
-  next: { netSaleProceeds: number; cashFlowUntilSale: number },
-): number {
+  previous: { date: IsoDate; netSaleProceeds: number; cashFlowUntilSale: number },
+  next: { date: IsoDate; netSaleProceeds: number; cashFlowUntilSale: number },
+): number | null {
+  if (next.date <= previous.date) return null;
   return (
     next.netSaleProceeds -
     previous.netSaleProceeds +

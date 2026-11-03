@@ -46,9 +46,17 @@ const minus = (cents: number) => euros(cents === 0 ? 0 : -cents);
 interface Row {
   index: number;
   sim: SaleSimulation;
-  /** Gain de l'attente par rapport au scénario précédent (par date) ; `null` pour le premier. */
+  /**
+   * Gain de l'attente par rapport au scénario précédent (par date) ; `null` pour le premier et
+   * pour un scénario à la même date que le précédent.
+   */
   waiting: number | null;
+  /** Même date que le scénario précédent : pas d'attente. */
+  sameDate: boolean;
 }
+
+/** Aide affichée à la place du gain de l'attente pour une ligne à la même date que la précédente. */
+const SAME_DATE_HELP = 'même date que la ligne précédente : pas d’attente';
 
 /** « attendre jusqu'au 30/06/2028 te rapporte 5 276,52 € de plus » (ou « te coûte »). */
 function waitingText(row: Row): string {
@@ -114,10 +122,17 @@ export function SalePage({ data, property, today }: Props) {
     }))
     .filter((r) => isSaleSimulation(r.result))
     .map((r) => ({ index: r.index, sim: r.result as SaleSimulation }))
-    .sort((a, b) => a.sim.scenario.date.localeCompare(b.sim.scenario.date) || a.index - b.index);
+    // Par date, puis par prix croissant pour une même date.
+    .sort(
+      (a, b) =>
+        a.sim.scenario.date.localeCompare(b.sim.scenario.date) ||
+        a.sim.scenario.price - b.sim.scenario.price ||
+        a.index - b.index,
+    );
   const rows: Row[] = valid.map((v, i) => ({
     ...v,
     waiting: i === 0 ? null : waitingGainBetween(valid[i - 1]!.sim, v.sim),
+    sameDate: i > 0 && valid[i - 1]!.sim.scenario.date === v.sim.scenario.date,
   }));
   const current = rows.find((r) => r.index === selected) ?? rows[0] ?? null;
   const invalid = scenarios
@@ -235,7 +250,7 @@ export function SalePage({ data, property, today }: Props) {
                       <th scope="col">Somme nette</th>
                       <th scope="col">Impôt</th>
                       <th scope="col">À remettre d’ici la vente</th>
-                      <th scope="col">Gain de l’attente</th>
+                      <th scope="col">Gain de l’attente (par rapport à la ligne précédente)</th>
                       <th scope="col">
                         <span className="visually-hidden">Actions</span>
                       </th>
@@ -269,6 +284,9 @@ export function SalePage({ data, property, today }: Props) {
                           }
                         >
                           {waitingText(r)}
+                          {r.sameDate && (
+                            <span className="muted small block">{SAME_DATE_HELP}</span>
+                          )}
                         </td>
                         <td>
                           <span className="scenario-actions">
@@ -319,6 +337,7 @@ export function SalePage({ data, property, today }: Props) {
                           {waitingText(r)}
                         </span>
                       )}
+                      {r.sameDate && <span className="small muted">— {SAME_DATE_HELP}</span>}
                     </button>
                   </li>
                 ))}

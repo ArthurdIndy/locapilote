@@ -125,14 +125,20 @@ export function waitingYieldBetween(previous: SaleSimulation, next: SaleSimulati
 
 /**
  * Gain de l'attente d'un scénario par rapport au précédent (scénarios triés par date) : somme
- * nette en plus, moins le cash-flow remis entre les deux dates.
+ * nette en plus, moins le cash-flow remis entre les deux dates. `null` à la même date (pas
+ * d'attente).
  */
-export function waitingGainBetween(previous: SaleSimulation, next: SaleSimulation): number {
+export function waitingGainBetween(previous: SaleSimulation, next: SaleSimulation): number | null {
   return waitingGain(
     {
+      date: previous.scenario.date,
       netSaleProceeds: previous.netProceeds,
       cashFlowUntilSale: previous.balance.cashFlowUntilSale,
     },
-    { netSaleProceeds: next.netProceeds, cashFlowUntilSale: next.balance.cashFlowUntilSale },
+    {
+      date: next.scenario.date,
+      netSaleProceeds: next.netProceeds,
+      cashFlowUntilSale: next.balance.cashFlowUntilSale,
+    },
   );
 }
