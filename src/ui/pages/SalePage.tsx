@@ -451,7 +451,7 @@ function ScenarioCard({
               label="Dépenses projetées (€ / an, hors prêt)"
               kind="euros"
               resolved={r.annualExpensesExcludingLoan}
-              help="Dépenses payées sur les 12 mois, hors investissements et dépenses à qualifier."
+              help="Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété."
               onSave={(v) => onSaveProjection({ annualExpensesExcludingLoan: v })}
             />
             <OverrideField

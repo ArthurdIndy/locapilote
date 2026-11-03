@@ -4,7 +4,8 @@
  * hypothèses du bien). Voir docs/regles-de-calcul.md § 6.
  *
  * - loyer net et dépenses projetés : 12 derniers mois du journal (jusqu'à la date de mise à
- *   jour), annualisés si le bien est loué depuis moins longtemps ; le budget (US12) les fournira ;
+ *   jour), annualisés si le bien est loué depuis moins longtemps, hors dépenses immobilisées et
+ *   catégories de travaux ; le budget (US12) les remplacera ;
  * - évolution annuelle : 1,5 % ;
  * - amortissements déduits des années futures : ceux de la dernière année complète (LMNP réel) ;
  * - frais de l'année de la vente : honoraires du comptable de la dernière année complète ;
@@ -28,6 +29,19 @@ export const DEFAULT_REINVESTED_SHARE = 1;
 
 /** Catégories des honoraires du comptable : repérées par leur nom (« Honoraires comptable »). */
 const ACCOUNTANT_FEES = /comptab/i;
+/**
+ * Catégories de travaux, exclues de la projection (y compris travaux de copropriété et
+ * honoraires sur travaux) : repérées par leur nom, en attendant un marqueur dédié (US02).
+ */
+const WORKS = /travaux/i;
+
+/**
+ * Dépense exclue de la projection : dépense immobilisée (« À amortir ») ou catégorie de
+ * travaux. Aucune autre exclusion (décision du 03/11/2026).
+ */
+export function isExcludedFromProjection(category: Category, property: Property): boolean {
+  return treatmentFor(category, property) === 'depreciable' || WORKS.test(category.name);
+}
 
 /** Une valeur résolue : celle retenue, si elle est modifiée, et le calcul automatique. */
 export interface Resolved<T = number> {
@@ -62,8 +76,8 @@ function treatmentFor(category: Category, property: Property): TaxTreatment | un
 }
 
 /**
- * Recettes et dépenses d'exploitation (hors investissements à amortir et dépenses à qualifier)
- * des 12 derniers mois jusqu'à `dataAsOf`, annualisées si la location a commencé dans la période.
+ * Recettes et dépenses des 12 derniers mois jusqu'à `dataAsOf` (dépenses hors dépenses
+ * immobilisées et catégories de travaux), annualisées si la location a commencé dans la période.
  */
 export function journalLastTwelveMonths(
   data: Dataset,
@@ -83,9 +97,8 @@ export function journalLastTwelveMonths(
     const category = categories.get(t.categoryId);
     if (!category) continue;
     if (category.direction === 'income') income += t.amount;
-    else if (category.direction === 'expense') {
-      const treatment = treatmentFor(category, property);
-      if (treatment !== 'depreciable' && treatment !== 'to-review') expenses += t.amount;
+    else if (category.direction === 'expense' && !isExcludedFromProjection(category, property)) {
+      expenses += t.amount;
     }
   }
   return { from, to: dataAsOf, income: income * factor, expenses: expenses * factor };

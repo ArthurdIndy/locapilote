@@ -13,6 +13,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur · **fait à l'itération 3 bis** |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 · **fait à l'itération 3 bis** |
 | Impôt estimé et cash-flow après impôt | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
+| Catégories : marqueurs dédiés (honoraires du comptable, travaux) | La simulation de vente repère les honoraires du comptable (frais de l'année de la vente) et les catégories de travaux (exclues de la projection) par le nom de la catégorie (« comptab », « travaux »). Ajouter à la catégorie un marqueur dédié, réglable à l'écran, pour ne plus dépendre du nom. À faire avec US02 (catégories paramétrables) | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
 | Plus-value : amortissements du logement seul | Aujourd'hui, la plus-value réintègre le total des amortissements déduits (tous composants), comme l'Excel. Selon la notice 2048-IMM (ligne 25), seuls ceux du logement sont à réintégrer, pas ceux du mobilier, des équipements ni des travaux. Répartir les amortissements utilisés entre composants et ne réintégrer que la part du logement ; `expected.json` serait à revoir. PR séparée | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
 
 ## Synthèse : détail des recettes et des dépenses

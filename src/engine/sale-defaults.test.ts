@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { loadTestDataset } from '../db/testDataset';
 import { defaultAssumptions } from '../db/defaultAssumptions';
-import { accountantFees, journalLastTwelveMonths, resolveSaleAssumptions } from './sale-defaults';
+import {
+  accountantFees,
+  isExcludedFromProjection,
+  journalLastTwelveMonths,
+  resolveSaleAssumptions,
+} from './sale-defaults';
 
 const dataset = loadTestDataset();
 const property = dataset.properties[0]!;
@@ -16,10 +21,30 @@ describe('valeurs de la simulation de vente calculées automatiquement', () => {
     expect(r.journalWindow).toEqual({ from: '2025-10-26', to: '2026-10-25' });
     const journal = journalLastTwelveMonths(dataset, property, dataAsOf)!;
     expect(journal.income).toBe(1392070); // 13 920,70 € de recettes
-    expect(journal.expenses).toBe(781251); // 7 812,51 € de dépenses (hors investissements)
+    expect(journal.expenses).toBe(778255); // 7 782,55 € : hors immobilisations et travaux (29,96 €)
     expect(r.netRentMonthly.value).toBeCloseTo(1392070 / 12, 6);
-    expect(r.annualExpensesExcludingLoan.value).toBe(781251);
+    expect(r.annualExpensesExcludingLoan.value).toBe(778255);
     expect(r.netRentMonthly.modified).toBe(false);
+  });
+
+  it('projection : dépenses immobilisées et catégories de travaux exclues, rien d’autre', () => {
+    const byName = (name: string) => dataset.categories.find((c) => c.name === name)!;
+    expect(isExcludedFromProjection(byName("Travaux d'amélioration (à amortir)"), property)).toBe(
+      true,
+    );
+    expect(isExcludedFromProjection(byName('Équipement / mobilier (à amortir)'), property)).toBe(
+      true,
+    );
+    expect(isExcludedFromProjection(byName('Honoraires sur travaux'), property)).toBe(true);
+    expect(
+      isExcludedFromProjection(
+        { ...byName('Charges de copropriété'), name: 'Travaux de copropriété' },
+        property,
+      ),
+    ).toBe(true);
+    expect(isExcludedFromProjection(byName('À qualifier'), property)).toBe(false);
+    expect(isExcludedFromProjection(byName('Charges de copropriété'), property)).toBe(false);
+    expect(isExcludedFromProjection(byName('Entretien et réparations'), property)).toBe(false);
   });
 
   it('évolution annuelle 1,5 %, part réinvestie 100 %', () => {

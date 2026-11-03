@@ -258,6 +258,15 @@ test('les détails ⊕ : somme perçue, plus-value, valeurs calculées', async (
     card(page).getByText(/Valeur modifiée \(calcul automatique : 1\s160,06\s€\)/),
   ).toBeVisible();
   await expect(card(page).getByText(/Honoraires du comptable de 2025/)).toBeVisible();
+  // Dépenses projetées : ce qui est exclu est indiqué ; calcul automatique 7 782,55 €/an.
+  await expect(
+    card(page).getByText(
+      /Exclues : dépenses immobilisées \(« À amortir »\) et catégories de travaux, y compris travaux de copropriété\./,
+    ),
+  ).toBeVisible();
+  await expect(
+    card(page).getByText(/Valeur modifiée \(calcul automatique : 7\s782,55\s€\)/),
+  ).toBeVisible();
   await capture(page, testInfo, 'us11-details');
 
   // Vider un champ revient au calcul automatique : le cash-flow d'ici la vente change.

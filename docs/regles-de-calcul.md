@@ -130,13 +130,13 @@ Moteur : `src/engine/core/irr.ts` (bilan, gain de l'attente, TRI), `src/engine/s
 
 **Valeurs calculées automatiquement** (chacune remplaçable par une valeur modifiée ; vide = calcul automatique) :
 
-- loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, hors investissements (« À amortir ») et dépenses à qualifier (« À valider »). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours). Le budget (US12) les fournira à l'itération 4b ;
+- loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, **hors dépenses immobilisées** (traitement « À amortir ») **et catégories de travaux** (nom contenant « travaux » : travaux de copropriété, honoraires sur travaux…). Aucune autre exclusion : les dépenses à qualifier, les charges de copropriété (régularisations comprises) et les honoraires de gestion comptent (décision d'Arthur du 03/11/2026). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours). Le budget (US12) les fournira à l'itération 4b ;
 - évolution annuelle des loyers et des charges : 1,5 % ;
 - frais de l'année de la vente : honoraires du comptable (catégories dont le nom contient « comptab ») de la dernière année complète ;
-- amortissements déduits des années futures : voir § 5 ;
+- amortissements déduits des années futures : ceux de la dernière année complète, selon la règle des années passées (§ 5) : dotation + report de début − stock du comptable quand il est saisi (7 307,73 € pour 2025 sur le jeu de test), sinon les amortissements utilisés calculés par l'outil. C'est ce que le comptable a réellement déduit, c'est-à-dire son résultat avant amortissements de l'année (décision d'Arthur du 03/11/2026) ;
 - part du prix réinvestie : 100 %.
 
-Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : recettes 1 160,06 €/mois, dépenses 7 812,51 €/an, amortissements 7 307,73 €/an (2025), frais 558 €.
+Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : recettes 1 160,06 €/mois, dépenses 7 782,55 €/an (honoraires sur travaux, 29,96 €, exclus), soit une projection nette de 511,51 €/mois ; amortissements 7 307,73 €/an (2025) ; frais 558 €.
 
 **Mise à jour (version 4 des données)** : les valeurs non nulles déjà saisies sont reprises comme valeurs modifiées ; celles à 0 passent en calcul automatique ; les taux de 19 % et 17,2 % sortent des hypothèses ; les frais d'acquisition réels passent sur la fiche du bien.
 
