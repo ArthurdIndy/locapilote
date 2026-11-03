@@ -47,9 +47,8 @@ describe('valeurs de la simulation de vente calculées automatiquement', () => {
     expect(isExcludedFromProjection(byName('Entretien et réparations'), property)).toBe(false);
   });
 
-  it('évolution annuelle 1,5 %, part réinvestie 100 %', () => {
+  it('évolution annuelle 1,5 %', () => {
     expect(r.annualGrowth.value).toBe(0.015);
-    expect(r.reinvestedShare.value).toBe(1);
   });
 
   it('amortissements des années futures : ceux de la dernière année complète (2025)', () => {

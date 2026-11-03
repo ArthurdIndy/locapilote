@@ -213,6 +213,36 @@ describe('bloc « revente » de expected.json (scénario 1)', () => {
   });
 });
 
+describe('part du prix réinvestie (remploi)', () => {
+  const auto = {
+    ...assumptions,
+    projection: { ...assumptions.projection, mainResidenceReinvestedShare: null },
+  };
+  const at2028 = () => {
+    const r = simulateSale(dataset, property, auto, dataAsOf, SEED_SCENARIOS[1]!);
+    if (!isSaleSimulation(r)) throw new Error(r.error);
+    return r;
+  };
+
+  it('par défaut : ce qui reste du prix de cession après remboursement du prêt', () => {
+    const s = at2028();
+    // (279 000 − 1 674 − 86 493,93) / (279 000 − 1 674) = 190 832,07 / 277 326 ≈ 68,81 %.
+    expect(s.resolved.reinvestedShare.modified).toBe(false);
+    expect(s.resolved.reinvestedShare.value).toBeCloseTo(19083207 / 27732600, 10);
+    expect(Math.round(s.resolved.reinvestedShare.value * 10000) / 100).toBe(68.81);
+    expect(s.reinvestedAmount).toBe(19083207);
+    expect(s.reinvestment.avoidedTax).toBe(Math.round(s.tax * s.resolved.reinvestedShare.value));
+    expect(s.netWithReinvestment).toBe(s.netProceeds + s.reinvestment.avoidedTax);
+  });
+
+  it('le jeu de test garde sa part de 100 % comme valeur modifiée', () => {
+    const s = scenarios[1]!;
+    expect(s.resolved.reinvestedShare).toMatchObject({ value: 1, modified: true });
+    expect(s.resolved.reinvestedShare.automatic).toBeCloseTo(19083207 / 27732600, 10);
+    expect(s.reinvestedAmount).toBe(27732600);
+  });
+});
+
 describe('comparaison à un placement de référence', () => {
   it('avec un taux égal au TRI, le gain par rapport au placement vaut 0 €', () => {
     for (const s of scenarios) {

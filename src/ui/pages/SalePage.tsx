@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { db } from '../../db/database';
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
 import { addMonths } from '../../engine/dates';
@@ -591,7 +591,17 @@ function Line({ label, value, strong }: { label: string; value: string; strong?:
   );
 }
 
-/** Ligne du remploi, avec la part du prix réinvestie (100 % par défaut) modifiable. */
+const shareFormat = new Intl.NumberFormat('fr-FR', {
+  style: 'percent',
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Ligne du remploi. Condition des 4 ans remplie : « Exonération partielle si tu réinvestis X €
+ * dans ta résidence principale sous 24 mois (Y % du prix) : impôt évité Z €, tu perçois W € »
+ * (« Exonéré » si la part vaut 100 %). Part du prix réinvestie modifiable ; par défaut, ce qui
+ * reste du prix de cession après remboursement du prêt.
+ */
 function ReinvestmentLine({
   sim,
   onSaveProjection,
@@ -608,16 +618,22 @@ function ReinvestmentLine({
       </p>
     );
   }
+  const share = sim.resolved.reinvestedShare.value;
   return (
-    <div className="sale-line reinvestment" data-testid="remploi">
-      <span>
-        Exonéré si tu réinvestis dans ta résidence principale (impôt évité : {euros(r.avoidedTax)})
+    <div className="sale-line reinvestment stack">
+      <span data-testid="remploi">
+        {share >= 1 ? 'Exonéré' : 'Exonération partielle'} si tu réinvestis{' '}
+        {euros(sim.reinvestedAmount)} dans ta résidence principale sous 24 mois (
+        {shareFormat.format(share)} du prix) : impôt évité {euros(r.avoidedTax)}, tu perçois{' '}
+        {euros(sim.netWithReinvestment)}
       </span>
-      <InlineValue
+      <OverrideField
         label="Part du prix réinvestie (%)"
         kind="percent"
-        value={sim.resolved.reinvestedShare.value}
-        onSave={(v) => onSaveProjection({ mainResidenceReinvestedShare: v === 1 ? null : v })}
+        max={1}
+        resolved={sim.resolved.reinvestedShare}
+        help="Part du prix de vente réinvestie. L’argent qui rembourse le prêt ne compte pas."
+        onSave={(v) => onSaveProjection({ mainResidenceReinvestedShare: v })}
       />
     </div>
   );
@@ -632,52 +648,6 @@ const parse = (kind: Kind, text: string) =>
 const show = (kind: Kind, value: number) =>
   kind === 'euros' ? euros(value) : formatPercent(value);
 
-/** Petit champ enregistré en quittant le champ (ou avec Entrée). */
-function InlineValue({
-  label,
-  kind,
-  value,
-  onSave,
-}: {
-  label: string;
-  kind: Kind;
-  value: number;
-  onSave: (value: number) => Promise<void>;
-}) {
-  const [draft, setDraft] = useState(toInput(kind, value));
-  const [source, setSource] = useState(value);
-  if (source !== value) {
-    setSource(value);
-    setDraft(toInput(kind, value));
-  }
-  const commit = () => {
-    const parsed = parse(kind, draft);
-    if (parsed === null || parsed < 0 || (kind === 'percent' && parsed > 1)) {
-      setDraft(toInput(kind, value));
-      return;
-    }
-    if (parsed !== value) void onSave(parsed);
-  };
-  return (
-    <label className="inline-value">
-      <span>{label}</span>
-      <input
-        className="amount"
-        inputMode="decimal"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            commit();
-          }
-        }}
-      />
-    </label>
-  );
-}
-
 /**
  * Valeur calculée automatiquement, modifiable : vide = calcul automatique. Enregistrée en
  * quittant le champ (ou avec Entrée).
@@ -687,14 +657,18 @@ function OverrideField({
   kind,
   resolved,
   help,
+  max,
   onSave,
 }: {
   label: string;
   kind: Kind;
   resolved: Resolved;
   help?: string;
+  /** Valeur maximale acceptée (1 pour une part en %). */
+  max?: number;
   onSave: (value: number | null) => Promise<void>;
 }) {
+  const id = useId();
   const initial = resolved.modified ? toInput(kind, resolved.value) : '';
   const [draft, setDraft] = useState(initial);
   const [source, setSource] = useState(resolved);
@@ -711,17 +685,18 @@ function OverrideField({
       return;
     }
     const parsed = parse(kind, text);
-    if (parsed === null || parsed < 0) {
-      setError(kind === 'euros' ? 'Montant invalide.' : 'Taux invalide.');
+    if (parsed === null || parsed < 0 || (max !== undefined && parsed > max)) {
+      setError(kind === 'euros' ? 'Montant invalide.' : 'Pourcentage invalide.');
       return;
     }
     setError(null);
     if (!resolved.modified || parsed !== resolved.value) void onSave(parsed);
   };
   return (
-    <label className="field">
-      <span>{label}</span>
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
       <input
+        id={id}
         className="amount"
         inputMode="decimal"
         value={draft}
@@ -741,12 +716,26 @@ function OverrideField({
           : `Calcul automatique : ${show(kind, resolved.automatic)}.`}
         {help ? ` ${help}` : ''}
       </span>
+      {resolved.modified && (
+        <button
+          type="button"
+          className="button link small"
+          aria-label={`${label} : revenir au calcul automatique`}
+          onClick={() => {
+            setDraft('');
+            setError(null);
+            void onSave(null);
+          }}
+        >
+          Revenir au calcul automatique
+        </button>
+      )}
       {error && (
         <span className="error-text" role="alert">
           {error}
         </span>
       )}
-    </label>
+    </div>
   );
 }
 

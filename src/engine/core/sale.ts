@@ -46,3 +46,14 @@ export function saleProceeds(
     beforeTax: netSalePrice - outstanding - sale.earlyRepaymentPenalty,
   };
 }
+
+/**
+ * Part du prix réinvestie par défaut (exonération pour remploi) : ce qui reste du prix de
+ * cession après remboursement du prêt = (prix − frais de vente − capital restant dû −
+ * indemnités) / (prix − frais de vente), entre 0 et 1. La part du prix qui rembourse l'emprunt
+ * du bien vendu ne compte pas comme remploi (docs/regles-de-calcul.md § 5).
+ */
+export function defaultReinvestedShare(proceeds: SaleProceeds): number {
+  if (proceeds.netSalePrice <= 0) return 0;
+  return Math.min(1, Math.max(0, proceeds.beforeTax / proceeds.netSalePrice));
+}

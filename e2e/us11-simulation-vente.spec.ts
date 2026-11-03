@@ -23,6 +23,10 @@ type Column = (string | number)[];
 const vq = expected.vendre_quand as Record<string, Column>;
 const num = (label: string, i: number) => vq[label]![i] as number;
 
+const shareFormat = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 2 });
+const pct100 = shareFormat.format(1);
+const pct50 = shareFormat.format(0.5);
+
 /** La carte du scénario affiché. */
 const card = (page: Page) => page.getByRole('region', { name: 'Scénario affiché' });
 
@@ -184,7 +188,7 @@ test('comparer avec d’autres dates : tableau, gain de l’attente, modifier, s
     'Si tu vends le 30/06/2028 à 279 000,00 €',
   );
   await expect(card(page).getByTestId('remploi')).toContainText(
-    `Exonéré si tu réinvestis dans ta résidence principale (impôt évité : ${eur(num('Impôt évité si le prix est réinvesti', 1))})`,
+    `Exonéré si tu réinvestis ${eur(277326)} dans ta résidence principale sous 24 mois (${pct100} du prix) : impôt évité ${eur(num('Impôt évité si le prix est réinvesti', 1))}, tu perçois ${eur(num('Somme nette avec remploi', 1))}`,
   );
 
   // Modifier : le prix passe à 290 000 €.
@@ -246,14 +250,16 @@ test('les détails ⊕ : somme perçue, plus-value, valeurs calculées', async (
   await expect(line(page, 'Plus-value brute')).toHaveText(eur(num('Plus-value brute', 1)));
   // Années futures : la valeur du jeu de test (4 185 €) est une valeur modifiée.
   await expect(
-    card(page).getByLabel('Amortissements déduits par an, années futures (€)'),
+    card(page).getByLabel('Amortissements déduits par an, années futures (€)', { exact: true }),
   ).toHaveValue('4185');
   await expect(
     card(page).getByText(/Valeur modifiée \(calcul automatique : 7\s307,73\s€\)/),
   ).toBeVisible();
 
   await open(page, 'Calcul');
-  await expect(card(page).getByLabel('Loyer net projeté (€ / mois)')).toHaveValue('1056,61');
+  await expect(card(page).getByLabel('Loyer net projeté (€ / mois)', { exact: true })).toHaveValue(
+    '1056,61',
+  );
   await expect(
     card(page).getByText(/Valeur modifiée \(calcul automatique : 1\s160,06\s€\)/),
   ).toBeVisible();
@@ -271,22 +277,41 @@ test('les détails ⊕ : somme perçue, plus-value, valeurs calculées', async (
 
   // Vider un champ revient au calcul automatique : le cash-flow d'ici la vente change.
   const before = await card(page).getByTestId('cash-flow').textContent();
-  await card(page).getByLabel('Loyer net projeté (€ / mois)').fill('');
-  await card(page).getByLabel('Loyer net projeté (€ / mois)').press('Enter');
+  await card(page).getByLabel('Loyer net projeté (€ / mois)', { exact: true }).fill('');
+  await card(page).getByLabel('Loyer net projeté (€ / mois)', { exact: true }).press('Enter');
   await expect(card(page).getByText(/^Calcul automatique : 1\s160,06\s€/)).toBeVisible();
   await expect(card(page).getByTestId('cash-flow')).not.toHaveText(before!);
 });
 
-test('remploi : part du prix réinvestie modifiable dans la ligne', async ({ page }) => {
+test('remploi : exonération partielle, part du prix réinvestie modifiable', async ({ page }) => {
   await startWithTestData(page);
   await goToSale(page);
   await compareWith(page, '2028-06-30', '279000');
-  const share = card(page).getByLabel('Part du prix réinvestie (%)');
+  const share = card(page).getByLabel('Part du prix réinvestie (%)', { exact: true });
+  const line = card(page).getByTestId('remploi');
+  // Le jeu de test garde 100 % comme valeur modifiée.
   await expect(share).toHaveValue('100');
+  await expect(
+    card(page).getByText(
+      /Valeur modifiée \(calcul automatique : 68,81\s%\)\. Part du prix de vente réinvestie\. L’argent qui rembourse le prêt ne compte pas\./,
+    ),
+  ).toBeVisible();
+
+  // 50 % : impôt de 356,83 €, la moitié est évitée.
   await share.fill('50');
   await share.press('Enter');
-  // Impôt de 356,83 € : la moitié est évitée.
-  await expect(card(page).getByTestId('remploi')).toContainText(`impôt évité : ${eur(178.42)}`);
+  await expect(line).toHaveText(
+    `Exonération partielle si tu réinvestis ${eur(138663)} dans ta résidence principale sous 24 mois (${pct50} du prix) : impôt évité ${eur(178.42)}, tu perçois ${eur(190653.66)}`,
+  );
+
+  // Retour au calcul : ce qui reste après remboursement du prêt, 190 832,07 € sur 277 326 €.
+  await card(page)
+    .getByRole('button', { name: 'Part du prix réinvestie (%) : revenir au calcul automatique' })
+    .click();
+  await expect(line).toHaveText(
+    /^Exonération partielle si tu réinvestis 190\s832,07\s€ dans ta résidence principale sous 24 mois \(68,81\s% du prix\) : impôt évité 245,54\s€, tu perçois 190\s720,78\s€$/,
+  );
+  await expect(share).toHaveValue('');
 });
 
 test('paramètres de vente : repliés, modifiables, la somme nette suit', async ({

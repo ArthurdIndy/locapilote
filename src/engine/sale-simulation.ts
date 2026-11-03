@@ -10,8 +10,8 @@ import {
   waitingYield,
   type OwnerBalance,
 } from './core/irr';
-import { resolveSaleAssumptions, type ResolvedSaleAssumptions } from './sale-defaults';
-import { saleProceeds, type SaleProceeds } from './core/sale';
+import { resolve, resolveSaleAssumptions, type ResolvedSaleAssumptions } from './sale-defaults';
+import { defaultReinvestedShare, saleProceeds, type SaleProceeds } from './core/sale';
 import { capitalGainModuleFor, type CapitalGainResult } from './tax/capital-gain';
 import {
   reinvestmentExemption,
@@ -39,6 +39,8 @@ export interface SaleSimulation {
   /** Somme disponible pour le prochain achat = somme nette − autres dettes. */
   available: Cents;
   reinvestment: ReinvestmentExemption;
+  /** Montant à réinvestir dans la résidence principale = part réinvestie × prix de cession. */
+  reinvestedAmount: Cents;
   /** Somme nette avec remploi = somme nette + impôt évité. */
   netWithReinvestment: Cents;
   balance: OwnerBalance;
@@ -59,7 +61,15 @@ export function simulateSale(
 ): SaleSimulation | { error: SaleSimulationError } {
   if (scenario.date <= property.acquisitionDate) return { error: 'sale-before-acquisition' };
   const proceeds = saleProceeds(data, property, assumptions.sale, scenario);
-  const resolved = resolveSaleAssumptions(data, property, assumptions, dataAsOf);
+  const common = resolveSaleAssumptions(data, property, assumptions, dataAsOf);
+  // Part réinvestie par défaut : ce qui reste du prix de cession après remboursement du prêt.
+  const resolved: ResolvedSaleAssumptions = {
+    ...common,
+    reinvestedShare: resolve(
+      assumptions.projection.mainResidenceReinvestedShare,
+      defaultReinvestedShare(proceeds),
+    ),
+  };
   const module = capitalGainModuleFor(property);
   const capitalGain = module
     ? module({
@@ -97,6 +107,7 @@ export function simulateSale(
     otherDebts: assumptions.projection.otherDebts,
     available: netProceeds - assumptions.projection.otherDebts,
     reinvestment,
+    reinvestedAmount: Math.round(resolved.reinvestedShare.value * proceeds.netSalePrice),
     netWithReinvestment: netProceeds + reinvestment.avoidedTax,
     balance,
     gainOverReference: reference

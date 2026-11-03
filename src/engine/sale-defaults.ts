@@ -9,7 +9,8 @@
  * - évolution annuelle : 1,5 % ;
  * - amortissements déduits des années futures : ceux de la dernière année complète (LMNP réel) ;
  * - frais de l'année de la vente : honoraires du comptable de la dernière année complète ;
- * - part du prix réinvestie (remploi) : 100 %.
+ * - part du prix réinvestie (remploi) : calculée par scénario dans `simulateSale` (ce qui reste
+ *   du prix de cession après remboursement du prêt, voir `defaultReinvestedShare`).
  */
 import type { ProjectionValues } from './core/irr';
 import { addDays, addMonths, daysBetween } from './dates';
@@ -25,7 +26,6 @@ import type {
 } from './types';
 
 export const DEFAULT_ANNUAL_GROWTH = 0.015;
-export const DEFAULT_REINVESTED_SHARE = 1;
 
 /** Catégories des honoraires du comptable : repérées par leur nom (« Honoraires comptable »). */
 const ACCOUNTANT_FEES = /comptab/i;
@@ -56,6 +56,7 @@ export interface ResolvedSaleAssumptions {
   annualGrowth: Resolved;
   depreciationDeductedPerYear: Resolved;
   saleYearCosts: Resolved;
+  /** Part réinvestie : la valeur automatique dépend du scénario (complétée par `simulateSale`). */
   reinvestedShare: Resolved;
   /** Période du journal retenue pour le loyer et les dépenses (vide si le bien n'est pas loué). */
   journalWindow: { from: IsoDate; to: IsoDate } | null;
@@ -65,7 +66,7 @@ export interface ResolvedSaleAssumptions {
   projection: ProjectionValues;
 }
 
-function resolve(saved: number | null, automatic: number): Resolved {
+export function resolve(saved: number | null, automatic: number): Resolved {
   return saved === null
     ? { value: automatic, modified: false, automatic }
     : { value: saved, modified: true, automatic };
@@ -140,7 +141,7 @@ export function resolveSaleAssumptions(
     annualGrowth: resolve(p.annualGrowth, DEFAULT_ANNUAL_GROWTH),
     depreciationDeductedPerYear: resolve(p.depreciationDeductedPerYear, depreciation.amount),
     saleYearCosts: resolve(p.saleYearCosts, accountantFees(data, property, depreciation.year)),
-    reinvestedShare: resolve(p.mainResidenceReinvestedShare, DEFAULT_REINVESTED_SHARE),
+    reinvestedShare: resolve(p.mainResidenceReinvestedShare, 1),
   };
   return {
     ...resolved,
