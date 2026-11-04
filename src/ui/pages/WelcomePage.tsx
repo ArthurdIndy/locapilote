@@ -36,7 +36,7 @@ export function WelcomePage() {
         >
           <strong>Commencer avec le jeu de test</strong>
           <span>
-            Un appartement fictif avec 289 mouvements et son prêt, pour découvrir l’outil.
+            Un appartement fictif avec 289 opérations et son prêt, pour découvrir l’outil.
           </span>
         </button>
         <button
@@ -47,7 +47,7 @@ export function WelcomePage() {
         >
           <strong>Démarrer vide</strong>
           <span>
-            Tu crées ton bien et tu saisis tes mouvements. Les catégories usuelles sont prêtes.
+            Tu crées ton bien et tu saisis tes opérations. Les catégories usuelles sont prêtes.
           </span>
         </button>
       </div>

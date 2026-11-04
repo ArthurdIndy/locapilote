@@ -147,18 +147,18 @@ test('un autre régime affiche « pas encore disponible »', async ({ page }, te
   }
 });
 
-test('les mouvements « À valider » sont signalés, avec un lien vers eux', async ({ page }) => {
+test('les opérations « À valider » sont signalés, avec un lien vers eux', async ({ page }) => {
   await openTax(page);
-  const warning = taxRegion(page).getByText(/2024 : 1 mouvement « À valider »/);
+  const warning = taxRegion(page).getByText(/2024 : 1 opération « À valider »/);
   await expect(warning).toContainText('395,25');
-  await expect(warning).toContainText('non retenu dans le résultat fiscal');
-  await warning.getByRole('link', { name: 'Voir le mouvement concerné' }).click();
-  await expect(page.getByRole('heading', { name: 'Mouvements' })).toBeVisible();
-  await expect(page.getByText(/Seuls les mouvements « À valider » sont affichés/)).toBeVisible();
+  await expect(warning).toContainText('non retenue dans le résultat fiscal');
+  await warning.getByRole('link', { name: 'Voir l’opération concernée' }).click();
+  await expect(page.getByRole('heading', { name: 'Opérations' })).toBeVisible();
+  await expect(page.getByText(/Seules les opérations « À valider » sont affichées/)).toBeVisible();
   await expect(page.locator('.transaction')).toHaveCount(1);
   await expect(page.locator('.transaction')).toContainText('À qualifier');
   await expect(page.getByLabel('Année')).toHaveValue('2024');
-  await page.getByRole('button', { name: 'Voir tous les mouvements' }).click();
+  await page.getByRole('button', { name: 'Voir toutes les opérations' }).click();
   await expect(page.locator('.transaction')).not.toHaveCount(1);
 });
 
@@ -481,9 +481,9 @@ test.describe('saisie des dates au clavier', () => {
   });
 
   test('les autres champs date gardent la saisie au clavier', async ({ page }) => {
-    // Mouvement.
-    await goTo(page, 'Mouvements');
-    await page.getByRole('button', { name: 'Nouveau mouvement' }).click();
+    // Opération.
+    await goTo(page, 'Opérations');
+    await page.getByRole('button', { name: 'Nouvelle opération' }).click();
     const txDate = page.getByLabel('Date', { exact: true });
     await typeDate(page, txDate, '11112025');
     await expect(txDate).toHaveValue('2025-11-11');

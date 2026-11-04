@@ -150,5 +150,5 @@ test('supprimer un prêt et ses échéances', async ({ page }) => {
   await expect(page.getByText('Prêt supprimé.')).toBeVisible();
   await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
   await goTo(page, 'Paramètres');
-  await expect(page.getByText(/1 bien, 289 mouvements, 0 échéances de prêt/).first()).toBeVisible();
+  await expect(page.getByText(/1 bien, 289 opérations, 0 échéances de prêt/).first()).toBeVisible();
 });

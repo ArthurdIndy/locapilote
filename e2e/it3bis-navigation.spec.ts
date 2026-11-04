@@ -1,6 +1,7 @@
 /**
- * Recette de l'itération 3 bis, étape 1 : navigation en 6 entrées (docs/backlog.md,
- * « Navigation : 6 entrées au lieu de 10 »).
+ * Recette de l'itération 3 bis, étape 1 : navigation (docs/backlog.md, « Navigation »). La
+ * disposition du menu (ordinateur et téléphone) a changé à l'itération 4b : ses tests sont
+ * dans it4b-nav-operations.spec.ts.
  */
 import {
   capture,
@@ -10,7 +11,6 @@ import {
   goTo,
   goToProperty,
   isPhone,
-  openPhoneMenu,
   openSettings,
   startWithTestData,
   test,
@@ -18,84 +18,15 @@ import {
   chooseProperty,
 } from './helpers';
 
-const ENTRIES = ['Accueil', 'Mouvements', 'Synthèse', 'Fiscalité', 'Simulations', 'Mon bien'];
-/** Sur téléphone, seuls ces onglets restent visibles ; les autres sont dans le menu ☰. */
-const PHONE_TABS = ['Accueil', 'Mouvements', 'Simulations'];
-
 test.beforeEach(async ({ page }) => {
   await startWithTestData(page);
 });
 
-test('ordinateur : les 6 entrées tiennent sur une ligne, plus l’icône ⚙', async ({
-  page,
-}, testInfo) => {
-  test.skip(isPhone(testInfo), 'ordinateur seulement');
-  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
-  await expect(nav.getByRole('link')).toHaveText(ENTRIES);
-  const box = await nav.boundingBox();
-  expect(box!.height).toBeLessThan(60);
-  // L'icône ⚙ est en haut à droite.
-  const gear = page.getByRole('link', { name: 'Paramètres', exact: true });
-  await expect(gear).toBeVisible();
-  await expect(gear).toHaveText('⚙');
-  const gearBox = await gear.boundingBox();
-  expect(gearBox!.y).toBeLessThan(box!.y);
-  expect(gearBox!.x + gearBox!.width).toBeGreaterThan(box!.x + box!.width - 60);
-  await expect(page.getByRole('button', { name: 'Menu' })).toBeHidden();
-  await capture(page, testInfo, 'it3bis-menu');
-});
-
-test('téléphone : 3 onglets qui tiennent sur 375 px ; Synthèse, Fiscalité, Mon bien et ⚙ dans le menu ☰', async ({
-  page,
-}, testInfo) => {
-  test.skip(!isPhone(testInfo), 'téléphone seulement');
-  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
-  await expect(nav.getByRole('link').filter({ visible: true })).toHaveText(PHONE_TABS);
-  await expect(page.getByRole('link', { name: 'Paramètres', exact: true })).toBeHidden();
-
-  // Une seule ligne, en haut de la page, sans défilement : chaque onglet est entièrement visible.
-  const box = await nav.boundingBox();
-  expect(box!.height).toBeLessThan(60);
-  expect(box!.y).toBeLessThan(200);
-  expect(await nav.evaluate((el) => getComputedStyle(el).position)).toBe('static');
-  expect(await nav.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
-  const width = page.viewportSize()!.width;
-  for (const tab of await nav.getByRole('link').filter({ visible: true }).all()) {
-    const tabBox = (await tab.boundingBox())!;
-    expect(tabBox.x).toBeGreaterThanOrEqual(0);
-    expect(tabBox.x + tabBox.width).toBeLessThanOrEqual(width);
-    expect(await tab.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-  }
-  await goTo(page, 'Simulations');
-  await expect(nav.locator('[aria-current="page"]')).toHaveText('Simulations');
-  await expectNoHorizontalScroll(page);
-  await capture(page, testInfo, 'it3bis-onglets', { fullPage: false });
-
-  // Le menu ☰ : Synthèse, Fiscalité, Mon bien, ⚙ Paramètres.
-  await openPhoneMenu(page);
-  const menu = page.getByRole('navigation', { name: 'Menu' });
-  await expect(menu.getByRole('link')).toHaveText([
-    'Synthèse',
-    'Fiscalité',
-    'Mon bien',
-    '⚙ Paramètres',
-  ]);
-  await capture(page, testInfo, 'it3bis-menu', { fullPage: false });
-  await menu.getByRole('link', { name: 'Synthèse' }).click();
-  await expect(page.getByRole('heading', { name: 'Synthèse · Appartement exemple' })).toBeVisible();
-  await expect(menu).toBeHidden();
-  // Le bouton ☰ signale qu'on est sur une page du menu.
-  await expect(page.getByRole('button', { name: 'Menu' })).toHaveClass(/active/);
-
-  // Le bas de page n'est pas masqué : le pied de page est visible en fin de défilement.
-  await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('contentinfo')).toBeInViewport();
-});
-
 test('chaque entrée ouvre sa page', async ({ page }) => {
   for (const [label, heading] of [
-    ['Mouvements', 'Mouvements · Appartement exemple'],
+    ['Opérations', 'Opérations · Appartement exemple'],
     ['Synthèse', 'Synthèse · Appartement exemple'],
+    ['Budget', 'Budget · Appartement exemple'],
     ['Fiscalité', 'Fiscalité · Appartement exemple'],
     ['Simulations', 'Simulations · Appartement exemple'],
     ['Mon bien', 'Mon bien · Appartement exemple'],
@@ -174,8 +105,10 @@ test.describe('règle multi-biens', () => {
   test('les autres pages montrent le bien courant, choisi dans le titre', async ({ page }) => {
     // Le titre-sélecteur est dans le titre de chaque page d'un bien ; rien dans l'en-tête.
     for (const [label, title] of [
-      ['Mouvements', 'Mouvements'],
+      ['Opérations', 'Opérations'],
       ['Synthèse', 'Synthèse'],
+      ['Budget', 'Budget'],
+      ['Simulations', 'Simulations'],
       ['Fiscalité', 'Fiscalité'],
       ['Mon bien', 'Mon bien'],
     ] as const) {
@@ -194,36 +127,43 @@ test.describe('règle multi-biens', () => {
     await chooseProperty(page, SECOND);
     await expect(page.getByText('Aucun prêt pour ce bien.')).toBeVisible();
 
-    // Mouvements : seulement ceux du bien courant ; plus de filtre « Bien ».
-    await goTo(page, 'Mouvements');
+    // Opérations : seulement celles du bien courant ; plus de filtre « Bien ».
+    await goTo(page, 'Opérations');
     await chooseProperty(page, 'Appartement exemple');
     await expect(page.getByRole('region', { name: 'Filtres' }).getByLabel('Bien')).toHaveCount(0);
-    await expect(page.getByText(/^289 mouvements · /)).toBeVisible();
+    await expect(page.getByText(/^289 opérations · /)).toBeVisible();
 
-    // Un lien vers les mouvements d'un bien rend ce bien courant.
+    // Un lien vers les opérations d'un bien rend ce bien courant.
+    await chooseProperty(page, SECOND);
+    await page.goto('/#/operations?bien=APPART-01&annee=2024&fiscal=a-valider');
+    await expect(titlePicker(page)).toHaveText(/^Appartement exemple/);
+    await expect(page.locator('.transaction')).toHaveCount(1);
+
+    // Même chose avec l'ancienne adresse (#/mouvements…), redirigée avec ses filtres.
     await chooseProperty(page, SECOND);
     await page.goto('/#/mouvements?bien=APPART-01&annee=2024&fiscal=a-valider');
+    await expect(page).toHaveURL(/#\/operations\?bien=APPART-01&annee=2024&fiscal=a-valider$/);
     await expect(titlePicker(page)).toHaveText(/^Appartement exemple/);
     await expect(page.locator('.transaction')).toHaveCount(1);
   });
 
-  test('Mouvements vide : seulement le message et le bouton « Nouveau mouvement »', async ({
+  test('Opérations vide : seulement le message et le bouton « Nouvelle opération »', async ({
     page,
   }, testInfo) => {
-    await goTo(page, 'Mouvements');
+    await goTo(page, 'Opérations');
     await expect(titlePicker(page)).toHaveText(new RegExp(`^${SECOND}`));
-    await expect(page.getByText('Aucun mouvement pour l’instant.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Nouveau mouvement' })).toBeVisible();
+    await expect(page.getByText('Aucune opération pour l’instant.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Nouvelle opération' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Filtres' })).toHaveCount(0);
-    await expect(page.getByText(/mouvements? · recettes/)).toHaveCount(0);
+    await expect(page.getByText(/opérations? · recettes/)).toHaveCount(0);
     await capture(page, testInfo, 'it3bis-mouvements-vide');
   });
 
   test('titre-sélecteur : une ligne, le nom comme le titre, ▾ discret, menu au clic', async ({
     page,
   }, testInfo) => {
-    await goTo(page, 'Mouvements');
-    const heading = page.getByRole('heading', { level: 2, name: `Mouvements · ${SECOND}` });
+    await goTo(page, 'Opérations');
+    const heading = page.getByRole('heading', { level: 2, name: `Opérations · ${SECOND}` });
     const picker = titlePicker(page);
     // Pas de liste déroulante native.
     await expect(page.getByRole('main').getByRole('combobox')).toHaveCount(0);
@@ -255,7 +195,7 @@ test.describe('règle multi-biens', () => {
     // Le bouton d'action est aligné verticalement sur la ligne du titre.
     const titleBox = (await heading.boundingBox())!;
     const actionBox = (await page
-      .getByRole('button', { name: 'Nouveau mouvement' })
+      .getByRole('button', { name: 'Nouvelle opération' })
       .boundingBox())!;
     expect(
       Math.abs(titleBox.y + titleBox.height / 2 - (actionBox.y + actionBox.height / 2)),
@@ -273,7 +213,7 @@ test.describe('règle multi-biens', () => {
     await expect(menu).toBeHidden();
     await expect(heading).toHaveCount(0);
     await expect(
-      page.getByRole('heading', { level: 2, name: 'Mouvements · Appartement exemple' }),
+      page.getByRole('heading', { level: 2, name: 'Opérations · Appartement exemple' }),
     ).toBeVisible();
     // Échap referme le menu.
     await picker.click();
@@ -285,8 +225,9 @@ test.describe('règle multi-biens', () => {
     await chooseProperty(page, 'Appartement exemple');
     for (const [label, name] of [
       ['Accueil', 'accueil'],
-      ['Mouvements', 'mouvements'],
+      ['Opérations', 'operations'],
       ['Synthèse', 'synthese'],
+      ['Budget', 'budget'],
       ['Fiscalité', 'fiscalite'],
       ['Simulations', 'simulations'],
       ['Mon bien', 'mon-bien'],
@@ -307,7 +248,7 @@ test('téléphone : un nom de bien long est tronqué avec « … », le ▾ rest
   await goTo(page, 'Mon bien');
   await page.getByRole('button', { name: 'Ajouter un bien' }).click();
   await createProperty(page, 'Appartement de la rue des Longues-Herbes');
-  await goTo(page, 'Mouvements');
+  await goTo(page, 'Opérations');
   const picker = titlePicker(page);
   const name = picker.locator('.property-title-name');
   // Le titre doit d'abord afficher le nouveau bien (la liste des biens se met à jour après la
@@ -357,7 +298,8 @@ test('Simulations : la vente (US11)', async ({ page }, testInfo) => {
   await goTo(page, 'Simulations');
   const main = page.getByRole('main');
   await expect(main.getByRole('heading', { name: 'Vente', exact: true })).toBeVisible();
-  await expect(main).not.toContainText('Budget prévisionnel');
+  // Simulations ne contient plus que la vente : aucune mention du budget.
+  await expect(main).not.toContainText(/budget/i);
   await capture(page, testInfo, 'it3bis-simulations');
 });
 
@@ -367,7 +309,7 @@ test('⚙ Paramètres : export, import et jeu de test', async ({ page }) => {
   for (const name of [
     'Exporter toutes mes données (JSON)',
     'Importer une sauvegarde…',
-    'Exporter les mouvements (CSV)',
+    'Exporter les opérations (CSV)',
     'Charger le jeu de test',
   ]) {
     await expect(page.getByRole('button', { name })).toBeVisible();
@@ -380,6 +322,7 @@ test.describe('les anciennes adresses redirigent vers leur nouvelle place', () =
     ['pret', /#\/mon-bien\?section=pret$/, 'Prêt'],
     ['immobilisations', /#\/mon-bien\?section=immobilisations$/, 'Immobilisations'],
     ['donnees', /#\/parametres$/, 'Paramètres'],
+    ['mouvements', /#\/operations$/, 'Opérations · Appartement exemple'],
   ] as const) {
     test(`#/${old}`, async ({ page }) => {
       await page.goto(`/#/${old}`);
@@ -390,10 +333,10 @@ test.describe('les anciennes adresses redirigent vers leur nouvelle place', () =
 });
 
 test('les liens internes mènent au bon endroit', async ({ page }) => {
-  // Fiscalité → mouvement « À valider » concerné.
+  // Fiscalité → opération « À valider » concernée.
   await goTo(page, 'Fiscalité');
-  await page.getByRole('link', { name: 'Voir le mouvement concerné' }).click();
-  await expect(page.getByRole('heading', { name: 'Mouvements' })).toBeVisible();
+  await page.getByRole('link', { name: 'Voir l’opération concernée' }).click();
+  await expect(page.getByRole('heading', { name: 'Opérations' })).toBeVisible();
   await expect(page.locator('.transaction')).toHaveCount(1);
 
   // Fiscalité → immobilisations (Mon bien).

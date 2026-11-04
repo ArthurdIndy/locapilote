@@ -15,7 +15,7 @@ Projet personnel en cours de construction, MVP prévu en décembre 2026.
 Déjà en ligne :
 
 - Suivre un ou plusieurs biens, avec leur régime fiscal
-- Saisir les mouvements (loyers, charges, travaux) et charger le tableau d'amortissement du prêt
+- Saisir les opérations (loyers, charges, travaux) et charger le tableau d'amortissement du prêt
 - Voir chaque année le cash-flow, l'enrichissement et les rendements
 - Obtenir le récapitulatif fiscal en LMNP réel (charges, amortissements par composant, report) et le rapprocher des comptes du comptable
 - Exporter et réimporter toutes ses données
@@ -40,7 +40,7 @@ Application web sans serveur : Vite, React, TypeScript, stockage dans le navigat
 
 `data/` contient un jeu de test anonymisé (noms, adresses et références remplacés, montants multipliés par un même coefficient) et les résultats attendus. Aucune donnée personnelle réelle n'est publiée.
 
-Dans l'application, les données sont stockées dans le navigateur (IndexedDB) et ne quittent jamais l'appareil. L'application permet de tout exporter en JSON (et de le réimporter) et d'exporter les mouvements en CSV pour Excel.
+Dans l'application, les données sont stockées dans le navigateur (IndexedDB) et ne quittent jamais l'appareil. L'application permet de tout exporter en JSON (et de le réimporter) et d'exporter les opérations en CSV pour Excel.
 
 ## Avertissement
 

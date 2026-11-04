@@ -1,5 +1,5 @@
 /**
- * Export CSV des mouvements, lisible directement dans Excel en français :
+ * Export CSV des opérations (mouvements), lisible directement dans Excel en français :
  * séparateur point-virgule, virgule décimale, dates JJ/MM/AAAA, encodage UTF-8 avec BOM.
  */
 import type { Dataset } from '../engine/types';
@@ -43,7 +43,7 @@ function escapeCell(value: string): string {
   return /[";\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-/** Mouvements triés par date puis par identifiant, une ligne par mouvement. */
+/** Opérations triées par date puis par identifiant, une ligne par opération. */
 export function transactionsToCsv(data: Dataset): string {
   const propertyNames = new Map(data.properties.map((p) => [p.id, p.name]));
   const categories = new Map(data.categories.map((c) => [c.id, c]));

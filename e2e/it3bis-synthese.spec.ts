@@ -197,7 +197,7 @@ test('l’état ouvert ou fermé est mémorisé dans le navigateur', async ({ pa
   await expect(expenses).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('un clic sur une ligne de détail ouvre Mouvements filtré sur ce groupe et cette année', async ({
+test('un clic sur une ligne de détail ouvre Opérations filtré sur ce groupe et cette année', async ({
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
@@ -214,11 +214,11 @@ test('un clic sur une ligne de détail ouvre Mouvements filtré sur ce groupe et
   } else {
     await page.getByRole('link', { name: `${group} 2025 : ${amount}` }).click();
   }
-  await expect(page.getByRole('heading', { name: 'Mouvements' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Opérations' })).toBeVisible();
   const filters = page.getByRole('region', { name: 'Filtres' });
   await expect(filters.getByLabel('Année')).toHaveValue('2025');
   await expect(filters.getByLabel('Groupe')).toHaveValue(group);
-  await expect(page.getByText(/^\d+ mouvements? · recettes/)).toContainText(`dépenses ${amount}`);
+  await expect(page.getByText(/^\d+ opérations? · recettes/)).toContainText(`dépenses ${amount}`);
   const categories = await page.locator('.transaction strong').allInnerTexts();
   expect(new Set(categories)).toEqual(
     new Set(categories.filter((c) => ['Entretien et réparations', 'Petit équipement'].includes(c))),

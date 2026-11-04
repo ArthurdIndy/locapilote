@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
 import {
   coOwnershipChargesBorne,
@@ -22,7 +22,7 @@ interface Props {
   today: string;
 }
 
-/** Ligne d'un détail replié ; `href` : lien vers les mouvements de cette ligne et de l'année. */
+/** Ligne d'un détail replié ; `href` : lien vers les opérations de cette ligne et de l'année. */
 interface DetailRow {
   label: string;
   value: (y: YearSynthesis) => string;
@@ -70,7 +70,7 @@ function groupRows(
           ?.amount ?? 0,
       ),
     href: (y) =>
-      routeHref('mouvements', { bien: propertyId, annee: String(y.year), groupe: group }),
+      routeHref('operations', { bien: propertyId, annee: String(y.year), groupe: group }),
   }));
 }
 
@@ -193,8 +193,12 @@ function signClass(line: Line, y: YearSynthesis): string | undefined {
   return v < 0 ? 'negative' : v > 0 ? 'positive' : undefined;
 }
 
+/** Sur ordinateur, nombre d'années affichées tant qu'on n'a pas demandé les précédentes. */
+export const RECENT_YEARS = 3;
+
 export function SynthesisPage({ data, property, today }: Props) {
   const details = useOpenDetails(OPEN_DETAILS_KEY);
+  const [showOlder, setShowOlder] = useState(false);
   if (!property) {
     return (
       <section className="card">
@@ -225,6 +229,9 @@ export function SynthesisPage({ data, property, today }: Props) {
     );
   const groups: Groups = { byYear, income: groupNames('income'), expense: groupNames('expense') };
   const sections = [...buildSections(groups, property.id), fiscalSection(taxResults)];
+  // Ordinateur : les 3 dernières années ; « Années précédentes » affiche les autres.
+  const olderYears = years.slice(0, Math.max(0, years.length - RECENT_YEARS));
+  const wideYears = showOlder ? years : years.slice(olderYears.length);
 
   return (
     <div className="stack">
@@ -253,13 +260,27 @@ export function SynthesisPage({ data, property, today }: Props) {
 
           {/* Grand écran : un tableau, une colonne par année (comme l'Excel). */}
           <div className="synthesis-wide">
+            {olderYears.length > 0 && (
+              <p className="older-years">
+                <button
+                  type="button"
+                  className="button small"
+                  aria-expanded={showOlder}
+                  onClick={() => setShowOlder((v) => !v)}
+                >
+                  {showOlder
+                    ? `Masquer les années précédentes`
+                    : `Années précédentes (${olderYears[0]!.year}${olderYears.length > 1 ? `–${olderYears.at(-1)!.year}` : ''})`}
+                </button>
+              </p>
+            )}
             <table className="synthesis-table" aria-label="Synthèse annuelle">
               <thead>
                 <tr>
                   <th scope="col">
                     <span className="visually-hidden">Indicateur</span>
                   </th>
-                  {years.map((y) => (
+                  {wideYears.map((y) => (
                     <th key={y.year} scope="col">
                       {y.year}
                     </th>
@@ -269,7 +290,7 @@ export function SynthesisPage({ data, property, today }: Props) {
               {sections.map((section) => (
                 <tbody key={section.title}>
                   <tr className="section-row">
-                    <th scope="rowgroup" colSpan={years.length + 1}>
+                    <th scope="rowgroup" colSpan={wideYears.length + 1}>
                       {section.title}
                       {section.link && (
                         <a className="section-link" href={section.link.href}>
@@ -284,7 +305,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                         <th scope="row">
                           <LineLabel line={line} details={details} />
                         </th>
-                        {years.map((y) => (
+                        {wideYears.map((y) => (
                           <td key={y.year} className={signClass(line, y)}>
                             {line.value(y)}
                           </td>
@@ -295,7 +316,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                         line.details.rows.map((row) => (
                           <tr key={row.label} className="detail">
                             <th scope="row">{row.label}</th>
-                            {years.map((y) => (
+                            {wideYears.map((y) => (
                               <td key={y.year}>
                                 {row.href ? (
                                   <a

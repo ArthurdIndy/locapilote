@@ -4,9 +4,9 @@ Référence : l'Excel `data/jeu-de-test.xlsx` (onglets indiqués entre parenthè
 
 > Estimations à vocation de suivi, pas un conseil fiscal. Règles vérifiées en octobre 2026 ; à confirmer avec un expert-comptable ou sur impots.gouv.fr.
 
-## 1. Mouvements (Journal)
+## 1. Opérations (Journal)
 
-Chaque mouvement a une date, un bien, un compte (banque, agence…), une catégorie et un montant positif (négatif seulement pour une annulation ou une remise).
+Chaque opération (appelée « mouvement » avant l'itération 4b) a une date, un bien, un compte (banque, agence…), une catégorie et un montant positif (négatif seulement pour une annulation ou une remise).
 
 La catégorie porte :
 
@@ -45,8 +45,8 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 - Report du début d'année = stock retenu par le comptable pour l'année précédente s'il est saisi (il fait foi), sinon le report de fin calculé par l'outil.
 - Résultat fiscal = résultat avant amortissements − amortissements utilisés.
 - Si le résultat avant amortissements est négatif, c'est un **déficit** : il est affiché (résultat fiscal négatif), aucun amortissement n'est utilisé, mais son report sur les années suivantes n'est pas géré (hors périmètre de US09).
-- Pour information, hors résultat : **dépenses à qualifier** (catégories « À valider », non retenues tant qu'elles ne sont pas qualifiées, avec un lien vers les mouvements concernés) et **investissements de l'année** (catégories « À amortir », à reporter dans les immobilisations).
-- Recettes et charges : mouvements de l'année civile entière (comme la trésorerie). Groupes affichés : loyers d'abord, groupes « Autres… » en dernier, les autres par ordre alphabétique.
+- Pour information, hors résultat : **dépenses à qualifier** (catégories « À valider », non retenues tant qu'elles ne sont pas qualifiées, avec un lien vers les opérations concernées) et **investissements de l'année** (catégories « À amortir », à reporter dans les immobilisations).
+- Recettes et charges : opérations de l'année civile entière (comme la trésorerie). Groupes affichés : loyers d'abord, groupes « Autres… » en dernier, les autres par ordre alphabétique.
 - Le module ne s'applique qu'aux biens au régime LMNP réel ; pour les autres régimes, l'écran indique que le calcul n'est pas encore disponible.
 
 **Rapprochement avec le comptable** (par année) : on saisit les montants des comptes déposés (recettes, charges hors amortissements, dotations, résultat fiscal) et le stock d'amortissements reporté. Écart = calcul de Locapilote − montant du comptable. Statut : « OK » si l'écart ne dépasse pas 1 centime (arrondis), « Écart expliqué » si une explication est saisie, « À expliquer » sinon. Le stock de fin d'année est comparé au report de fin calculé par l'outil.
@@ -55,7 +55,7 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 
 **Trésorerie**
 
-- Recettes encaissées = mouvements des catégories de sens Recette ; dépenses payées = mouvements des catégories de sens Dépense (investissements et dépenses à qualifier compris), de l'année civile entière, même après la date de mise à jour (comme l'Excel).
+- Recettes encaissées = opérations des catégories de sens Recette ; dépenses payées = opérations des catégories de sens Dépense (investissements et dépenses à qualifier compris), de l'année civile entière, même après la date de mise à jour (comme l'Excel).
 - Cash-flow = recettes encaissées − dépenses payées (hors prêt) − échéances de prêt de la période louée (jusqu'à la date de mise à jour).
 - Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, divisés par 365/12.
 - Cash-flow mensuel = cash-flow / mois de location.
@@ -68,7 +68,7 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 
 - Loyers annualisés = loyers hors charges / mois de location × 12.
 - Rendement brut = loyers annualisés / coût total d'acquisition.
-- Loyers hors charges = mouvements des catégories du groupe « Loyers ».
+- Loyers hors charges = opérations des catégories du groupe « Loyers ».
 - Rendement net = (recettes − charges hors intérêts et assurance emprunteur), annualisé, / coût total d'acquisition. Les charges sont les dépenses payées hors investissements (« À amortir ») et hors dépenses à qualifier (« À valider ») ; tant que seul le LMNP réel est paramétré, c'est son traitement qui sert de référence.
 - Années affichées : de l'année de mise en location à celle de la date de mise à jour des données (réglable en haut des pages Synthèse et Fiscalité, même date pour les deux ; la date du jour par défaut).
 
@@ -154,7 +154,7 @@ Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 
 - loyer évité pendant l'occupation comme résidence principale : loyer à l'achat × (1 + indexation)^(années pleines depuis l'achat), au prorata des jours du mois passés entre l'achat et la fin de la résidence principale (hypothèse du moteur, non affichée ni saisie à l'écran) ;
 - échéances de prêt (toutes, y compris avant la location et après la date de mise à jour) ;
 - dépenses payées avant la location (saisies à part) ;
-- mouvements réels du journal jusqu'à la date de mise à jour (recettes − dépenses, transferts et dépôt exclus) ;
+- opérations réelles du journal jusqu'à la date de mise à jour (recettes − dépenses, transferts et dépôt exclus) ;
 - pour les mois commençant après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, × (1 + évolution)^(année du mois − année de la date de mise à jour).
 
 Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme nette de la vente (sans l'exonération pour remploi) moins les frais de l'année de vente. Les flux calculés (loyer évité, projection) ne sont pas arrondis au centime, comme dans l'Excel ; ils le sont à l'affichage.

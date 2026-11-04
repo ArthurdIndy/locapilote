@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCurrentPropertyContext } from '../propertyContext';
 
 /**
- * Titre d'une page d'un bien, sur une seule ligne : « Mouvements · Appartement exemple ». Avec
+ * Titre d'une page d'un bien, sur une seule ligne : « Opérations · Appartement exemple ». Avec
  * plusieurs biens, le nom du bien (même police que le titre, suivi d'un ▾ discret) ouvre au clic
  * le menu des biens (titre-sélecteur). Un nom trop long est tronqué avec « … ».
  */

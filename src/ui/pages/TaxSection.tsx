@@ -123,18 +123,18 @@ function LmnpReelSection({ data, property, dataAsOf }: Props) {
 
           {toReviewYears.map((y) => (
             <p key={y.year} className="warning">
-              {y.year} : {y.toReviewCount} mouvement{y.toReviewCount > 1 ? 's' : ''} « À valider » (
-              {formatEuros(y.toReview)}) non retenu{y.toReviewCount > 1 ? 's' : ''} dans le résultat
-              fiscal.{' '}
+              {y.year} : {y.toReviewCount} opération{y.toReviewCount > 1 ? 's' : ''} « À valider » (
+              {formatEuros(y.toReview)}) non retenue{y.toReviewCount > 1 ? 's' : ''} dans le
+              résultat fiscal.{' '}
               <a
                 className="no-print"
-                href={routeHref('mouvements', {
+                href={routeHref('operations', {
                   bien: property.id,
                   annee: String(y.year),
                   fiscal: TO_REVIEW_FILTER,
                 })}
               >
-                Voir {y.toReviewCount > 1 ? 'les mouvements concernés' : 'le mouvement concerné'}
+                Voir {y.toReviewCount > 1 ? 'les opérations concernées' : 'l’opération concernée'}
               </a>
             </p>
           ))}

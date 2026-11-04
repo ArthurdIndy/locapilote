@@ -15,12 +15,12 @@ interface Props {
   today: string;
   /**
    * Filtres reçus dans l'adresse : `annee`, `groupe`, `fiscal=a-valider`. Le paramètre `bien`
-   * rend ce bien courant (App.tsx) : la page ne montre que les mouvements du bien courant.
+   * rend ce bien courant (App.tsx) : la page ne montre que les opérations du bien courant.
    */
   params?: URLSearchParams;
 }
 
-/** Valeur de `fiscal` dans l'adresse : mouvements « À valider » (non retenus au résultat fiscal). */
+/** Valeur de `fiscal` dans l'adresse : opérations « À valider » (non retenus au résultat fiscal). */
 export const TO_REVIEW_FILTER = 'a-valider';
 
 /** Montant signé pour l'affichage : + pour une recette, − pour une dépense. */
@@ -105,8 +105,8 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
   if (data.properties.length === 0) {
     return (
       <section className="card">
-        <h2>Mouvements</h2>
-        <p>Crée d’abord un bien : chaque mouvement y est rattaché.</p>
+        <h2>Opérations</h2>
+        <p>Crée d’abord un bien : chaque opération y est rattachée.</p>
         <a className="button primary" href={propertyHref('informations')}>
           Créer un bien
         </a>
@@ -117,36 +117,36 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
   const remove = async (t: Transaction) => {
     const category = categories.get(t.categoryId);
     const ok = window.confirm(
-      `Supprimer ce mouvement ?\n\n${formatDate(t.date)} · ${category?.name ?? ''} · ${formatEuros(t.amount)}\n${t.label}\n\nCette action est définitive.`,
+      `Supprimer cette opération ?\n\n${formatDate(t.date)} · ${category?.name ?? ''} · ${formatEuros(t.amount)}\n${t.label}\n\nCette action est définitive.`,
     );
     if (!ok) return;
     await db.transactions.delete(t.id);
     if (editing?.mode === 'edit' && editing.transaction.id === t.id) setEditing(null);
-    setMessage('Mouvement supprimé.');
+    setMessage('Opération supprimée.');
   };
 
-  /** Bien sans aucun mouvement : ni filtres ni totaux, seulement le message et le bouton. */
+  /** Bien sans aucune opération : ni filtres ni totaux, seulement le message et le bouton. */
   const isEmpty = !data.transactions.some((t) => t.propertyId === currentPropertyId);
   const hasFilter = Boolean(yearFilter || groupFilter || categoryFilter || toReviewOnly);
 
   return (
     <div className="stack">
       <div className="toolbar title-toolbar">
-        <PropertyTitle title="Mouvements" />
+        <PropertyTitle title="Opérations" />
         {!editing && (
           <button
             type="button"
             className="button primary"
-            aria-label="Nouveau mouvement"
+            aria-label="Nouvelle opération"
             onClick={() => {
               setMessage(null);
               setEditing({ mode: 'new' });
             }}
           >
             {/* Sur téléphone, libellé court pour laisser la place au titre-sélecteur. */}
-            <span className="label-wide">Nouveau mouvement</span>
+            <span className="label-wide">Nouvelle opération</span>
             <span className="label-narrow" aria-hidden="true">
-              + Nouveau
+              + Nouvelle
             </span>
           </button>
         )}
@@ -171,7 +171,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
       )}
 
       {isEmpty ? (
-        <p className="card muted">Aucun mouvement pour l’instant.</p>
+        <p className="card muted">Aucune opération pour l’instant.</p>
       ) : (
         <>
           <section className="card filters" aria-label="Filtres">
@@ -234,22 +234,23 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
 
           {toReviewOnly && (
             <p className="warning" role="status">
-              Seuls les mouvements « À valider » sont affichés : ils ne sont pas retenus dans le
-              résultat fiscal tant qu’ils ne sont pas qualifiés (charge déductible ou investissement
-              à amortir). Modifie leur catégorie une fois la réponse du comptable obtenue.{' '}
+              Seules les opérations « À valider » sont affichées : elles ne sont pas retenues dans
+              le résultat fiscal tant qu’elles ne sont pas qualifiées (charge déductible ou
+              investissement à amortir). Modifie leur catégorie une fois la réponse du comptable
+              obtenue.{' '}
               <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
-                Voir tous les mouvements
+                Voir toutes les opérations
               </button>
             </p>
           )}
 
           <p className="muted summary">
-            {filtered.length} mouvement{filtered.length > 1 ? 's' : ''} · recettes{' '}
+            {filtered.length} opération{filtered.length > 1 ? 's' : ''} · recettes{' '}
             {formatEuros(totals.income)} · dépenses {formatEuros(totals.expense)}
           </p>
 
           {filtered.length === 0 ? (
-            <p className="card muted">Aucun mouvement ne correspond aux filtres.</p>
+            <p className="card muted">Aucune opération ne correspond aux filtres.</p>
           ) : (
             <ul className="transactions">
               {filtered.map((t) => {

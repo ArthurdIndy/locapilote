@@ -9,7 +9,7 @@ interface Props {
   today: string;
 }
 
-/** Simulations : le futur du bien courant. Vente (US11) ; le budget (US12) arrive ensuite. */
+/** Simulations : le futur du bien courant, c'est-à-dire la vente (US11). */
 export function SimulationsPage({ data, property, today }: Props) {
   if (!property) {
     return (
