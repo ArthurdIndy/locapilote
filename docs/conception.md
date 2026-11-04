@@ -99,7 +99,7 @@ Pourquoi le web plutôt qu'une application de bureau : partage par simple lien, 
 | Mouvements | Saisie au fil de l'eau | Chaque mois |
 | Synthèse | Les années passées : trésorerie, rentabilité, patrimoine | Quand on veut faire le point |
 | Fiscalité | Déclaration et rapprochement avec le comptable | Une fois par an |
-| Simulations | Le futur : vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, une ligne par chiffre, détails repliés), budget | Ponctuellement |
+| Simulations | Le futur : vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, quatre lignes — prix, somme nette, impôt, ce qui te reste vraiment — et les détails repliés), budget | Ponctuellement |
 | Mon bien | Fiche du bien, saisie une fois : informations, prêt, immobilisations | Rarement |
 
 Sur ordinateur, les 6 écrans sont dans le menu, plus ⚙ Paramètres (données). Sur téléphone, seuls Accueil, Mouvements et Simulations restent en onglets ; Synthèse, Fiscalité, Mon bien et ⚙ sont dans le menu ☰, et chaque carte de l'Accueil mène à la Synthèse de son bien.

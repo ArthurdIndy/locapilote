@@ -1,7 +1,6 @@
 import {
   Fragment,
   useEffect,
-  useId,
   useRef,
   useState,
   type FormEvent,
@@ -11,13 +10,8 @@ import {
 import { db } from '../../db/database';
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
 import { addMonths } from '../../engine/dates';
-import type { Resolved } from '../../engine/sale-defaults';
-import {
-  isSaleSimulation,
-  simulateSale,
-  waitingGainBetween,
-  type SaleSimulation,
-} from '../../engine/sale-simulation';
+import { resolveSaleAssumptions, type Resolved } from '../../engine/sale-defaults';
+import { isSaleSimulation, simulateSale, type SaleSimulation } from '../../engine/sale-simulation';
 import type {
   Dataset,
   IsoDate,
@@ -27,6 +21,8 @@ import type {
   SaleScenario,
 } from '../../engine/types';
 import { DisclosureButton } from '../components/DisclosureButton';
+import { OverrideField } from '../components/OverrideField';
+import { percentToInput } from '../valueFormat';
 import {
   centsToInput,
   formatDate,
@@ -54,11 +50,6 @@ const euroRounded = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
-const shareFormat = new Intl.NumberFormat('fr-FR', {
-  style: 'percent',
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 /** Montant du tableau : arrondi à l'euro. */
 const eur0 = (cents: number) => euroRounded.format(Math.round(cents) / 100);
@@ -70,10 +61,6 @@ const minus = (cents: number) => eur(cents === 0 ? 0 : -cents);
 interface Col {
   index: number;
   sim: SaleSimulation;
-  /** Gain de l'attente depuis la colonne précédente ; `null` pour la première ou une même date. */
-  waiting: number | null;
-  /** Date de la colonne précédente (libellé sur téléphone). */
-  previousDate: IsoDate | null;
 }
 
 interface DetailRow {
@@ -84,26 +71,23 @@ interface DetailRow {
 interface Line {
   id: string;
   label: string;
-  /** Libellé dans la carte du téléphone, s'il diffère. */
-  phoneLabel?: (c: Col) => string;
   value: (c: Col) => ReactNode;
   strong?: boolean;
   /** Aide au survol du libellé. */
   title?: string;
-  className?: (c: Col) => string | undefined;
   /** Détail replié ⊕ : lignes par colonne, puis un bloc commun à toutes les colonnes. */
   details?: { rows: DetailRow[]; extra?: ReactNode };
 }
 
-const WAITING_HELP =
-  'Somme nette en plus, moins ce que tu remets en plus entre les deux dates, à prix de vente égal.';
+const REMAINING_HELP =
+  'Somme nette de la vente, moins ce que tu auras sorti de ta poche d’ici là. À prix égal, la date la plus intéressante est celle où ce montant est le plus élevé.';
 
 type Editing = { mode: 'new' } | { mode: 'edit'; index: number } | null;
 
 /**
- * Simulations › Vente (US11) : combien je touche, combien d'impôt, ai-je intérêt à attendre.
- * Même modèle que la Synthèse : une colonne par scénario (une carte sur téléphone), une ligne
- * par chiffre, les détails repliés derrière ⊕.
+ * Simulations › Vente (US11) : combien je touche, combien d'impôt, combien il me reste vraiment.
+ * Même modèle que la Synthèse : une colonne par scénario (une carte sur téléphone), quatre
+ * lignes, les détails repliés derrière ⊕.
  */
 export function SalePage({ data, property, today }: Props) {
   const details = useOpenDetails('locapilote.vente.detailsOuverts');
@@ -113,6 +97,7 @@ export function SalePage({ data, property, today }: Props) {
   const assumptions = assumptionsOf(data, property);
   const asOf = effectiveDataAsOf(data.assumptions, property.id, today);
   const scenarios = assumptions.saleScenarios;
+  const resolved = resolveSaleAssumptions(data, property, assumptions, asOf.date);
 
   // Aucun scénario : on en crée un par défaut (vente dans 12 mois, à la valeur estimée).
   const creating = useRef(false);
@@ -135,7 +120,7 @@ export function SalePage({ data, property, today }: Props) {
   const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
     save({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
 
-  const valid = scenarios
+  const cols: Col[] = scenarios
     .map((scenario, index) => ({
       index,
       result: simulateSale(data, property, assumptions, asOf.date, scenario),
@@ -149,14 +134,9 @@ export function SalePage({ data, property, today }: Props) {
         a.sim.scenario.price - b.sim.scenario.price ||
         a.index - b.index,
     );
-  const cols: Col[] = valid.map((v, i) => ({
-    ...v,
-    waiting: i === 0 ? null : waitingGainBetween(valid[i - 1]!.sim, v.sim),
-    previousDate: i === 0 ? null : valid[i - 1]!.sim.scenario.date,
-  }));
   const invalid = scenarios
     .map((scenario, index) => ({ scenario, index }))
-    .filter(({ index }) => !valid.some((v) => v.index === index));
+    .filter(({ index }) => !cols.some((c) => c.index === index));
 
   const remove = async (index: number) => {
     const s = scenarios[index]!;
@@ -183,47 +163,27 @@ export function SalePage({ data, property, today }: Props) {
       onDelete={() => remove(c.index)}
     />
   );
-  const addButton = (
-    <button
-      type="button"
-      className="button small"
-      disabled={editing !== null}
-      onClick={() => startEdit({ mode: 'new' })}
-    >
-      + Autre date
-    </button>
-  );
 
   return (
     <div className="stack">
-      <h3>Vente</h3>
+      <div className="toolbar">
+        <h3>Vente</h3>
+        {cols.length > 0 && (
+          <button
+            type="button"
+            className="button small"
+            disabled={editing !== null}
+            onClick={() => startEdit({ mode: 'new' })}
+          >
+            + Autre date
+          </button>
+        )}
+      </div>
 
       {message && (
         <p className="success" role="status">
           {message}
         </p>
-      )}
-
-      {editing && (
-        <ScenarioForm
-          key={editing.mode === 'edit' ? editing.index : 'new'}
-          property={property}
-          initial={editing.mode === 'edit' ? scenarios[editing.index]! : null}
-          onCancel={() => setEditing(null)}
-          onSave={async (scenario) => {
-            const next =
-              editing.mode === 'edit'
-                ? scenarios.map((s, i) => (i === editing.index ? scenario : s))
-                : [...scenarios, scenario];
-            await saveScenarios(next);
-            setEditing(null);
-            setMessage(
-              editing.mode === 'edit'
-                ? `Scénario du ${formatDate(scenario.date)} modifié.`
-                : `Scénario du ${formatDate(scenario.date)} ajouté.`,
-            );
-          }}
-        />
       )}
 
       {property.taxRegime !== 'lmnp-reel' && (
@@ -247,6 +207,37 @@ export function SalePage({ data, property, today }: Props) {
         </div>
       )}
 
+      {/* Le formulaire s'ouvre juste au-dessus du tableau. */}
+      {editing && (
+        <ScenarioForm
+          key={editing.mode === 'edit' ? editing.index : 'new'}
+          property={property}
+          initial={editing.mode === 'edit' ? scenarios[editing.index]! : null}
+          isDuplicate={(s) =>
+            scenarios.some(
+              (other, i) =>
+                other.date === s.date &&
+                other.price === s.price &&
+                !(editing.mode === 'edit' && i === editing.index),
+            )
+          }
+          onCancel={() => setEditing(null)}
+          onSave={async (scenario) => {
+            const next =
+              editing.mode === 'edit'
+                ? scenarios.map((s, i) => (i === editing.index ? scenario : s))
+                : [...scenarios, scenario];
+            await saveScenarios(next);
+            setEditing(null);
+            setMessage(
+              editing.mode === 'edit'
+                ? `Scénario du ${formatDate(scenario.date)} modifié.`
+                : `Scénario du ${formatDate(scenario.date)} ajouté.`,
+            );
+          }}
+        />
+      )}
+
       {cols.length === 0 ? (
         property.estimatedValue > 0 ? (
           <p className="card muted">Préparation de la simulation…</p>
@@ -260,7 +251,7 @@ export function SalePage({ data, property, today }: Props) {
       ) : (
         <>
           {/* Grand écran : un tableau, une colonne par scénario (comme la Synthèse). */}
-          <div className="synthesis-wide">
+          <div className="synthesis-wide sale-scroll">
             <table className="synthesis-table sale-table" aria-label="Simulation de vente">
               <thead>
                 <tr>
@@ -275,9 +266,6 @@ export function SalePage({ data, property, today }: Props) {
                       </span>
                     </th>
                   ))}
-                  <th scope="col" className="add-column">
-                    {addButton}
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -288,11 +276,8 @@ export function SalePage({ data, property, today }: Props) {
                         <LineLabel line={line} details={details} />
                       </th>
                       {cols.map((c) => (
-                        <td key={c.index} className={line.className?.(c)}>
-                          {line.value(c)}
-                        </td>
+                        <td key={c.index}>{line.value(c)}</td>
                       ))}
-                      <td />
                     </tr>
                     {line.details && details.isOpen(line.id) && (
                       <>
@@ -302,12 +287,11 @@ export function SalePage({ data, property, today }: Props) {
                             {cols.map((c) => (
                               <td key={c.index}>{row.value(c)}</td>
                             ))}
-                            <td />
                           </tr>
                         ))}
                         {line.details.extra && (
                           <tr className="detail detail-extra">
-                            <td colSpan={cols.length + 2}>{line.details.extra}</td>
+                            <td colSpan={cols.length + 1}>{line.details.extra}</td>
                           </tr>
                         )}
                       </>
@@ -318,7 +302,7 @@ export function SalePage({ data, property, today }: Props) {
             </table>
           </div>
 
-          {/* Téléphone : une carte par scénario, mêmes lignes, même ordre. */}
+          {/* Téléphone : une carte par scénario, mêmes lignes, mêmes détails. */}
           <div className="synthesis-narrow stack">
             {cols.map((c) => (
               <section
@@ -335,9 +319,9 @@ export function SalePage({ data, property, today }: Props) {
                     <dl className="year-lines">
                       <div className={line.strong ? 'strong' : undefined}>
                         <dt title={line.title}>
-                          <LineLabel line={line} details={details} label={line.phoneLabel?.(c)} />
+                          <LineLabel line={line} details={details} />
                         </dt>
-                        <dd className={line.className?.(c)}>{line.value(c)}</dd>
+                        <dd>{line.value(c)}</dd>
                       </div>
                       {line.details &&
                         details.isOpen(line.id) &&
@@ -355,34 +339,97 @@ export function SalePage({ data, property, today }: Props) {
                 ))}
               </section>
             ))}
-            <div>{addButton}</div>
           </div>
         </>
       )}
 
-      <SaleSettings assumptions={assumptions} />
+      <SaleSettings assumptions={assumptions} resolved={resolved} />
 
       <SaleDisclaimer />
     </div>
   );
 }
 
-/** Les lignes du tableau, dans l'ordre de l'écran. */
+/** Les quatre lignes du tableau, dans l'ordre de l'écran. */
 function buildLines(
   cols: Col[],
   property: Property,
   saveProjection: (patch: Partial<ProjectionAssumptions>) => Promise<void>,
 ): Line[] {
-  const first = cols[0]!.sim;
-  const r = first.resolved;
+  const r = cols[0]!.sim.resolved;
   const hasTaxModule = cols.some((c) => c.sim.capitalGain !== null);
   const showReinvestment = cols.some((c) => c.sim.reinvestment.condition !== 'not-applicable');
+  const anyReinvestmentMet = cols.some((c) => c.sim.reinvestment.condition === 'met');
   const futureDepreciation = cols.some((c) =>
     c.sim.capitalGain?.depreciationYears.some((y) => y.origin === 'assumption'),
   );
   const gain = (c: Col) => c.sim.capitalGain!;
 
-  const lines: Line[] = [
+  const taxRows: DetailRow[] = [
+    { label: 'Durée de détention', value: (c) => `${gain(c).holdingYears} ans` },
+    { label: 'Prix de cession (prix − frais de vente)', value: (c) => eur(gain(c).netSalePrice) },
+    {
+      label: 'Prix d’achat du logement (hors mobilier)',
+      value: (c) => eur(gain(c).purchasePrice),
+    },
+    {
+      label: '+ Frais d’acquisition (réels ou forfait 7,5 %)',
+      value: (c) =>
+        `${eur(gain(c).acquisitionCosts)}${gain(c).acquisitionCostsIsFlat ? ' (forfait)' : ''}`,
+    },
+    {
+      label: '+ Forfait travaux 15 % (plus de 5 ans)',
+      value: (c) => eur(gain(c).worksAllowance),
+    },
+    {
+      label: '− Amortissements déduits à réintégrer',
+      value: (c) => minus(gain(c).depreciationDeducted),
+    },
+    { label: 'Prix d’acquisition corrigé', value: (c) => eur(gain(c).adjustedCost) },
+    { label: 'Plus-value brute', value: (c) => eur(gain(c).grossGain) },
+    {
+      label: 'Abattement pour durée de détention (impôt sur le revenu)',
+      value: (c) => formatPercent(gain(c).incomeTaxAllowance),
+    },
+    {
+      label: 'Abattement pour durée de détention (prélèvements sociaux)',
+      value: (c) => formatPercent(gain(c).socialChargesAllowance),
+    },
+    { label: 'Impôt sur le revenu (19 %)', value: (c) => eur(gain(c).incomeTax) },
+    { label: 'Prélèvements sociaux (17,2 %)', value: (c) => eur(gain(c).socialCharges) },
+    { label: 'Impôt sur la plus-value', value: (c) => eur(c.sim.tax) },
+  ];
+  if (showReinvestment) {
+    taxRows.push({
+      label: 'Avec remploi',
+      value: (c) => {
+        const ri = c.sim.reinvestment;
+        if (ri.condition === 'not-met') {
+          return (
+            <span className="reinvestment-cell">
+              Remploi possible à partir du {formatDate(ri.eligibleFrom!)}
+            </span>
+          );
+        }
+        if (ri.condition !== 'met') return '—';
+        return (
+          <span className="reinvestment-cell">
+            <span>
+              {eur(c.sim.netWithReinvestment)} perçus si tu réinvestis dans ta résidence principale
+            </span>
+            <ShareField
+              key={`${c.index}-${c.sim.resolved.reinvestedShare.value}`}
+              date={c.sim.scenario.date}
+              resolved={c.sim.resolved.reinvestedShare}
+              onSave={(v) => saveProjection({ mainResidenceReinvestedShare: v })}
+            />
+          </span>
+        );
+      },
+    });
+  }
+
+  return [
     { id: 'prix', label: 'Prix', value: (c) => eur0(c.sim.scenario.price) },
     {
       id: 'somme',
@@ -419,46 +466,7 @@ function buildLines(
       ...(hasTaxModule
         ? {
             details: {
-              rows: [
-                { label: 'Durée de détention', value: (c) => `${gain(c).holdingYears} ans` },
-                {
-                  label: 'Prix de cession (prix − frais de vente)',
-                  value: (c) => eur(gain(c).netSalePrice),
-                },
-                {
-                  label: 'Prix d’achat du logement (hors mobilier)',
-                  value: (c) => eur(gain(c).purchasePrice),
-                },
-                {
-                  label: '+ Frais d’acquisition (réels ou forfait 7,5 %)',
-                  value: (c) =>
-                    `${eur(gain(c).acquisitionCosts)}${gain(c).acquisitionCostsIsFlat ? ' (forfait)' : ''}`,
-                },
-                {
-                  label: '+ Forfait travaux 15 % (plus de 5 ans)',
-                  value: (c) => eur(gain(c).worksAllowance),
-                },
-                {
-                  label: '− Amortissements déduits à réintégrer',
-                  value: (c) => minus(gain(c).depreciationDeducted),
-                },
-                { label: 'Prix d’acquisition corrigé', value: (c) => eur(gain(c).adjustedCost) },
-                { label: 'Plus-value brute', value: (c) => eur(gain(c).grossGain) },
-                {
-                  label: 'Abattement pour durée de détention (impôt sur le revenu)',
-                  value: (c) => formatPercent(gain(c).incomeTaxAllowance),
-                },
-                {
-                  label: 'Abattement pour durée de détention (prélèvements sociaux)',
-                  value: (c) => formatPercent(gain(c).socialChargesAllowance),
-                },
-                { label: 'Impôt sur le revenu (19 %)', value: (c) => eur(gain(c).incomeTax) },
-                {
-                  label: 'Prélèvements sociaux (17,2 %)',
-                  value: (c) => eur(gain(c).socialCharges),
-                },
-                { label: 'Impôt sur la plus-value', value: (c) => eur(c.sim.tax) },
-              ],
+              rows: taxRows,
               extra: (
                 <div className="stack">
                   <p className="small muted detail-note">
@@ -466,6 +474,13 @@ function buildLines(
                     équipements, travaux) ; selon la notice 2048-IMM, seuls ceux du logement sont à
                     réintégrer : à confirmer avec le notaire.
                   </p>
+                  {anyReinvestmentMet && (
+                    <p className="small muted">
+                      Remploi : seul l’argent du prix de vente compte : la part qui rembourse le
+                      prêt et un nouveau prêt n’entrent pas dans le calcul. À confirmer avec le
+                      notaire.
+                    </p>
+                  )}
                   <p className="small muted">
                     Frais d’acquisition réels :{' '}
                     {property.actualAcquisitionCosts
@@ -494,151 +509,43 @@ function buildLines(
           }
         : {}),
     },
-  ];
-
-  if (showReinvestment) {
-    lines.push({
-      id: 'remploi',
-      label: 'Avec remploi',
-      value: (c) => {
-        const ri = c.sim.reinvestment;
-        if (ri.condition === 'met') return eur0(c.sim.netWithReinvestment);
-        if (ri.condition === 'not-met') return `dès le ${formatDate(ri.eligibleFrom!)}`;
-        return '—';
-      },
-      details: {
-        rows: [
-          {
-            label: 'Part du prix réinvestie',
-            value: (c) => (
-              <ShareField
-                key={`${c.index}-${c.sim.resolved.reinvestedShare.value}`}
-                date={c.sim.scenario.date}
-                resolved={c.sim.resolved.reinvestedShare}
-                onSave={(v) => saveProjection({ mainResidenceReinvestedShare: v })}
-              />
-            ),
-          },
-          {
-            label: 'Impôt évité',
-            value: (c) =>
-              c.sim.reinvestment.condition === 'met' ? eur(c.sim.reinvestment.avoidedTax) : '—',
-          },
-        ],
-        extra: (
-          <p className="small muted">
-            Seul l’argent du prix de vente compte : la part qui rembourse le prêt et un nouveau prêt
-            n’entrent pas dans le calcul. À confirmer avec le notaire.
-          </p>
-        ),
-      },
-    });
-  }
-
-  lines.push(
     {
-      id: 'remettre',
-      label: 'À remettre d’ici la vente',
-      value: (c) => {
-        const total = c.sim.balance.cashFlowUntilSale;
-        return total <= 0 ? eur0(-total) : `${eur0(total)} reçus`;
-      },
+      id: 'reste',
+      label: 'Ce qui te reste vraiment',
+      title: REMAINING_HELP,
+      value: (c) => eur0(c.sim.netAfterCashFlow),
       details: {
         rows: [
+          {
+            label: 'À remettre d’ici la vente',
+            value: (c) => eur(-c.sim.balance.cashFlowUntilSale),
+          },
           {
             label: 'Par mois (échéances − loyer net + dépenses)',
             value: (c) => {
               const m = c.sim.balance.monthlyCashFlowUntilSale;
-              if (m === null) return '—';
-              return m <= 0 ? `soit ${eur(-m)}/mois` : `soit ${eur(m)}/mois reçus`;
+              return m === null ? '—' : eur(-m);
             },
           },
           {
             label: 'Frais de l’année de la vente',
-            value: (c) => `+ ${eur(c.sim.resolved.saleYearCosts.value)}`,
+            value: (c) => eur(c.sim.resolved.saleYearCosts.value),
           },
           {
-            label: 'Capital remboursé (récupéré à la vente)',
-            value: (c) => `dont ${eur(c.sim.balance.principalRepaidUntilSale)}`,
+            label: 'Dont capital remboursé (récupéré à la vente)',
+            value: (c) => eur(c.sim.balance.principalRepaidUntilSale),
           },
         ],
-        extra: (
-          <div className="stack">
-            <p className="small muted">
-              Échéances du prêt et projection des loyers et des dépenses, des mois suivant la date
-              des données ({formatDate(r.journalWindow?.to ?? first.scenario.date)}) jusqu’à la
-              vente. Valeurs calculées à partir du journal ; tu peux les modifier (vide = calcul
-              automatique).
-            </p>
-            <div className="assumptions-grid">
-              <OverrideField
-                label="Loyer net projeté (€ / mois)"
-                kind="euros"
-                resolved={r.netRentMonthly}
-                help={
-                  r.journalWindow
-                    ? `Recettes du ${formatDate(r.journalWindow.from)} au ${formatDate(r.journalWindow.to)} / 12.`
-                    : 'Bien pas encore loué.'
-                }
-                onSave={(v) => saveProjection({ netRentMonthly: v })}
-              />
-              <OverrideField
-                label="Dépenses projetées (€ / an, hors prêt)"
-                kind="euros"
-                resolved={r.annualExpensesExcludingLoan}
-                help="Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété."
-                onSave={(v) => saveProjection({ annualExpensesExcludingLoan: v })}
-              />
-              <OverrideField
-                label="Évolution annuelle des loyers et des charges (%)"
-                kind="percent"
-                resolved={r.annualGrowth}
-                onSave={(v) => saveProjection({ annualGrowth: v })}
-              />
-              <OverrideField
-                label="Frais de l’année de la vente (€)"
-                kind="euros"
-                resolved={r.saleYearCosts}
-                help={`Honoraires du comptable de ${r.lastCompleteYear}.`}
-                onSave={(v) => saveProjection({ saleYearCosts: v })}
-              />
-            </div>
-          </div>
-        ),
       },
     },
-    {
-      id: 'attendre',
-      label: 'Attendre depuis la colonne précédente',
-      phoneLabel: (c) =>
-        c.previousDate ? `Attendre depuis le ${formatDate(c.previousDate)}` : 'Attendre',
-      title: WAITING_HELP,
-      value: (c) => {
-        if (c.waiting === null) return '—';
-        const amount = euroRounded.format(Math.abs(Math.round(c.waiting)) / 100);
-        return c.waiting >= 0 ? `+ ${amount}` : `− ${amount}`;
-      },
-      className: (c) =>
-        c.waiting === null ? 'waiting' : c.waiting >= 0 ? 'waiting positive' : 'waiting negative',
-    },
-  );
-  return lines;
+  ];
 }
 
-function LineLabel({
-  line,
-  details,
-  label,
-}: {
-  line: Line;
-  details: ReturnType<typeof useOpenDetails>;
-  label?: string | undefined;
-}) {
-  const text = label ?? line.label;
-  if (!line.details) return <>{text}</>;
+function LineLabel({ line, details }: { line: Line; details: ReturnType<typeof useOpenDetails> }) {
+  if (!line.details) return <>{line.label}</>;
   return (
     <DisclosureButton
-      label={text}
+      label={line.label}
       open={details.isOpen(line.id)}
       onToggle={() => details.toggle(line.id)}
     />
@@ -717,16 +624,11 @@ function ColumnMenu({
   );
 }
 
-type Kind = 'euros' | 'percent';
-
-/** Taux affiché à 0,1 % près dans un champ : 0.688114 → « 68,8 ». */
-const percentToInput = (rate: number) => String(Math.round(rate * 1000) / 10).replace('.', ',');
-const toInput = (kind: Kind, value: number) =>
-  kind === 'euros' ? centsToInput(Math.round(value)) : percentToInput(value);
-const parse = (kind: Kind, text: string) =>
-  kind === 'euros' ? parseEurosInput(text) : parsePercentInput(text);
-const show = (kind: Kind, value: number) =>
-  kind === 'euros' ? eur(value) : shareFormat.format(value);
+const shareFormat = new Intl.NumberFormat('fr-FR', {
+  style: 'percent',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 /**
  * Part du prix réinvestie d'une colonne : champ compact affiché à 0,1 % près, « calculé » ou
@@ -763,6 +665,7 @@ function ShareField({
   };
   return (
     <span className="share-field">
+      <span className="small muted">Part du prix réinvestie</span>
       <input
         className="amount"
         inputMode="decimal"
@@ -778,7 +681,7 @@ function ShareField({
           }
         }}
       />
-      <span aria-hidden="true"> %</span>
+      <span aria-hidden="true">%</span>
       <span className="share-status small muted">
         {resolved.modified ? 'modifié' : 'calculé'}
         {resolved.modified && (
@@ -799,102 +702,19 @@ function ShareField({
   );
 }
 
-/**
- * Valeur calculée automatiquement, modifiable : vide = calcul automatique. Enregistrée en
- * quittant le champ (ou avec Entrée).
- */
-function OverrideField({
-  label,
-  kind,
-  resolved,
-  help,
-  onSave,
-}: {
-  label: string;
-  kind: Kind;
-  resolved: Resolved;
-  help?: string;
-  onSave: (value: number | null) => Promise<void>;
-}) {
-  const id = useId();
-  const initial = resolved.modified ? toInput(kind, resolved.value) : '';
-  const [draft, setDraft] = useState(initial);
-  const [source, setSource] = useState(resolved);
-  const [error, setError] = useState<string | null>(null);
-  if (source.value !== resolved.value || source.modified !== resolved.modified) {
-    setSource(resolved);
-    setDraft(initial);
-  }
-  const commit = () => {
-    const text = draft.trim();
-    if (text === '') {
-      setError(null);
-      if (resolved.modified) void onSave(null);
-      return;
-    }
-    const parsed = parse(kind, text);
-    if (parsed === null || parsed < 0) {
-      setError(kind === 'euros' ? 'Montant invalide.' : 'Pourcentage invalide.');
-      return;
-    }
-    setError(null);
-    if (!resolved.modified || parsed !== resolved.value) void onSave(parsed);
-  };
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        className="amount"
-        inputMode="decimal"
-        value={draft}
-        placeholder={toInput(kind, resolved.automatic)}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            commit();
-          }
-        }}
-      />
-      <span className="muted small">
-        {resolved.modified
-          ? `Valeur modifiée (calcul automatique : ${show(kind, resolved.automatic)}).`
-          : `Calcul automatique : ${show(kind, resolved.automatic)}.`}
-        {help ? ` ${help}` : ''}
-      </span>
-      {resolved.modified && (
-        <button
-          type="button"
-          className="button link small"
-          aria-label={`Revenir au calcul automatique : ${label}`}
-          onClick={() => {
-            setDraft('');
-            setError(null);
-            void onSave(null);
-          }}
-        >
-          Revenir au calcul automatique
-        </button>
-      )}
-      {error && (
-        <span className="error-text" role="alert">
-          {error}
-        </span>
-      )}
-    </div>
-  );
-}
-
 interface ScenarioFormProps {
   property: Property;
   initial: SaleScenario | null;
+  isDuplicate: (scenario: SaleScenario) => boolean;
   onCancel: () => void;
   onSave: (scenario: SaleScenario) => Promise<void>;
 }
 
-function ScenarioForm({ property, initial, onCancel, onSave }: ScenarioFormProps) {
+/**
+ * Formulaire date et prix, ouvert juste au-dessus du tableau : la page défile jusqu'à lui et le
+ * curseur se place dans le premier champ.
+ */
+function ScenarioForm({ property, initial, isDuplicate, onCancel, onSave }: ScenarioFormProps) {
   const [date, setDate] = useState(initial?.date ?? '');
   const [price, setPrice] = useState(
     initial
@@ -905,6 +725,13 @@ function ScenarioForm({ property, initial, onCancel, onSave }: ScenarioFormProps
   );
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const firstField = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    firstField.current?.focus({ preventScroll: true });
+  }, []);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -917,6 +744,9 @@ function ScenarioForm({ property, initial, onCancel, onSave }: ScenarioFormProps
       );
     if (cents === null || cents <= 0)
       problems.push('Le prix de vente doit être un montant positif.');
+    if (problems.length === 0 && cents !== null && isDuplicate({ date, price: cents })) {
+      problems.push('Ce scénario existe déjà.');
+    }
     setErrors(problems);
     if (problems.length > 0 || cents === null) return;
     setSaving(true);
@@ -929,12 +759,23 @@ function ScenarioForm({ property, initial, onCancel, onSave }: ScenarioFormProps
   };
 
   return (
-    <form className="card form" onSubmit={submit} noValidate aria-label="Scénario de vente">
+    <form
+      ref={formRef}
+      className="card form scenario-form"
+      onSubmit={submit}
+      noValidate
+      aria-label="Scénario de vente"
+    >
       <h2>{initial ? 'Modifier le scénario' : 'Autre date de vente'}</h2>
       <div className="row">
         <label className="field">
           <span>Date de vente *</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input
+            ref={firstField}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </label>
         <label className="field">
           <span>Prix de vente net vendeur (€) *</span>

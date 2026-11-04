@@ -1346,11 +1346,54 @@ ul.warning {
 }
 
 .sale-table tbody th[scope='row'] {
-  min-width: 210px;
+  min-width: 190px;
 }
 
-.sale-table th.add-column {
+.sale-table tr.detail td {
+  white-space: normal;
+}
+
+/* Au-delà de 4 scénarios : barre de défilement fine, libellés fixés à gauche. */
+.sale-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.sale-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sale-scroll::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.sale-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sale-table th[scope='row'],
+.sale-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+.reinvestment-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: 14em;
   text-align: right;
+  white-space: normal;
+}
+
+.year-lines dd:has(.reinvestment-cell) {
+  white-space: normal;
+  min-width: 0;
+  flex: 1 1 55%;
 }
 
 .column-menu {

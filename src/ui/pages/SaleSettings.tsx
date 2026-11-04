@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { db } from '../../db/database';
-import type { PropertyAssumptions } from '../../engine/types';
+import type { ResolvedSaleAssumptions } from '../../engine/sale-defaults';
+import type { ProjectionAssumptions, PropertyAssumptions } from '../../engine/types';
 import { DisclosureButton } from '../components/DisclosureButton';
+import { OverrideField } from '../components/OverrideField';
+import { showValue } from '../valueFormat';
 import {
   centsToInput,
+  formatDate,
   formatEuros,
   formatPercent,
   parseEurosInput,
@@ -13,10 +17,17 @@ import {
 import { useOpenDetails } from '../openDetails';
 
 /**
- * « Paramètres de vente » (replié, avec un résumé d'une ligne) : frais d'agence, frais divers de
- * vente, indemnités de remboursement anticipé. Communs à tous les scénarios du bien.
+ * « Paramètres de vente » (replié, avec un résumé d'une ligne), communs à tous les scénarios du
+ * bien : frais d'agence, frais divers de vente, indemnités de remboursement anticipé, puis les
+ * valeurs de projection d'ici la vente (calculées à partir du journal, modifiables).
  */
-export function SaleSettings({ assumptions }: { assumptions: PropertyAssumptions }) {
+export function SaleSettings({
+  assumptions,
+  resolved,
+}: {
+  assumptions: PropertyAssumptions;
+  resolved: ResolvedSaleAssumptions;
+}) {
   const details = useOpenDetails('locapilote.vente.parametresOuverts');
   const open = details.isOpen('parametres');
   const { sale } = assumptions;
@@ -33,6 +44,9 @@ export function SaleSettings({ assumptions }: { assumptions: PropertyAssumptions
     setSource(sale);
     setValues(initial());
   }
+
+  const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
+    db.saveAssumptions({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,7 +93,11 @@ export function SaleSettings({ assumptions }: { assumptions: PropertyAssumptions
       <p className="muted small" data-testid="resume-parametres">
         Frais d’agence {formatPercent(sale.agencyFeesRate)} · frais divers de vente{' '}
         {formatEuros(sale.otherSaleCosts)} · indemnités de remboursement anticipé{' '}
-        {formatEuros(sale.earlyRepaymentPenalty)}
+        {formatEuros(sale.earlyRepaymentPenalty)} · loyer net projeté{' '}
+        {showValue('euros', resolved.netRentMonthly.value)}/mois · dépenses projetées{' '}
+        {showValue('euros', resolved.annualExpensesExcludingLoan.value)}/an · évolution{' '}
+        {showValue('percent', resolved.annualGrowth.value)}/an · frais de l’année de la vente{' '}
+        {showValue('euros', resolved.saleYearCosts.value)}
       </p>
       {open && (
         <form className="form stack" onSubmit={submit} noValidate aria-label="Paramètres de vente">
@@ -118,6 +136,50 @@ export function SaleSettings({ assumptions }: { assumptions: PropertyAssumptions
             </button>
           </div>
         </form>
+      )}
+      {open && (
+        <div className="stack" aria-label="Projection d’ici la vente" role="group">
+          <h4>Projection d’ici la vente</h4>
+          <p className="muted small">
+            Loyers et dépenses des mois suivant la date des données
+            {resolved.journalWindow ? ` (${formatDate(resolved.journalWindow.to)})` : ''} jusqu’à la
+            vente. Valeurs calculées à partir du journal, communes à toutes les dates ; tu peux les
+            modifier (vide = calcul automatique).
+          </p>
+          <div className="assumptions-grid">
+            <OverrideField
+              label="Loyer net projeté (€ / mois)"
+              kind="euros"
+              resolved={resolved.netRentMonthly}
+              help={
+                resolved.journalWindow
+                  ? `Recettes du ${formatDate(resolved.journalWindow.from)} au ${formatDate(resolved.journalWindow.to)} / 12.`
+                  : 'Bien pas encore loué.'
+              }
+              onSave={(v) => saveProjection({ netRentMonthly: v })}
+            />
+            <OverrideField
+              label="Dépenses projetées (€ / an, hors prêt)"
+              kind="euros"
+              resolved={resolved.annualExpensesExcludingLoan}
+              help="Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété."
+              onSave={(v) => saveProjection({ annualExpensesExcludingLoan: v })}
+            />
+            <OverrideField
+              label="Évolution annuelle des loyers et des charges (%)"
+              kind="percent"
+              resolved={resolved.annualGrowth}
+              onSave={(v) => saveProjection({ annualGrowth: v })}
+            />
+            <OverrideField
+              label="Frais de l’année de la vente (€)"
+              kind="euros"
+              resolved={resolved.saleYearCosts}
+              help={`Honoraires du comptable de ${resolved.lastCompleteYear}.`}
+              onSave={(v) => saveProjection({ saleYearCosts: v })}
+            />
+          </div>
+        </div>
       )}
     </section>
   );

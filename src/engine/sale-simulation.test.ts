@@ -124,6 +124,13 @@ describe('scénarios « Vendre quand » du jeu de test (expected.json)', () => {
     );
   });
 
+  it('ce qui te reste vraiment = somme nette − à remettre d’ici la vente', () => {
+    // 182 343,65 − 2 515,02 ; 190 475,24 − 5 370,09 ; 197 951,85 − 8 116,55.
+    [179828.63, 185105.15, 189835.3].forEach((target, i) => {
+      expectEuros(scenarios[i]!.netAfterCashFlow, target);
+    });
+  });
+
   it('rythme mensuel d’ici la vente, hors frais de l’année de la vente', () => {
     // 30/06/2027 : (2 515,02 − 558) / 8 mois ≈ 244,63 € à remettre par mois.
     const s = scenarios[0]!;

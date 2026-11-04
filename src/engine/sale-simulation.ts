@@ -44,6 +44,11 @@ export interface SaleSimulation {
   /** Somme nette avec remploi = somme nette + impôt évité. */
   netWithReinvestment: Cents;
   balance: OwnerBalance;
+  /**
+   * Ce qui te reste vraiment = somme nette perçue − ce qu'il faut remettre d'ici la vente
+   * (cash-flow d'ici la vente, négatif quand il faut remettre de l'argent).
+   */
+  netAfterCashFlow: number;
   /** Gain par rapport au placement de référence, à la date de vente ; `null` sans placement. */
   gainOverReference: number | null;
 }
@@ -110,6 +115,7 @@ export function simulateSale(
     reinvestedAmount: Math.round(resolved.reinvestedShare.value * proceeds.netSalePrice),
     netWithReinvestment: netProceeds + reinvestment.avoidedTax,
     balance,
+    netAfterCashFlow: netProceeds + balance.cashFlowUntilSale,
     gainOverReference: reference
       ? gainOverReference(balance.flows, reference.rate, scenario.date)
       : null,
