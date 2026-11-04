@@ -124,6 +124,13 @@ describe('scénarios « Vendre quand » du jeu de test (expected.json)', () => {
     );
   });
 
+  it('rythme mensuel d’ici la vente, hors frais de l’année de la vente', () => {
+    // 30/06/2027 : (2 515,02 − 558) / 8 mois ≈ 244,63 € à remettre par mois.
+    const s = scenarios[0]!;
+    expect(s.balance.monthlyCashFlowUntilSale).toBeCloseTo((-251502.46 + 55800) / 8, 1);
+    expect(Math.round(-s.balance.monthlyCashFlowUntilSale!) / 100).toBe(244.63);
+  });
+
   it('cash-flow à remettre, par mois', () => {
     scenarios.forEach((s, i) => {
       const perMonth = centsToEuros(s.balance.cashFlowUntilSale / s.balance.monthsUntilSale);

@@ -350,11 +350,11 @@ test('ajouter un bien : bouton en haut de Mon bien, à droite du titre', async (
   await expect(title).toBeVisible();
 });
 
-test('Simulations : la vente (US11), et le budget annoncé', async ({ page }, testInfo) => {
+test('Simulations : la vente (US11)', async ({ page }, testInfo) => {
   await goTo(page, 'Simulations');
   const main = page.getByRole('main');
   await expect(main.getByRole('heading', { name: 'Vente', exact: true })).toBeVisible();
-  await expect(main).toContainText('Budget prévisionnel : prochainement');
+  await expect(main).not.toContainText('Budget prévisionnel');
   await capture(page, testInfo, 'it3bis-simulations');
 });
 

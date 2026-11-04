@@ -69,6 +69,12 @@ export interface OwnerBalance {
   cashFlowUntilSale: number;
   /** Capital remboursé entre la date de mise à jour et la vente. */
   principalRepaidUntilSale: Cents;
+  /**
+   * Rythme mensuel d'ici la vente, hors frais de l'année de la vente : (cash-flow d'ici la vente
+   * + frais de l'année de la vente) / nombre de mois, soit échéances − loyer net + dépenses
+   * (négatif = à remettre). `null` s'il n'y a aucun mois d'ici la vente.
+   */
+  monthlyCashFlowUntilSale: number | null;
 }
 
 /** Montant au résultat d'un mouvement : + recette, − dépense, 0 sinon (transfert, dépôt). */
@@ -186,6 +192,8 @@ export function ownerBalance(input: OwnerBalanceInput): OwnerBalance {
     monthsUntilSale,
     cashFlowUntilSale,
     principalRepaidUntilSale,
+    monthlyCashFlowUntilSale:
+      monthsUntilSale > 0 ? (cashFlowUntilSale + projection.saleYearCosts) / monthsUntilSale : null,
   };
 }
 

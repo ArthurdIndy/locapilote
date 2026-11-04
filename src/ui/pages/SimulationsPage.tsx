@@ -26,7 +26,6 @@ export function SimulationsPage({ data, property, today }: Props) {
     <div className="stack">
       <PropertyTitle title="Simulations" />
       <SalePage data={data} property={property} today={today} />
-      <p className="muted small">Budget prévisionnel : prochainement, dans cette même page.</p>
     </div>
   );
 }
