@@ -57,7 +57,7 @@ Les années postérieures à la date de mise à jour des données ne sont pas ca
 
 - Recettes encaissées = opérations des catégories de sens Recette ; dépenses payées = opérations des catégories de sens Dépense (investissements et dépenses à qualifier compris), de l'année civile entière, même après la date de mise à jour (comme l'Excel).
 - Cash-flow = recettes encaissées − dépenses payées (hors prêt) − échéances de prêt de la période louée (jusqu'à la date de mise à jour).
-- Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, divisés par 365/12.
+- Mois de location = jours entre MAX(1er janvier, mise en location) et MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, divisés par 365/12, plafonnés à 12 : une année entière compte 12 mois, y compris bissextile ; au plus 1 jour d'écart sur une période partielle d'année bissextile, comme dans l'Excel (décision d'Arthur du 04/11/2026 : une année bissextile entièrement louée affichait 12,03).
 - Cash-flow mensuel = cash-flow / mois de location.
 - Enrichissement = cash-flow + capital remboursé sur la période louée.
 - Détail des recettes et des dépenses (replié à l'écran) : même périmètre, réparti par groupe de synthèse des catégories paramétrées ; la somme des groupes est égale au total de la ligne. Ordre : loyers d'abord, puis ordre alphabétique, groupes « Autres… » ensuite, et en dernier les groupes de catégories « À amortir » ou « À valider ». Ce détail montre ce qui a été payé, pas ce qui est déductible (voir le récapitulatif fiscal).

@@ -420,6 +420,13 @@ test.describe('Synthèse : fenêtre de 3 ans sur ordinateur', () => {
 
     // Par défaut : les 3 dernières années ; la fenêtre précédente à gauche.
     await expectWindow(['2024', '2025', '2026'], '2021–2023', null);
+    // 2024, année bissextile entièrement louée : exactement 12 mois (et non 12,03).
+    await expect(
+      table
+        .getByRole('row', { name: /^Mois de location/ })
+        .locator('td')
+        .first(),
+    ).toHaveText('12,00');
     const previousButton = window.getByRole('button', { name: /^Années précédentes/ });
     const nextButton = window.getByRole('button', { name: /^Années suivantes/ });
     const tableBox = (await table.boundingBox())!;
