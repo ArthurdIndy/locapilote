@@ -3,7 +3,7 @@
  *
  * {
  *   "application": "locapilote",
- *   "formatVersion": 2,          // = version du schéma de la base au moment de l'export
+ *   "formatVersion": 4,          // = version du schéma de la base au moment de l'export
  *   "exportedAt": "2026-10-31T17:00:00.000Z",
  *   "data": { properties: [...], categories: [...], transactions: [...], ... }
  * }
@@ -12,10 +12,23 @@
  * `accountantFilings` (comptes déposés par le comptable) apparaît. Une sauvegarde en
  * version 1 reste lisible : elle est complétée à la lecture.
  *
+ * Version 2 → 3 (US11) : la liste `householdSettings` (paramètres du foyer : placement de
+ * référence) apparaît ; vide à la lecture d'une sauvegarde plus ancienne.
+ *
+ * Version 3 → 4 (US11 recentrée) : hypothèses de vente simplifiées et frais d'acquisition réels
+ * sur la fiche du bien (voir `migrations.ts`).
+ *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
-import { isTaxRegimeCompatible, RENTAL_TYPES, TAX_REGIMES, type Dataset } from '../engine/types';
+import {
+  HOUSEHOLD_SETTINGS_ID,
+  isTaxRegimeCompatible,
+  RENTAL_TYPES,
+  TAX_REGIMES,
+  type Dataset,
+} from '../engine/types';
 import { SCHEMA_VERSION } from './database';
+import { upgradeDataToV4 } from './migrations';
 
 export const BACKUP_APPLICATION = 'locapilote';
 
@@ -53,6 +66,7 @@ const DATASET_KEYS = [
   'accountantFilings',
   'preRentalExpenses',
   'assumptions',
+  'householdSettings',
 ] as const satisfies readonly (keyof Dataset)[];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -86,7 +100,9 @@ export function parseBackup(text: string): Backup {
       'Cette sauvegarde vient d’une version plus récente de Locapilote. Rechargez la page et réessayez.',
     );
   }
-  const data = version < 2 ? upgradeFromV1(json.data) : json.data;
+  const v2 = version < 2 ? upgradeFromV1(json.data) : json.data;
+  const v3 = version < 3 ? { ...v2, householdSettings: v2.householdSettings ?? [] } : v2;
+  const data = version < 4 ? upgradeDataToV4(v3) : v3;
   for (const key of DATASET_KEYS) {
     const table = data[key];
     if (!Array.isArray(table) || !table.every(isRow)) {
@@ -203,6 +219,13 @@ function checkDataset(data: Dataset): void {
     if (!isRow(f.amounts) || !isRow(f.comments)) fail(`comptes déposés ${f.year} invalides.`);
     if (!Object.values(f.amounts).every(isCents))
       fail(`montant invalide dans les comptes ${f.year}.`);
+  }
+  if (data.householdSettings.length > 1) fail('plusieurs lignes de paramètres du foyer.');
+  for (const h of data.householdSettings) {
+    if (h.id !== HOUSEHOLD_SETTINGS_ID) fail('paramètres du foyer invalides.');
+    if (h.referenceRate !== null && typeof h.referenceRate !== 'number') {
+      fail('taux du placement de référence invalide.');
+    }
   }
   for (const row of [
     ...data.assets,

@@ -1332,3 +1332,198 @@ ul.warning {
 .property-menu button[aria-checked='true']::before {
   content: '✓ ';
 }
+
+/* ---------- Simulations › Vente (US11) ---------- */
+
+.sale-table thead th {
+  vertical-align: bottom;
+}
+
+.column-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sale-table tbody th[scope='row'] {
+  min-width: 190px;
+}
+
+.sale-table tr.detail td {
+  white-space: normal;
+}
+
+/* Au-delà de 4 scénarios : barre de défilement fine, libellés fixés à gauche. */
+.sale-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.sale-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sale-scroll::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.sale-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sale-table th[scope='row'],
+.sale-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+.reinvestment-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: 14em;
+  text-align: right;
+  white-space: normal;
+}
+
+.year-lines dd:has(.reinvestment-cell) {
+  white-space: normal;
+  min-width: 0;
+  flex: 1 1 55%;
+}
+
+.column-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.column-menu-button {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.column-menu-button:hover,
+.column-menu-button:focus-visible,
+.column-menu-button[aria-expanded='true'] {
+  background: var(--accent-soft);
+}
+
+.column-menu-list {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  text-align: left;
+}
+
+.column-menu-list button {
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 400;
+  color: inherit;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.column-menu-list button:hover,
+.column-menu-list button:focus-visible {
+  background: var(--accent-soft);
+}
+
+.danger-text {
+  color: var(--expense) !important;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sale-table tr.detail-extra td,
+.detail-extra {
+  text-align: left;
+  white-space: normal;
+  font-size: 0.9rem;
+  padding: 8px 8px 12px 24px;
+}
+
+.detail-extra {
+  padding: 6px 0 10px 16px;
+}
+
+.detail-extra p {
+  margin: 0;
+}
+
+.share-field {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px 4px;
+  max-width: 11em;
+  white-space: normal;
+}
+
+.share-field .share-status {
+  flex-basis: 100%;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  text-align: right;
+}
+
+.share-field input {
+  width: 4.5em;
+  padding: 2px 6px;
+}
+
+.share-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.assumptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.card h3 .disclosure {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.synthesis-table tr.detail-note td,
+.year-lines .detail-note dt,
+.detail-note {
+  text-align: left;
+  white-space: normal;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--muted);
+}

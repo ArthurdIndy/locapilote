@@ -21,6 +21,7 @@ export function startEmpty(db: LocapiloteDb): Promise<void> {
     accountantFilings: [],
     preRentalExpenses: [],
     assumptions: [],
+    householdSettings: [],
   };
   return db.replaceAll(empty);
 }

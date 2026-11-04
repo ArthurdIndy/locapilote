@@ -97,7 +97,7 @@ test('chaque entrée ouvre sa page', async ({ page }) => {
     ['Mouvements', 'Mouvements · Appartement exemple'],
     ['Synthèse', 'Synthèse · Appartement exemple'],
     ['Fiscalité', 'Fiscalité · Appartement exemple'],
-    ['Simulations', 'Simulations'],
+    ['Simulations', 'Simulations · Appartement exemple'],
     ['Mon bien', 'Mon bien · Appartement exemple'],
     ['Paramètres', 'Paramètres'],
     ['Accueil', 'Mes biens'],
@@ -310,8 +310,11 @@ test('téléphone : un nom de bien long est tronqué avec « … », le ▾ rest
   await goTo(page, 'Mouvements');
   const picker = titlePicker(page);
   const name = picker.locator('.property-title-name');
+  // Le titre doit d'abord afficher le nouveau bien (la liste des biens se met à jour après la
+  // création) ; la troncature se vérifie ensuite, avec réessai.
+  await expect(name).toHaveText('Appartement de la rue des Longues-Herbes');
   await expect(name).toHaveCSS('text-overflow', 'ellipsis');
-  expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  await expect.poll(() => name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
   const caret = picker.locator('.property-title-caret');
   await expect(caret).toBeInViewport({ ratio: 1 });
   await expectNoHorizontalScroll(page);
@@ -350,14 +353,11 @@ test('ajouter un bien : bouton en haut de Mon bien, à droite du titre', async (
   await expect(title).toBeVisible();
 });
 
-test('Simulations : page d’attente qui annonce la vente et le budget', async ({
-  page,
-}, testInfo) => {
+test('Simulations : la vente (US11)', async ({ page }, testInfo) => {
   await goTo(page, 'Simulations');
   const main = page.getByRole('main');
-  await expect(main).toContainText('Vente');
-  await expect(main).toContainText('Budget');
-  await expect(main).toContainText('itération 4');
+  await expect(main.getByRole('heading', { name: 'Vente', exact: true })).toBeVisible();
+  await expect(main).not.toContainText('Budget prévisionnel');
   await capture(page, testInfo, 'it3bis-simulations');
 });
 

@@ -63,3 +63,22 @@ export function isValidIsoDate(date: string): boolean {
   const { year, month, day } = parseIso(date);
   return month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth(year, month);
 }
+
+/**
+ * Années pleines (révolues) de `from` à `to`, comme DATEDIF(from; to; "y") dans Excel :
+ * 10/11/2017 → 30/06/2027 = 9 ans. 0 si `to` précède `from`.
+ */
+export function fullYearsBetween(from: IsoDate, to: IsoDate): number {
+  if (to < from) return 0;
+  const a = parseIso(from);
+  const b = parseIso(to);
+  let years = b.year - a.year;
+  if (b.month < a.month || (b.month === a.month && b.day < a.day)) years -= 1;
+  return Math.max(0, years);
+}
+
+/** Premier jour du mois de la date. */
+export function startOfMonth(date: IsoDate): IsoDate {
+  const { year, month } = parseIso(date);
+  return toIso(year, month, 1);
+}

@@ -64,6 +64,12 @@ export interface Property {
   /** Fin de l'occupation comme résidence principale, si le bien l'a été. */
   mainResidenceEndDate: IsoDate | null;
   estimatedValue: Cents;
+  /**
+   * Frais d'acquisition réels justifiables (droits, émoluments du notaire, honoraires d'agence
+   * de l'achat, hors frais de garantie du prêt), pour la plus-value ; 0 = non renseignés (le
+   * forfait de 7,5 % s'applique). Absent dans les données antérieures à la version 4.
+   */
+  actualAcquisitionCosts?: Cents;
   surfaceM2: number | null;
   manager: string | null;
   syndic: string | null;
@@ -189,24 +195,36 @@ export interface PreRentalExpense {
   sourceNote: string | null;
 }
 
+/** Paramètres de vente saisis par l'utilisateur. */
 export interface SaleAssumptions {
+  /** Frais d'agence à la charge du vendeur, en % du prix. */
   agencyFeesRate: number;
+  /** Frais divers de vente (diagnostics, état daté, mainlevée). */
   otherSaleCosts: Cents;
   earlyRepaymentPenalty: Cents;
-  actualAcquisitionCosts: Cents;
-  incomeTaxRate: number;
-  socialChargesRate: number;
 }
 
+/**
+ * Hypothèses de projection. Pour les valeurs calculées automatiquement, `null` = calcul
+ * automatique (voir `src/engine/sale-defaults.ts`), un nombre = valeur modifiée.
+ */
 export interface ProjectionAssumptions {
+  /** Loyer évité pendant la résidence principale (bilan depuis l'achat, TRI : non affichés). */
   avoidedRentMonthlyAtPurchase: Cents;
   avoidedRentIndexation: number;
-  netRentMonthly: Cents;
-  annualExpensesExcludingLoan: Cents;
-  annualGrowth: number;
-  depreciationDeductedPerYear: Cents;
-  saleYearCosts: Cents;
-  mainResidenceReinvestedShare: number;
+  /** Loyer net projeté par mois ; `null` = recettes des 12 derniers mois du journal. */
+  netRentMonthly: Cents | null;
+  /** Dépenses annuelles projetées hors prêt ; `null` = 12 derniers mois du journal. */
+  annualExpensesExcludingLoan: Cents | null;
+  /** Évolution annuelle des loyers et des charges ; `null` = 1,5 %. */
+  annualGrowth: number | null;
+  /** Amortissements déduits par an, années futures ; `null` = dernière année complète. */
+  depreciationDeductedPerYear: Cents | null;
+  /** Frais liés à l'année de la vente ; `null` = honoraires du comptable de la dernière année complète. */
+  saleYearCosts: Cents | null;
+  /** Part du prix réinvestie dans la résidence principale (remploi) ; `null` = 100 %. */
+  mainResidenceReinvestedShare: number | null;
+  /** Autres dettes à rembourser à la vente (non affiché). */
   otherDebts: Cents;
 }
 
@@ -225,6 +243,22 @@ export interface PropertyAssumptions {
   dataAsOf: IsoDate;
 }
 
+/**
+ * Paramètres du foyer (communs à tous les biens). Une seule ligne, d'identifiant `household`.
+ */
+export interface HouseholdSettings {
+  id: 'household';
+  /**
+   * Placement de référence pour juger la rentabilité réelle : taux annuel (0.03 pour 3 %),
+   * `null` tant qu'il n'est pas saisi (aucune valeur imposée).
+   */
+  referenceRate: number | null;
+  /** Libellé libre du placement (« fonds euros », « ETF »…). */
+  referenceLabel: string;
+}
+
+export const HOUSEHOLD_SETTINGS_ID = 'household';
+
 /** L'ensemble des données d'un utilisateur. */
 export interface Dataset {
   properties: Property[];
@@ -237,4 +271,6 @@ export interface Dataset {
   accountantFilings: AccountantFiling[];
   preRentalExpenses: PreRentalExpense[];
   assumptions: PropertyAssumptions[];
+  /** Paramètres du foyer : au plus une ligne. */
+  householdSettings: HouseholdSettings[];
 }

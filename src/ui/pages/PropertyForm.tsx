@@ -27,6 +27,7 @@ interface Fields {
   acquisitionAgencyFees: string;
   notaryAndGuaranteeFees: string;
   downPayment: string;
+  actualAcquisitionCosts: string;
   rentExcludingCharges: string;
   chargesProvision: string;
   securityDeposit: string;
@@ -42,6 +43,7 @@ const MONEY_FIELDS = [
   'acquisitionAgencyFees',
   'notaryAndGuaranteeFees',
   'downPayment',
+  'actualAcquisitionCosts',
   'rentExcludingCharges',
   'chargesProvision',
   'securityDeposit',
@@ -66,6 +68,7 @@ function toFields(p: Property | null): Fields {
     acquisitionAgencyFees: money(p?.acquisitionAgencyFees),
     notaryAndGuaranteeFees: money(p?.notaryAndGuaranteeFees),
     downPayment: money(p?.downPayment),
+    actualAcquisitionCosts: money(p?.actualAcquisitionCosts),
     rentExcludingCharges: money(p?.rentExcludingCharges),
     chargesProvision: money(p?.chargesProvision),
     securityDeposit: money(p?.securityDeposit),
@@ -150,6 +153,7 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
       notaryAndGuaranteeFees: amounts.notaryAndGuaranteeFees,
       totalAcquisitionCost: total,
       downPayment: amounts.downPayment,
+      actualAcquisitionCosts: amounts.actualAcquisitionCosts,
       rentalStartDate: f.rentalStartDate || null,
       mainResidenceEndDate: f.mainResidenceEndDate || null,
       estimatedValue: amounts.estimatedValue,
@@ -257,6 +261,12 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
           <span className="muted small"> (prix + frais d’agence + frais de notaire)</span>
         </p>
         {euros('downPayment', 'Apport (€)')}
+        {euros('actualAcquisitionCosts', 'Frais d’acquisition réels justifiables (€)')}
+        <p className="muted small">
+          Pour la plus-value à la vente : droits, émoluments du notaire et honoraires d’agence de
+          l’achat, hors frais de garantie du prêt (selon l’acte). Vide : le forfait de 7,5 % du prix
+          s’applique.
+        </p>
       </fieldset>
 
       <details>

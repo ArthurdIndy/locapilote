@@ -58,6 +58,7 @@ export function PropertyInfoSection({
     ['Frais de notaire et de garantie', euros(property.notaryAndGuaranteeFees)],
     ['Coût total d’acquisition', formatEuros(property.totalAcquisitionCost)],
     ['Apport', euros(property.downPayment)],
+    ['Frais d’acquisition réels (plus-value)', euros(property.actualAcquisitionCosts ?? 0)],
     ['Valeur estimée', euros(property.estimatedValue)],
     [
       'Loyer hors charges',

@@ -70,9 +70,9 @@ describe('prêts dans la base', () => {
     await db.setDataAsOf('APPART-01', '2026-06-30');
     const a = await db.assumptions.get('APPART-01');
     expect(a!.dataAsOf).toBe('2026-06-30');
-    expect(a!.saleScenarios).toHaveLength(3); // le reste est conservé
+    expect(a!.saleScenarios).toHaveLength(1); // le reste est conservé
     await db.properties.put({ ...(await db.properties.get('APPART-01'))!, id: 'B2', name: 'B2' });
     await db.setDataAsOf('B2', '2026-01-31');
-    expect((await db.assumptions.get('B2'))!.sale.incomeTaxRate).toBe(0.19);
+    expect((await db.assumptions.get('B2'))!.projection.netRentMonthly).toBeNull(); // calcul automatique
   });
 });

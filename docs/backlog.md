@@ -5,7 +5,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Sujet | Description | Origine |
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
-| Rentabilité réelle : TRI et comparaison à un placement | Voir le détail ci-dessous ; à intégrer à l'itération 4 avec US11 | Demande d'Arthur, 01/11/2026 |
+| Rentabilité réelle : TRI, gain total et comparaison à un placement | Voir le détail ci-dessous. **Moteur prêt et testé à l'itération 4a ; affichage reporté** (retiré de Simulations › Vente et de la Synthèse à la recette du 03/11/2026), par exemple sur l'Accueil ou dans un « mode investisseur » | Demande d'Arthur, 01/11/2026 |
 | Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
 | Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis** |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
@@ -13,6 +13,8 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur · **fait à l'itération 3 bis** |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 · **fait à l'itération 3 bis** |
 | Impôt estimé et cash-flow après impôt | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
+| Catégories : marqueurs dédiés (honoraires du comptable, travaux) | La simulation de vente repère les honoraires du comptable (frais de l'année de la vente) et les catégories de travaux (exclues de la projection) par le nom de la catégorie (« comptab », « travaux »). Ajouter à la catégorie un marqueur dédié, réglable à l'écran, pour ne plus dépendre du nom. À faire avec US02 (catégories paramétrables) | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
+| Plus-value : amortissements du logement seul | Aujourd'hui, la plus-value réintègre le total des amortissements déduits (tous composants), comme l'Excel. Selon la notice 2048-IMM (ligne 25), seuls ceux du logement sont à réintégrer, pas ceux du mobilier, des équipements ni des travaux. Répartir les amortissements utilisés entre composants et ne réintégrer que la part du logement ; `expected.json` serait à revoir. PR séparée | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
 
 ## Synthèse : détail des recettes et des dépenses
 
@@ -49,9 +51,12 @@ Le résultat fiscal (US09) n'est pas de l'argent : c'est la base de l'impôt. Po
 - **Cash-flow après impôt** = cash-flow − impôt estimé, dans la synthèse ; mensualisé comme le cash-flow.
 - Calcul simplifié, signalé comme tel : pas de calcul complet du barème, ni de quotient familial.
 
-À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (17,2 %, ou taux relevé par une loi de finances récente), barème en vigueur, imputation d'un déficit.
+À vérifier au moment de la construire (règles à sourcer dans `docs/regles-de-calcul.md`) : taux des prélèvements sociaux applicables aux revenus de location meublée non professionnelle (18,6 % depuis la LFSS 2026 d'après la brochure IR 2026 d'impots.gouv.fr, à confirmer ; les plus-values immobilières restent à 17,2 %), barème en vigueur, imputation d'un déficit.
 
-## Rentabilité réelle : TRI et comparaison à un placement (itération 4, avec US11)
+## Rentabilité réelle : TRI et comparaison à un placement (moteur prêt, affichage reporté)
+
+**État au 03/11/2026** : le moteur calcule le bilan depuis l'achat (loyer évité compris), le gain total, le TRI et le gain par rapport à un placement (`src/engine/core/irr.ts`, testés contre `data/expected.json`). À la recette de l'itération 4a, Arthur a retiré ces indicateurs de l'écran, ainsi que la saisie du loyer évité et du placement de référence (la table des paramètres du foyer reste, vide, dans les données) : Simulations › Vente se limite à « combien je touche, combien d'impôt, ai-je intérêt à attendre ». Reste à décider où les afficher : sur l'Accueil (US21), ou dans un mode « investisseur » ; il faudra alors rétablir la saisie du loyer évité et du placement.
+
 
 « En tant que propriétaire, je veux savoir si mon investissement vaut le coup, c'est-à-dire s'il rapporte plus que mon argent placé ailleurs. »
 

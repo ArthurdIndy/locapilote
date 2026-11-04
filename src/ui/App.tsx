@@ -94,7 +94,9 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
         )}
         {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
         {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
-        {route === 'simulations' && <SimulationsPage />}
+        {route === 'simulations' && (
+          <SimulationsPage data={data} property={current} today={today} />
+        )}
         {route === 'mon-bien' && (
           <MyPropertyPage
             data={data}

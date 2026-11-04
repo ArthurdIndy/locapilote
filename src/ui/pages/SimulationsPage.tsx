@@ -1,19 +1,31 @@
-/** Page d'attente : la simulation de vente (US11) et le budget (US12) arrivent à l'itération 4. */
-export function SimulationsPage() {
+import type { Dataset, Property } from '../../engine/types';
+import { PropertyTitle } from '../components/PropertyTitle';
+import { propertyHref } from '../router';
+import { SalePage } from './SalePage';
+
+interface Props {
+  data: Dataset;
+  property: Property | null;
+  today: string;
+}
+
+/** Simulations : le futur du bien courant. Vente (US11) ; le budget (US12) arrive ensuite. */
+export function SimulationsPage({ data, property, today }: Props) {
+  if (!property) {
+    return (
+      <section className="card">
+        <h2>Simulations</h2>
+        <p>Crée d’abord un bien.</p>
+        <a className="button primary" href={propertyHref('informations')}>
+          Créer un bien
+        </a>
+      </section>
+    );
+  }
   return (
-    <section className="card stack">
-      <h2>Simulations</h2>
-      <p>Cette page accueillera bientôt deux simulations, à partir des données déjà saisies :</p>
-      <ul>
-        <li>
-          <strong>Vente</strong> : ce qu’il te resterait si tu vendais à une date et à un prix
-          donnés (frais, remboursement du prêt, impôt sur la plus-value).
-        </li>
-        <li>
-          <strong>Budget</strong> : les recettes et dépenses prévues pour les années à venir.
-        </li>
-      </ul>
-      <p className="muted small">Prévu pour l’itération 4.</p>
-    </section>
+    <div className="stack">
+      <PropertyTitle title="Simulations" />
+      <SalePage data={data} property={property} today={today} />
+    </div>
   );
 }

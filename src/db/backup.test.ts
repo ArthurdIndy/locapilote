@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Dataset } from '../engine/types';
 import { BackupError, buildBackup, parseBackup, serializeBackup } from './backup';
@@ -42,6 +43,7 @@ function normalize(data: Dataset): Dataset {
     ),
     preRentalExpenses: data.preRentalExpenses,
     assumptions: by((a: Dataset['assumptions'][number]) => a.propertyId)(data.assumptions),
+    householdSettings: data.householdSettings,
   };
 }
 
@@ -66,7 +68,14 @@ describe('sauvegarde complète (US18)', () => {
       source: null,
       comment: 'Ligne 1\nLigne 2',
     });
+    // Et le placement de référence (paramètre du foyer, US11).
+    await db.saveHouseholdSettings({
+      id: 'household',
+      referenceRate: 0.035,
+      referenceLabel: 'Fonds euros',
+    });
     const before = await db.readAll();
+    expect(before.householdSettings).toHaveLength(1);
     const file = serializeBackup(buildBackup(before, new Date('2026-10-31T12:00:00Z')));
 
     // Import dans une autre base, qui contenait déjà d'autres données.
@@ -128,9 +137,33 @@ describe('sauvegarde complète (US18)', () => {
     expect(new Set(data.assets.map((a) => a.id)).size).toBe(5);
   });
 
+  it('lit une sauvegarde de la version 2 (avant les paramètres du foyer)', () => {
+    const v2 = JSON.parse(serializeBackup(buildBackup(loadTestDataset())));
+    v2.formatVersion = 2;
+    delete v2.data.householdSettings;
+    expect(parseBackup(JSON.stringify(v2)).data.householdSettings).toEqual([]);
+  });
+
   it('refuse une sauvegarde d’une version future', () => {
     const backup = { ...buildBackup(loadTestDataset()), formatVersion: 99 };
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/plus récente/);
+  });
+});
+
+describe('hypothèses de simulation (US11)', () => {
+  it('enregistre les scénarios de vente d’un bien, et refuse un bien inconnu', async () => {
+    await startWithTestDataset(db);
+    const [assumptions] = await db.assumptions.toArray();
+    await db.saveAssumptions({
+      ...assumptions!,
+      saleScenarios: [{ date: '2030-06-30', price: 30000000 }],
+    });
+    expect((await db.assumptions.get('APPART-01'))!.saleScenarios).toEqual([
+      { date: '2030-06-30', price: 30000000 },
+    ]);
+    await expect(db.saveAssumptions({ ...assumptions!, propertyId: 'inconnu' })).rejects.toThrow(
+      /Bien/,
+    );
   });
 });
 
@@ -153,5 +186,61 @@ describe('enregistrement d’un mouvement', () => {
     await expect(db.saveTransaction({ ...base, categoryId: 'inconnue' })).rejects.toThrow(
       /Catégorie/,
     );
+  });
+});
+
+describe('migration de la base vers la version 4 (US11 recentrée)', () => {
+  it('reprend les hypothèses saisies et reporte les frais d’acquisition sur le bien', async () => {
+    const name = `test-${n}-v3`;
+    const old = new Dexie(name);
+    old.version(3).stores({
+      properties: 'id',
+      categories: 'id',
+      transactions: 'id, propertyId, date, categoryId',
+      loans: 'id, propertyId',
+      loanInstallments: '[loanId+number], loanId',
+      assets: '++, propertyId, id',
+      accountantCarryforwards: '[propertyId+year], propertyId',
+      accountantFilings: '[propertyId+year], propertyId',
+      preRentalExpenses: '++, propertyId',
+      assumptions: 'propertyId',
+      householdSettings: 'id',
+    });
+    const property = { ...loadTestDataset().properties[0]! };
+    delete property.actualAcquisitionCosts;
+    await old.table('properties').add(property);
+    await old.table('assumptions').add({
+      propertyId: property.id,
+      sale: {
+        agencyFeesRate: 0,
+        otherSaleCosts: 167400,
+        earlyRepaymentPenalty: 0,
+        actualAcquisitionCosts: 2790000,
+        incomeTaxRate: 0.19,
+        socialChargesRate: 0.172,
+      },
+      projection: {
+        avoidedRentMonthlyAtPurchase: 0,
+        avoidedRentIndexation: 0,
+        netRentMonthly: 0,
+        annualExpensesExcludingLoan: 0,
+        annualGrowth: 0,
+        depreciationDeductedPerYear: 418500,
+        saleYearCosts: 0,
+        mainResidenceReinvestedShare: 0,
+        otherDebts: 0,
+      },
+      saleScenarios: [],
+      dataAsOf: '',
+    });
+    old.close();
+
+    const upgraded = new LocapiloteDb(name);
+    const a = (await upgraded.assumptions.get(property.id))!;
+    expect(a.sale).toEqual({ agencyFeesRate: 0, otherSaleCosts: 167400, earlyRepaymentPenalty: 0 });
+    expect(a.projection.depreciationDeductedPerYear).toBe(418500);
+    expect(a.projection.netRentMonthly).toBeNull();
+    expect((await upgraded.properties.get(property.id))!.actualAcquisitionCosts).toBe(2790000);
+    await upgraded.delete();
   });
 });
