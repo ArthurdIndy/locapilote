@@ -317,12 +317,6 @@ export function SynthesisPage({ data, property, today }: Props) {
               </nav>
             )}
             <table className="synthesis-table synthesis-years" aria-label="Synthèse annuelle">
-              <colgroup>
-                <col className="label-col" />
-                {wideYears.map((y) => (
-                  <col key={y.year} />
-                ))}
-              </colgroup>
               <thead>
                 <tr>
                   <th scope="col">

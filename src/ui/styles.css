@@ -1618,24 +1618,13 @@ ul.warning {
 }
 
 /*
- * Synthèse sur ordinateur : colonne des libellés de largeur fixe, sur une ligne ; les colonnes
- * d'années se partagent le reste.
+ * Synthèse sur ordinateur : la colonne des libellés prend la largeur de son plus long libellé,
+ * sur une ligne (la même quelle que soit la fenêtre d'années, et quelle que soit la police) ;
+ * les colonnes d'années se partagent le reste.
  */
-.synthesis-years {
-  table-layout: fixed;
-}
-
-.synthesis-years col.label-col {
-  width: 25rem;
-}
-
 .synthesis-years th[scope='row'] {
+  width: 1%;
   white-space: nowrap;
-}
-
-.synthesis-years td {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .table-note {
