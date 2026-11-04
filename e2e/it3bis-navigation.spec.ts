@@ -310,8 +310,11 @@ test('téléphone : un nom de bien long est tronqué avec « … », le ▾ rest
   await goTo(page, 'Mouvements');
   const picker = titlePicker(page);
   const name = picker.locator('.property-title-name');
+  // Le titre doit d'abord afficher le nouveau bien (la liste des biens se met à jour après la
+  // création) ; la troncature se vérifie ensuite, avec réessai.
+  await expect(name).toHaveText('Appartement de la rue des Longues-Herbes');
   await expect(name).toHaveCSS('text-overflow', 'ellipsis');
-  expect(await name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  await expect.poll(() => name.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
   const caret = picker.locator('.property-title-caret');
   await expect(caret).toBeInViewport({ ratio: 1 });
   await expectNoHorizontalScroll(page);
