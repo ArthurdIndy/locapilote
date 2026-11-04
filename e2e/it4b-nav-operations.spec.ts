@@ -175,8 +175,49 @@ test('« + Opération » ouvre le formulaire de saisie depuis n’importe quelle
     await expect(page.getByPlaceholder(/Tape pour chercher/)).toBeFocused();
     await expect(page.getByLabel('Date', { exact: true })).toHaveValue('2026-11-01');
     await expectNoHorizontalScroll(page);
-    await page.getByRole('button', { name: 'Fermer' }).click();
+    await page.getByRole('button', { name: 'Fermer', exact: true }).click();
     await expect(page).toHaveURL(url);
+  }
+});
+
+test('« + Opération » devient « × Fermer » tant que le formulaire est ouvert ; un nouveau clic le referme', async ({
+  page,
+}, testInfo) => {
+  for (const label of ['Synthèse', 'Fiscalité'] as const) {
+    await goTo(page, label);
+    const url = page.url();
+    const add = page.getByRole('link', { name: '+ Opération', exact: true });
+    await expect(add).toBeVisible();
+    await add.click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Nouvelle opération' })).toBeVisible();
+
+    // Le bouton montre son état : « × Fermer », enfoncé, à la même place.
+    const close = page.getByRole('button', { name: '× Fermer', exact: true });
+    await expect(close).toBeVisible();
+    await expect(close).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('link', { name: '+ Opération', exact: true })).toHaveCount(0);
+    if (isPhone(testInfo)) {
+      // Téléphone : dans la barre du haut, à côté de ☰.
+      await expect(
+        page.getByRole('banner').locator('.header-tools').getByRole('button', { name: '× Fermer' }),
+      ).toBeVisible();
+    } else {
+      await expect(
+        page
+          .getByRole('navigation', { name: 'Navigation principale' })
+          .getByRole('button', { name: '× Fermer' }),
+      ).toBeVisible();
+    }
+    if (label === 'Synthèse')
+      await capture(page, testInfo, 'it4b-bouton-fermer', { fullPage: false });
+
+    // Un nouveau clic referme le formulaire et ramène à la page d'origine.
+    await close.click();
+    await expect(page).toHaveURL(url);
+    await expect(page.getByRole('heading', { level: 2, name: 'Nouvelle opération' })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('link', { name: '+ Opération', exact: true })).toBeVisible();
   }
 });
 
@@ -287,10 +328,12 @@ test('la Synthèse mène aux opérations filtrées (groupe et année)', async ({
   await expect(filters.getByLabel('Groupe')).toHaveValue(group);
 });
 
-test.describe('Synthèse limitée aux 3 dernières années', () => {
-  test('jeu de test (loué depuis 2024) : 3 années, pas de bouton', async ({ page }, testInfo) => {
+test.describe('Synthèse : fenêtre de 3 ans sur ordinateur', () => {
+  test('jeu de test (loué depuis 2024) : 3 années, pas de navigation', async ({
+    page,
+  }, testInfo) => {
     await goTo(page, 'Synthèse');
-    await expect(page.getByRole('button', { name: /Années précédentes/ })).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Années affichées' })).toHaveCount(0);
     if (isPhone(testInfo)) {
       await expect(page.locator('.year-card h3')).toHaveText(['2026', '2025', '2024']);
     } else {
@@ -299,7 +342,40 @@ test.describe('Synthèse limitée aux 3 dernières années', () => {
     }
   });
 
-  test('bien loué depuis 2020 : les 3 dernières années, puis « Années précédentes »', async ({
+  test('libellés sur une ligne, de largeur fixe ; les colonnes d’années s’adaptent', async ({
+    page,
+  }, testInfo) => {
+    test.skip(isPhone(testInfo), 'ordinateur seulement');
+    await goTo(page, 'Synthèse');
+    const table = page.getByRole('table', { name: 'Synthèse annuelle' });
+    for (const name of [
+      'Échéances de prêt (période louée)',
+      'Enrichissement (cash-flow + capital remboursé)',
+      'Charges de copropriété restant à ma charge',
+    ]) {
+      const header = table.getByRole('rowheader', { name, exact: true });
+      const lineHeight = await header.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.5;
+      });
+      const box = (await header.boundingBox())!;
+      // Une seule ligne (padding compris), et rien de coupé.
+      expect(box.height).toBeLessThan(lineHeight * 1.5 + 16);
+      expect(await header.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    }
+    // Pas de défilement horizontal du tableau : la dernière année est visible.
+    const wide = page.locator('.synthesis-wide');
+    expect(await wide.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+    await expect(table.locator('thead th').last()).toBeInViewport();
+    // La colonne des libellés garde sa largeur quand la fenêtre étroite les colonnes d'années.
+    const labelWidth = async () => (await table.locator('thead th').first().boundingBox())!.width;
+    const before = await labelWidth();
+    await page.setViewportSize({ width: 1000, height: 900 });
+    expect(Math.abs((await labelWidth()) - before)).toBeLessThan(1);
+    expect(await wide.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+  });
+
+  test('bien loué depuis 2020 : 3 dernières années, « ‹ 2021–2023 » et « 2024–2026 › »', async ({
     page,
   }, testInfo) => {
     await goTo(page, 'Mon bien');
@@ -310,7 +386,7 @@ test.describe('Synthèse limitée aux 3 dernières années', () => {
 
     if (isPhone(testInfo)) {
       // Téléphone inchangé : une carte par année, la plus récente en premier.
-      await expect(page.getByRole('button', { name: /Années précédentes/ })).toBeHidden();
+      await expect(page.getByRole('navigation', { name: 'Années affichées' })).toBeHidden();
       await expect(page.locator('.year-card h3')).toHaveText([
         '2026',
         '2025',
@@ -327,33 +403,43 @@ test.describe('Synthèse limitée aux 3 dernières années', () => {
 
     const table = page.getByRole('table', { name: 'Synthèse annuelle' });
     const headers = table.locator('thead th');
-    await expect(headers).toHaveText(['Indicateur', '2024', '2025', '2026']);
-    // Chaque ligne n'a que les 3 colonnes affichées.
-    await expect(
-      table.getByRole('row', { name: /^Cash-flow mensuel moyen/ }).locator('td'),
-    ).toHaveCount(3);
+    const window = page.getByRole('navigation', { name: 'Années affichées' });
+    const row = table.getByRole('row', { name: /^Cash-flow mensuel moyen/ });
+    const wide = page.locator('.synthesis-wide');
+    const expectWindow = async (years: string[], previous: string | null, next: string | null) => {
+      await expect(headers).toHaveText(['Indicateur', ...years]);
+      // Toujours 3 colonnes d'années, sans défilement horizontal.
+      await expect(row.locator('td')).toHaveCount(3);
+      expect(await wide.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+      const buttons = window.getByRole('button');
+      await expect(buttons).toHaveText([
+        ...(previous ? [`‹ ${previous}`] : []),
+        ...(next ? [`${next} ›`] : []),
+      ]);
+    };
+
+    // Par défaut : les 3 dernières années ; la fenêtre précédente à gauche.
+    await expectWindow(['2024', '2025', '2026'], '2021–2023', null);
+    const previousButton = window.getByRole('button', { name: /^Années précédentes/ });
+    const nextButton = window.getByRole('button', { name: /^Années suivantes/ });
+    const tableBox = (await table.boundingBox())!;
+    expect((await previousButton.boundingBox())!.x).toBeLessThan(tableBox.x + tableBox.width / 2);
     await capture(page, testInfo, 'it4b-synthese-3-ans', { fullPage: false });
 
-    const older = page.getByRole('button', { name: 'Années précédentes (2020–2023)' });
-    await expect(older).toHaveAttribute('aria-expanded', 'false');
-    await older.click();
-    await expect(headers).toHaveText([
-      'Indicateur',
-      '2020',
-      '2021',
-      '2022',
-      '2023',
-      '2024',
-      '2025',
-      '2026',
-    ]);
-    await expect(
-      table.getByRole('row', { name: /^Cash-flow mensuel moyen/ }).locator('td'),
-    ).toHaveCount(7);
-    const hide = page.getByRole('button', { name: 'Masquer les années précédentes' });
-    await expect(hide).toHaveAttribute('aria-expanded', 'true');
+    await previousButton.click();
+    await expectWindow(['2021', '2022', '2023'], '2020–2022', '2024–2026');
+    // La fenêtre suivante est à droite.
+    const nextBox = (await nextButton.boundingBox())!;
+    expect(nextBox.x + nextBox.width).toBeGreaterThan(tableBox.x + tableBox.width / 2);
     await capture(page, testInfo, 'it4b-synthese-annees', { fullPage: false });
-    await hide.click();
-    await expect(headers).toHaveText(['Indicateur', '2024', '2025', '2026']);
+
+    // La plus ancienne fenêtre garde 3 colonnes (2020 à 2022).
+    await previousButton.click();
+    await expectWindow(['2020', '2021', '2022'], null, '2021–2023');
+
+    await nextButton.click();
+    await expectWindow(['2021', '2022', '2023'], '2020–2022', '2024–2026');
+    await nextButton.click();
+    await expectWindow(['2024', '2025', '2026'], '2021–2023', null);
   });
 });

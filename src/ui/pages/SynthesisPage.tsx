@@ -11,6 +11,7 @@ import {
 import { lmnpReelSummary } from '../../engine/tax/lmnp-reel';
 import type { Category, Dataset, Property } from '../../engine/types';
 import { formatDate, formatEuros, formatMonths, formatPercent } from '../format';
+import { REGIME_LABELS } from '../labels';
 import { propertyHref, routeHref } from '../router';
 import { useOpenDetails } from '../openDetails';
 import { DataAsOfBar } from './DataAsOfBar';
@@ -166,23 +167,26 @@ function buildSections(groups: Groups, propertyId: string): Section[] {
 
 /**
  * Bloc « Fiscalité » : le seul résultat fiscal estimé de chaque année ; le détail est sur la
- * page Fiscalité. `null` = régime pas encore calculé par Locapilote.
+ * page Fiscalité. `null` = régime pas encore calculé par Locapilote : « — » en texte normal
+ * dans chaque colonne.
  */
 function fiscalSection(taxResults: Map<number, number> | null): Section {
   return {
     title: 'Fiscalité',
     link: { href: routeHref('fiscalite'), label: 'Voir le détail fiscal' },
     lines: [
-      {
-        label: 'Résultat fiscal estimé',
-        strong: true,
-        value: (y) => {
-          const result = taxResults?.get(y.year);
-          if (result === undefined) return 'non disponible';
-          return result < 0 ? `${formatEuros(result)} (déficit)` : formatEuros(result);
-        },
-        signed: (y) => Math.min(0, taxResults?.get(y.year) ?? 0),
-      },
+      taxResults === null
+        ? { label: 'Résultat fiscal estimé', value: () => '—' }
+        : {
+            label: 'Résultat fiscal estimé',
+            strong: true,
+            value: (y) => {
+              const result = taxResults.get(y.year);
+              if (result === undefined) return '—';
+              return result < 0 ? `${formatEuros(result)} (déficit)` : formatEuros(result);
+            },
+            signed: (y) => Math.min(0, taxResults.get(y.year) ?? 0),
+          },
     ],
   };
 }
@@ -193,12 +197,28 @@ function signClass(line: Line, y: YearSynthesis): string | undefined {
   return v < 0 ? 'negative' : v > 0 ? 'positive' : undefined;
 }
 
-/** Sur ordinateur, nombre d'années affichées tant qu'on n'a pas demandé les précédentes. */
-export const RECENT_YEARS = 3;
+/** Sur ordinateur, nombre d'années affichées à la fois (fenêtre de 3 ans). */
+export const WINDOW_YEARS = 3;
+
+/**
+ * Fenêtre n° `index` (0 = les 3 dernières années, 1 = les 3 d'avant…) : indices de début et de
+ * fin (exclue) dans la liste des années. La plus ancienne est complétée pour garder 3 colonnes.
+ */
+function yearWindow(count: number, index: number): { start: number; end: number } {
+  const end = Math.max(Math.min(WINDOW_YEARS, count), count - index * WINDOW_YEARS);
+  return { start: Math.max(0, end - WINDOW_YEARS), end };
+}
+
+/** « 2021–2023 » */
+function windowLabel(years: readonly YearSynthesis[]): string {
+  const first = years[0]!.year;
+  const last = years.at(-1)!.year;
+  return first === last ? String(first) : `${first}–${last}`;
+}
 
 export function SynthesisPage({ data, property, today }: Props) {
   const details = useOpenDetails(OPEN_DETAILS_KEY);
-  const [showOlder, setShowOlder] = useState(false);
+  const [windowIndex, setWindowIndex] = useState(0);
   if (!property) {
     return (
       <section className="card">
@@ -229,9 +249,21 @@ export function SynthesisPage({ data, property, today }: Props) {
     );
   const groups: Groups = { byYear, income: groupNames('income'), expense: groupNames('expense') };
   const sections = [...buildSections(groups, property.id), fiscalSection(taxResults)];
-  // Ordinateur : les 3 dernières années ; « Années précédentes » affiche les autres.
-  const olderYears = years.slice(0, Math.max(0, years.length - RECENT_YEARS));
-  const wideYears = showOlder ? years : years.slice(olderYears.length);
+  // Ordinateur : une fenêtre de 3 ans, les 3 dernières par défaut ; ‹ et › passent à la
+  // fenêtre précédente ou suivante.
+  const windowCount = Math.max(1, Math.ceil(years.length / WINDOW_YEARS));
+  const current = Math.min(windowIndex, windowCount - 1);
+  const slice = (index: number) => {
+    const { start, end } = yearWindow(years.length, index);
+    return years.slice(start, end);
+  };
+  const wideYears = slice(current);
+  const previousYears = current + 1 < windowCount ? slice(current + 1) : null;
+  const nextYears = current > 0 ? slice(current - 1) : null;
+  const taxNote =
+    taxResults === null
+      ? `Résultat fiscal non disponible : le calcul fiscal du régime « ${REGIME_LABELS[property.taxRegime]} » n’est pas encore proposé par Locapilote.`
+      : null;
 
   return (
     <div className="stack">
@@ -260,21 +292,37 @@ export function SynthesisPage({ data, property, today }: Props) {
 
           {/* Grand écran : un tableau, une colonne par année (comme l'Excel). */}
           <div className="synthesis-wide">
-            {olderYears.length > 0 && (
-              <p className="older-years">
-                <button
-                  type="button"
-                  className="button small"
-                  aria-expanded={showOlder}
-                  onClick={() => setShowOlder((v) => !v)}
-                >
-                  {showOlder
-                    ? `Masquer les années précédentes`
-                    : `Années précédentes (${olderYears[0]!.year}${olderYears.length > 1 ? `–${olderYears.at(-1)!.year}` : ''})`}
-                </button>
-              </p>
+            {(previousYears || nextYears) && (
+              <nav className="year-window" aria-label="Années affichées">
+                {previousYears && (
+                  <button
+                    type="button"
+                    className="button small"
+                    aria-label={`Années précédentes : ${windowLabel(previousYears)}`}
+                    onClick={() => setWindowIndex(current + 1)}
+                  >
+                    ‹ {windowLabel(previousYears)}
+                  </button>
+                )}
+                {nextYears && (
+                  <button
+                    type="button"
+                    className="button small year-window-next"
+                    aria-label={`Années suivantes : ${windowLabel(nextYears)}`}
+                    onClick={() => setWindowIndex(current - 1)}
+                  >
+                    {windowLabel(nextYears)} ›
+                  </button>
+                )}
+              </nav>
             )}
-            <table className="synthesis-table" aria-label="Synthèse annuelle">
+            <table className="synthesis-table synthesis-years" aria-label="Synthèse annuelle">
+              <colgroup>
+                <col className="label-col" />
+                {wideYears.map((y) => (
+                  <col key={y.year} />
+                ))}
+              </colgroup>
               <thead>
                 <tr>
                   <th scope="col">
@@ -337,6 +385,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                 </tbody>
               ))}
             </table>
+            {taxNote && <p className="muted small table-note">{taxNote}</p>}
           </div>
 
           {/* Téléphone : une carte par année, la plus récente en premier. */}
@@ -380,6 +429,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                 ))}
               </section>
             ))}
+            {taxNote && <p className="muted small">{taxNote}</p>}
           </div>
         </>
       )}

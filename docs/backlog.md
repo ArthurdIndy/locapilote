@@ -161,7 +161,10 @@ Remplace l'organisation en 6 entrées de l'itération 3 bis (ci-dessous, gardée
 - **Ordinateur** : à gauche, Accueil · Synthèse · Budget · Simulations ; à droite, plus petit et plus discret, Fiscalité · Mon bien · bouton « + Opération » · ⚙.
 - **Téléphone (375 px)** : 4 onglets en haut (Accueil, Synthèse, Budget, Simulations), qui tiennent avec leur libellé complet ; le bouton « + Opération » dans la barre du haut, à côté de ☰ ; le menu ☰ contient Fiscalité, Mon bien, Toutes les opérations, ⚙ Paramètres.
 - **Vocabulaire** : « mouvement » devient « opération » partout dans l'interface (boutons, titres, messages, aides, export pour Excel) ; le code garde `transaction`.
-- **Synthèse** : sur ordinateur, les 3 dernières années ; le bouton « Années précédentes (2020–2023) » affiche les autres, « Masquer les années précédentes » les replie. Téléphone inchangé : une carte par année, la plus récente en premier.
+- **Synthèse** : sur ordinateur, une fenêtre de 3 ans, les 3 dernières années par défaut ; à gauche « ‹ 2021–2023 » (fenêtre précédente), à droite « 2024–2026 › » (fenêtre suivante) quand elle existe. Le tableau garde toujours 3 colonnes d'années (la plus ancienne fenêtre est complétée : 2020–2022). La colonne des libellés a une largeur fixe et ne passe jamais à la ligne ; ce sont les colonnes d'années qui s'adaptent. Téléphone inchangé : une carte par année, la plus récente en premier. (Recette du 04/11/2026 : le bouton « Années précédentes », qui dépliait toutes les années, rendait le tableau illisible.)
+- **Résultat fiscal non disponible** (régime pas encore calculé) : « — » en texte normal dans chaque colonne, et la raison une seule fois sous le tableau.
+- **« + Opération »** devient « × Fermer » (bouton enfoncé) tant que le formulaire est ouvert ; un nouveau clic le referme et ramène à la page d'origine.
+- **Barres de défilement** : partout, la barre fine aux couleurs du thème (un seul style commun).
 - **Adresses** : la liste est à `#/operations`, le formulaire à `#/nouvelle-operation`, le budget à `#/budget`. L'ancienne adresse `#/mouvements` (avec ses filtres) redirige vers `#/operations`. « Fermer » sur le formulaire ramène à la page d'où l'on vient.
 
 Critères d'acceptation (tests : `e2e/it4b-nav-operations.spec.ts`) :
@@ -170,7 +173,8 @@ Critères d'acceptation (tests : `e2e/it4b-nav-operations.spec.ts`) :
 - « + Opération » ouvre le formulaire depuis chaque page et « Fermer » y ramène ;
 - « Toutes les opérations » est à côté du formulaire (et dans le menu ☰ sur téléphone) ;
 - les liens de la Synthèse et de la Fiscalité ouvrent la liste filtrée ;
-- Synthèse : 3 années, puis toutes avec « Années précédentes », pour un bien loué depuis plus de 3 ans ;
+- Synthèse : fenêtres de 3 ans (« ‹ » et « › ») pour un bien loué depuis plus de 3 ans, toujours 3 colonnes, libellés sur une ligne, sans défilement ;
+- « + Opération » devient « × Fermer » tant que le formulaire est ouvert ;
 - Simulations ne mentionne plus le budget.
 
 ## Navigation : 6 entrées au lieu de 10 (itération 3 bis, remplacée à l'itération 4b)

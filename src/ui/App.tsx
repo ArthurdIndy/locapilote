@@ -16,6 +16,7 @@ import { TaxPage } from './pages/TaxPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
 import {
+  goBack,
   MAIN_NAV,
   routeHref,
   SECONDARY_NAV,
@@ -139,14 +140,30 @@ const PHONE_MENU: readonly { id: RouteId; label: string }[] = [
   { id: 'parametres', label: '⚙ Paramètres' },
 ];
 
-/** Bouton « + Opération » : ouvre directement le formulaire de saisie, depuis toute page. */
+/**
+ * Bouton « + Opération » : ouvre directement le formulaire de saisie, depuis toute page. Tant que
+ * le formulaire est ouvert, il devient « × Fermer » (enfoncé) : un nouveau clic le referme et
+ * ramène à la page d'où l'on vient, comme le bouton « Fermer » du formulaire.
+ */
 function NewTransactionLink({ route, className }: { route: RouteId; className: string }) {
+  if (route === 'nouvelle-operation') {
+    return (
+      <button
+        type="button"
+        className={`${className} new-transaction-link pressed`}
+        aria-pressed="true"
+        title="Fermer la saisie et revenir à la page précédente"
+        onClick={goBack}
+      >
+        × Fermer
+      </button>
+    );
+  }
   return (
     <a
       className={`${className} new-transaction-link`}
       href={routeHref('nouvelle-operation')}
       title="Saisir une recette ou une dépense"
-      aria-current={route === 'nouvelle-operation' ? 'page' : undefined}
     >
       + Opération
     </a>

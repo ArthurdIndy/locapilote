@@ -213,6 +213,18 @@ h3 {
   display: none;
 }
 
+/* « × Fermer » : le bouton « + Opération » enfoncé, tant que le formulaire est ouvert. */
+.button.new-transaction-link.pressed {
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.15);
+}
+
+.nav .nav-secondary .button.pressed {
+  color: var(--accent);
+}
+
 /* Lien « Toutes les opérations », à droite du titre du formulaire de saisie. */
 .form-title {
   margin-bottom: 4px;
@@ -1435,24 +1447,7 @@ ul.warning {
   white-space: normal;
 }
 
-/* Au-delà de 4 scénarios : barre de défilement fine, libellés fixés à gauche. */
-.sale-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
-}
-
-.sale-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.sale-scroll::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 3px;
-}
-
-.sale-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Au-delà de 4 scénarios : la table défile (barre fine commune), libellés fixés à gauche. */
 
 .sale-table th[scope='row'],
 .sale-table thead th:first-child {
@@ -1610,8 +1605,62 @@ ul.warning {
   color: var(--muted);
 }
 
-/* Synthèse sur ordinateur : bouton « Années précédentes », au-dessus du tableau. */
-.older-years {
-  margin: 0 0 8px;
-  text-align: right;
+/* Synthèse sur ordinateur : fenêtre de 3 ans, « ‹ 2021–2023 » à gauche, « 2024–2026 › » à droite. */
+.year-window {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.year-window-next {
+  margin-left: auto;
+}
+
+/*
+ * Synthèse sur ordinateur : colonne des libellés de largeur fixe, sur une ligne ; les colonnes
+ * d'années se partagent le reste.
+ */
+.synthesis-years {
+  table-layout: fixed;
+}
+
+.synthesis-years col.label-col {
+  width: 25rem;
+}
+
+.synthesis-years th[scope='row'] {
+  white-space: nowrap;
+}
+
+.synthesis-years td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-note {
+  margin: 8px 0 0;
+}
+
+/*
+ * Barres de défilement : partout, la barre fine aux couleurs du thème (au lieu de la barre
+ * blanche par défaut du navigateur). Un seul style commun.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
 }

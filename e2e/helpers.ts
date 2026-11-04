@@ -97,7 +97,10 @@ export async function goToTransactions(page: Page): Promise<void> {
       .getByRole('link', { name: 'Toutes les opérations', exact: true })
       .click();
   } else {
-    await openNewTransaction(page);
+    // Le formulaire est peut-être déjà ouvert (le bouton est alors « × Fermer »).
+    if (!(await page.getByRole('link', { name: 'Toutes les opérations ›' }).isVisible())) {
+      await openNewTransaction(page);
+    }
     await page.getByRole('link', { name: 'Toutes les opérations ›' }).click();
   }
   await expect(page.getByRole('heading', { level: 2, name: /^Opérations/ })).toBeVisible();

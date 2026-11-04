@@ -98,7 +98,7 @@ Le menu suit l'ordre « maintenant, puis passé, présent, futur » (itération 
 | Écran | Rôle | Fréquence |
 | --- | --- | --- |
 | Accueil | Maintenant : où j'en suis, une carte par bien | À chaque visite |
-| Synthèse | Les années passées : trésorerie, rentabilité, patrimoine (sur ordinateur, les 3 dernières années ; « Années précédentes » affiche les autres) | Quand on veut faire le point |
+| Synthèse | Les années passées : trésorerie, rentabilité, patrimoine (sur ordinateur, une fenêtre de 3 ans, les 3 dernières par défaut, avec « ‹ 2021–2023 » et « 2024–2026 › » pour passer d'une fenêtre à l'autre ; libellés sur une ligne, de largeur fixe) | Quand on veut faire le point |
 | Budget | L'année en cours : prévu, réalisé et écarts (US12, itération 4c) | Chaque mois |
 | Simulations | Le futur : la vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, quatre lignes — prix, somme nette, impôt, ce qui te reste vraiment — et les détails repliés) | Ponctuellement |
 | Fiscalité *(second plan)* | Déclaration et rapprochement avec le comptable | Une fois par an |

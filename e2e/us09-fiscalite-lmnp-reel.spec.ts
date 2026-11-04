@@ -140,14 +140,24 @@ test('un autre régime affiche « pas encore disponible »', async ({ page }, te
   await expect(tax).toContainText('pas encore disponible pour ce régime (LMNP micro-BIC)');
   await expect(tax.getByRole('link', { name: 'impots.gouv.fr' })).toBeVisible();
   await expect(taxRegion(page)).toHaveCount(0);
-  // Dans la Synthèse, la ligne du résultat fiscal affiche « non disponible ».
+  // Dans la Synthèse, la ligne du résultat fiscal affiche « — » en texte normal dans chaque
+  // colonne, et la raison une seule fois sous le tableau (ou sous les cartes sur téléphone).
   await goTo(page, 'Synthèse');
   for (const year of YEARS) {
-    await expect(synthesisTaxResult(page, isPhone(testInfo), year)).toHaveText('non disponible');
+    const value = synthesisTaxResult(page, isPhone(testInfo), year);
+    await expect(value).toHaveText('—');
+    await expect(value).toHaveCSS('font-weight', '400');
   }
+  const reason = page
+    .getByText(
+      'Résultat fiscal non disponible : le calcul fiscal du régime « LMNP micro-BIC » n’est pas encore proposé par Locapilote.',
+    )
+    .filter({ visible: true });
+  await expect(reason).toHaveCount(1);
+  await capture(page, testInfo, 'it4b-resultat-fiscal-non-disponible');
 });
 
-test('les opérations « À valider » sont signalés, avec un lien vers eux', async ({ page }) => {
+test('les opérations « À valider » sont signalées, avec un lien vers elles', async ({ page }) => {
   await openTax(page);
   const warning = taxRegion(page).getByText(/2024 : 1 opération « À valider »/);
   await expect(warning).toContainText('395,25');
