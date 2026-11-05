@@ -45,7 +45,13 @@ export interface SaleSimulation {
   netWithReinvestment: Cents;
   balance: OwnerBalance;
   /**
-   * Ce qui te reste vraiment = somme nette perçue − ce qu'il faut remettre d'ici la vente
+   * Payé de ta poche d'ici la vente = cash-flow à remettre entre la date des données et la
+   * vente (échéances et dépenses moins loyers, frais de l'année de la vente compris) ; positif
+   * quand il faut remettre de l'argent. Il n'est pas retiré de la somme nette perçue.
+   */
+  paidFromPocketUntilSale: number;
+  /**
+   * Ce qui te reste vraiment (calculé, plus affiché depuis l'itération 4c) = somme nette perçue − ce qu'il faut remettre d'ici la vente
    * (cash-flow d'ici la vente, négatif quand il faut remettre de l'argent).
    */
   netAfterCashFlow: number;
@@ -115,6 +121,7 @@ export function simulateSale(
     reinvestedAmount: Math.round(resolved.reinvestedShare.value * proceeds.netSalePrice),
     netWithReinvestment: netProceeds + reinvestment.avoidedTax,
     balance,
+    paidFromPocketUntilSale: -balance.cashFlowUntilSale,
     netAfterCashFlow: netProceeds + balance.cashFlowUntilSale,
     gainOverReference: reference
       ? gainOverReference(balance.flows, reference.rate, scenario.date)

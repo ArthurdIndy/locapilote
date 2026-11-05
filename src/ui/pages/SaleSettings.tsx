@@ -29,6 +29,17 @@ export function SaleSettings({
   resolved: ResolvedSaleAssumptions;
 }) {
   const details = useOpenDetails('locapilote.vente.parametresOuverts');
+  const fromBudget = resolved.projectionSource.kind === 'budget';
+  const budgetYears =
+    resolved.projectionSource.kind === 'budget' ? resolved.projectionSource.years : [];
+  // Une valeur modifiée reste prioritaire : la source n'est le budget que si l'une des deux
+  // valeurs est calculée.
+  const sourceLabel =
+    resolved.netRentMonthly.modified && resolved.annualExpensesExcludingLoan.modified
+      ? 'valeurs modifiées'
+      : fromBudget
+        ? `d’après ${budgetYears.length > 1 ? 'les budgets' : 'le budget'} ${budgetYears.join(', ')}`
+        : '12 derniers mois';
   const open = details.isOpen('parametres');
   const { sale } = assumptions;
   const initial = () => ({
@@ -46,7 +57,7 @@ export function SaleSettings({
   }
 
   const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
-    db.saveAssumptions({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
+    db.saveProjection(assumptions.propertyId, patch);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -95,9 +106,9 @@ export function SaleSettings({
         {formatEuros(sale.otherSaleCosts)} · indemnités de remboursement anticipé{' '}
         {formatEuros(sale.earlyRepaymentPenalty)} · loyer net projeté{' '}
         {showValue('euros', resolved.netRentMonthly.value)}/mois · dépenses projetées{' '}
-        {showValue('euros', resolved.annualExpensesExcludingLoan.value)}/an · évolution{' '}
-        {showValue('percent', resolved.annualGrowth.value)}/an · frais de l’année de la vente{' '}
-        {showValue('euros', resolved.saleYearCosts.value)}
+        {showValue('euros', resolved.annualExpensesExcludingLoan.value)}/an ({sourceLabel}) ·
+        évolution {showValue('percent', resolved.annualGrowth.value)}/an · frais de l’année de la
+        vente {showValue('euros', resolved.saleYearCosts.value)}
       </p>
       {open && (
         <form className="form stack" onSubmit={submit} noValidate aria-label="Paramètres de vente">
@@ -143,8 +154,8 @@ export function SaleSettings({
           <p className="muted small">
             Loyers et dépenses des mois suivant la date des données
             {resolved.journalWindow ? ` (${formatDate(resolved.journalWindow.to)})` : ''} jusqu’à la
-            vente. Valeurs calculées à partir du journal, communes à toutes les dates ; tu peux les
-            modifier (vide = calcul automatique).
+            vente. Valeurs calculées {fromBudget ? 'd’après le budget' : 'à partir du journal'},
+            communes à toutes les dates ; tu peux les modifier (vide = calcul automatique).
           </p>
           <div className="assumptions-grid">
             <OverrideField
@@ -152,9 +163,11 @@ export function SaleSettings({
               kind="euros"
               resolved={resolved.netRentMonthly}
               help={
-                resolved.journalWindow
-                  ? `Recettes du ${formatDate(resolved.journalWindow.from)} au ${formatDate(resolved.journalWindow.to)} / 12.`
-                  : 'Bien pas encore loué.'
+                fromBudget
+                  ? `Budget ${budgetYears[0]} : loyers et charges perçus − gestion et comptable, / 12.`
+                  : resolved.journalWindow
+                    ? `Recettes du ${formatDate(resolved.journalWindow.from)} au ${formatDate(resolved.journalWindow.to)} / 12.`
+                    : 'Bien pas encore loué.'
               }
               onSave={(v) => saveProjection({ netRentMonthly: v })}
             />
@@ -162,7 +175,11 @@ export function SaleSettings({
               label="Dépenses projetées (€ / an, hors prêt)"
               kind="euros"
               resolved={resolved.annualExpensesExcludingLoan}
-              help="Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété."
+              help={
+                fromBudget
+                  ? `Budget ${budgetYears[0]} : copropriété, impôts et taxes, assurances, entretien.`
+                  : 'Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété.'
+              }
               onSave={(v) => saveProjection({ annualExpensesExcludingLoan: v })}
             />
             <OverrideField

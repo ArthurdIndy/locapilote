@@ -105,7 +105,7 @@ Vérifiées le 01/11/2026. Les sites officiels n'étaient pas consultables direc
 
 Moteur : `src/engine/core/sale.ts` (somme perçue, commun à tous les régimes), `src/engine/tax/capital-gain/` (un module de plus-value par régime : `private-individuals.ts` pour les règles des particuliers, `index.ts` pour le choix du module ; seul le LMNP réel est disponible, les autres régimes affichent « non calculé »), assemblés par `src/engine/sale-simulation.ts`. Testé contre les blocs « revente » et « vendre_quand » de `data/expected.json`.
 
-**Écran (Simulations › Vente)** : il répond à « combien je touche, combien d'impôt, ai-je intérêt à attendre ». Un scénario à l'ouverture : celui du bien, ou à défaut une vente dans 12 mois au prix de la valeur estimée (Mon bien). Le jeu de test n'importe que le premier de ses trois scénarios ; les trois servent aux tests. Saisis par l'utilisateur, dans « Paramètres de vente » : frais d'agence (% du prix), frais divers de vente, indemnités de remboursement anticipé. Frais d'acquisition réels : fiche du bien (Mon bien). Les autres valeurs sont calculées (§ 6) ou sont des constantes. Affichage au modèle de la Synthèse (décisions des 04 et 05/11/2026) : un tableau, une colonne par scénario (triées par date puis par prix croissant ; une carte par scénario sur téléphone ; pas de barre de défilement jusqu'à 4 scénarios, au-delà une barre fine et les libellés fixés à gauche) et **quatre lignes** : Prix ; Somme nette perçue ⊕ (prix, frais d'agence, frais divers, capital restant dû, indemnités, impôt) ; Impôt sur la plus-value ⊕ (calcul de la plus-value, note sur les amortissements, remploi) ; Ce qui te reste vraiment ⊕. Montants arrondis à l'euro dans le tableau, au centime dans les détails ⊕. Chaque en-tête de colonne a un menu ✎ (Modifier, Supprimer) ; le bouton « + Autre date » est au-dessus du tableau ; le formulaire s'ouvre juste au-dessus du tableau (la page défile jusqu'à lui, curseur dans le premier champ). Un scénario de même date et même prix qu'un autre est refusé (« Ce scénario existe déjà »). Les valeurs de projection (loyer net, dépenses, évolution, frais de l'année de la vente) sont dans « Paramètres de vente », communes à tous les scénarios, et mentionnées dans son résumé d'une ligne.
+**Écran (Simulations › Vente)** : il répond à « combien je touche, combien d'impôt, ai-je intérêt à attendre ». Un scénario à l'ouverture : celui du bien, ou à défaut une vente dans 12 mois au prix de la valeur estimée (Mon bien). Le jeu de test n'importe que le premier de ses trois scénarios ; les trois servent aux tests. Saisis par l'utilisateur, dans « Paramètres de vente » : frais d'agence (% du prix), frais divers de vente, indemnités de remboursement anticipé. Frais d'acquisition réels : fiche du bien (Mon bien). Les autres valeurs sont calculées (§ 6) ou sont des constantes. Affichage au modèle de la Synthèse (décisions des 04 et 05/11/2026) : un tableau, une colonne par scénario (triées par date puis par prix croissant ; une carte par scénario sur téléphone ; pas de barre de défilement jusqu'à 4 scénarios, au-delà une barre fine et les libellés fixés à gauche) et **quatre lignes** : Prix ; Somme nette perçue ⊕ (prix, frais d'agence, frais divers, capital restant dû, indemnités, impôt) ; Impôt sur la plus-value ⊕ (calcul de la plus-value, note sur les amortissements, remploi) ; Payé de ta poche d'ici la vente ⊕ (depuis l'itération 4c ; « Ce qui te reste vraiment » avant). Montants arrondis à l'euro dans le tableau, au centime dans les détails ⊕. Chaque en-tête de colonne a un menu ✎ (Modifier, Supprimer) ; le bouton « + Autre date » est au-dessus du tableau ; le formulaire s'ouvre juste au-dessus du tableau (la page défile jusqu'à lui, curseur dans le premier champ). Un scénario de même date et même prix qu'un autre est refusé (« Ce scénario existe déjà »). Les valeurs de projection (loyer net, dépenses, évolution, frais de l'année de la vente) sont dans « Paramètres de vente », communes à tous les scénarios, et mentionnées dans son résumé d'une ligne, avec leur source : « d'après le budget 2026 », « 12 derniers mois », ou « valeurs modifiées » quand le loyer net et les dépenses sont tous deux modifiés (cas du jeu de test).
 
 **Somme perçue** = prix − frais d'agence (% du prix) − frais divers de vente − capital restant dû à la date de vente (tous les prêts du bien, échéances datées au plus tard ce jour-là) − indemnités de remboursement anticipé − impôt sur la plus-value. (Le moteur calcule aussi la somme disponible pour le prochain achat = somme nette − autres dettes ; elle n'est pas affichée.)
 
@@ -139,13 +139,19 @@ Moteur : `src/engine/core/irr.ts` (bilan, gain de l'attente, TRI), `src/engine/s
 
 **Valeurs calculées automatiquement** (chacune remplaçable par une valeur modifiée ; vide = calcul automatique) :
 
-- loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, **hors dépenses immobilisées** (traitement « À amortir ») **et catégories de travaux** (nom contenant « travaux » : travaux de copropriété, honoraires sur travaux…). Aucune autre exclusion : les dépenses à qualifier, les charges de copropriété (régularisations comprises) et les honoraires de gestion comptent (décision d'Arthur du 03/11/2026). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours). Le budget (US12) les fournira à l'itération 4b ;
+- loyer net et dépenses projetés, **d'après le budget** (§ 8, itération 4c) quand l'année de la date des données en a un (la location a commencé avant cette année, ou une ligne de son budget est modifiée) :
+  - loyer net projeté par mois = (loyers et charges perçus − gestion et comptable) prévus de l'année / 12 ; la gestion comprend les honoraires sur travaux et les frais bancaires ;
+  - dépenses projetées par an = copropriété + impôts et taxes + assurances + entretien prévus (ni « Autres dépenses », ni le prêt) ;
+  - années suivantes : celles du dernier budget × (1 + évolution) par année d'écart ; une année suivante dont le budget a une ligne modifiée devient le « dernier budget » à partir d'elle ;
+  - jeu de test, budget 2026 au 25/10/2026 : (13 908,70 − 1 635,71) / 12 = 1 022,75 €/mois ; 2 463,17 + 570,15 + 115,89 + 392,22 = 3 541,43 €/an.
+- **sinon**, d'après les 12 derniers mois du journal : loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, **hors dépenses immobilisées** (traitement « À amortir ») **et catégories de travaux** (nom contenant « travaux » : travaux de copropriété, honoraires sur travaux…). Aucune autre exclusion : les dépenses à qualifier, les charges de copropriété (régularisations comprises) et les honoraires de gestion comptent (décision d'Arthur du 03/11/2026). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours) ;
+- une valeur modifiée dans « Paramètres de vente » reste prioritaire (loyer net et dépenses, chacun séparément) : elle évolue de (1 + évolution) par an à partir de l'année des données ;
 - évolution annuelle des loyers et des charges : 1,5 % ;
 - frais de l'année de la vente : honoraires du comptable (catégories dont le nom contient « comptab ») de la dernière année complète ;
 - amortissements déduits des années futures : ceux de la dernière année complète, selon la règle des années passées (§ 5) : dotation + report de début − stock du comptable quand il est saisi (7 307,73 € pour 2025 sur le jeu de test), sinon les amortissements utilisés calculés par l'outil. C'est ce que le comptable a réellement déduit, c'est-à-dire son résultat avant amortissements de l'année (décision d'Arthur du 03/11/2026) ;
 - part du prix réinvestie : ce qui reste du prix de cession après remboursement du prêt (voir § 5).
 
-Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : recettes 1 160,06 €/mois, dépenses 7 782,55 €/an (honoraires sur travaux, 29,96 €, exclus), soit une projection nette de 511,51 €/mois ; amortissements 7 307,73 €/an (2025) ; frais 558 €.
+Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : d'après le budget 2026, loyer net 1 022,75 €/mois et dépenses 3 541,43 €/an (soit une projection nette de 727,63 €/mois) ; d'après les 12 derniers mois (méthode d'avant l'itération 4c, toujours utilisée sans budget), recettes 1 160,06 €/mois et dépenses 7 782,55 €/an ; amortissements 7 307,73 €/an (2025) ; frais 558 €.
 
 **Mise à jour (version 4 des données)** : les valeurs non nulles déjà saisies sont reprises comme valeurs modifiées ; celles à 0 passent en calcul automatique ; les taux de 19 % et 17,2 % sortent des hypothèses ; les frais d'acquisition réels passent sur la fiche du bien.
 
@@ -155,16 +161,16 @@ Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 
 - échéances de prêt (toutes, y compris avant la location et après la date de mise à jour) ;
 - dépenses payées avant la location (saisies à part) ;
 - opérations réelles du journal jusqu'à la date de mise à jour (recettes − dépenses, transferts et dépôt exclus) ;
-- pour les mois commençant après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, × (1 + évolution)^(année du mois − année de la date de mise à jour).
+- pour les mois commençant après la date de mise à jour : projection mensuelle = loyer net projeté − dépenses annuelles / 12, × (1 + évolution)^(année du mois − année de la date de mise à jour) ; d'après le budget : loyer net et dépenses de l'année du mois (voir ci-dessus).
 
 Plus l'apport à la date d'achat (négatif) et, à la date de vente, la somme nette de la vente (sans l'exonération pour remploi) moins les frais de l'année de vente. Les flux calculés (loyer évité, projection) ne sont pas arrondis au centime, comme dans l'Excel ; ils le sont à l'affichage.
 
 **Affiché à l'écran** :
 
-- **Ce qui te reste vraiment** = somme nette perçue − à remettre d'ici la vente (jeu de test : 179 828,63 € ; 185 105,15 € ; 189 835,30 € aux 30/06/2027, 2028 et 2029). Aide au survol : « Somme nette de la vente, moins ce que tu auras sorti de ta poche d'ici là. À prix égal, la date la plus intéressante est celle où ce montant est le plus élevé. »
-
-- Détail ⊕ de « Ce qui te reste vraiment » (montants seuls dans les cellules) : à remettre d'ici la vente (mois commençant après la date de mise à jour) = échéances + projection − frais de l'année de vente ; par mois (échéances − loyer net + dépenses) = **rythme mensuel hors frais de l'année de la vente** = (total à remettre − frais de l'année de la vente) / nombre de mois (jeu de test au 30/06/2027 : (2 515,02 − 558) / 8 ≈ 244,63 €) ; frais de l'année de la vente ; dont capital remboursé (récupéré à la vente).
-- **Gain de l'attente** entre deux scénarios triés par date = (somme nette du scénario − somme nette du précédent) + (cash-flow d'ici la vente du scénario − celui du précédent). **Calculé par le moteur, testé contre l'Excel, mais plus affiché** depuis le 05/11/2026 : « Ce qui te reste vraiment » permet la même comparaison colonne par colonne. Il retrouve la ligne « Gain en plus par rapport au scénario précédent » de l'onglet Vendre quand (5 276,52 € et 4 730,15 €, à 0,01 € près).
+- **Payé de ta poche d'ici la vente** (itération 4c) = cash-flow à remettre entre la date des données et la vente (mois commençant après la date de mise à jour) = échéances − projection + frais de l'année de vente, en positif quand il faut remettre de l'argent (jeu de test : 2 515,02 € au 30/06/2027 ; 5 370,09 € au 30/06/2028 ; 8 116,55 € au 30/06/2029). Aide au survol : « Ce que tu sortiras de ta poche, mois après mois, d'ici la vente : échéances et dépenses moins loyers. Cette somme n'est pas retirée de la somme nette perçue. » Raison (recette de l'itération 4a, décision d'Arthur) : le jour de la vente, on perçoit la somme nette ; ce qu'on a payé de sa poche avant n'en est pas retiré.
+- **Ce qui te reste vraiment** = somme nette perçue − payé de ta poche d'ici la vente (179 828,63 € ; 185 105,15 € ; 189 835,30 €) : **calculé par le moteur et testé, plus affiché** depuis l'itération 4c (libellé jugé trompeur).
+- Détail ⊕ de « Payé de ta poche d'ici la vente » (montants seuls dans les cellules) : par mois (échéances − loyer net + dépenses) = **rythme mensuel hors frais de l'année de la vente** = (total à remettre − frais de l'année de la vente) / nombre de mois (jeu de test au 30/06/2027 : (2 515,02 − 558) / 8 ≈ 244,63 €) ; frais de l'année de la vente ; dont capital remboursé (récupéré à la vente).
+- **Gain de l'attente** entre deux scénarios triés par date = (somme nette du scénario − somme nette du précédent) + (cash-flow d'ici la vente du scénario − celui du précédent). **Calculé par le moteur, testé contre l'Excel, mais plus affiché** depuis le 05/11/2026. Il retrouve la ligne « Gain en plus par rapport au scénario précédent » de l'onglet Vendre quand (5 276,52 € et 4 730,15 €, à 0,01 € près).
 - Le gain de l'attente n'est calculé que si la date du scénario est strictement postérieure à celle du scénario précédent ; sinon le moteur renvoie `null` (deux scénarios à la même date ne diffèrent que par le prix).
 
 **Calculé par le moteur, non affiché** (décision produit du 03/11/2026 ; voir le backlog) :
@@ -201,3 +207,67 @@ Sources :
 - location de locaux d'habitation meublés imposée dans la catégorie des bénéfices industriels et commerciaux (BIC) : article 35, I-5° bis du code général des impôts ;
 - distinction entre loueur en meublé non professionnel (LMNP) et professionnel (LMP) : article 155, IV du code général des impôts ;
 - location nue imposée dans la catégorie des revenus fonciers : article 14 du code général des impôts ; présentation sur impots.gouv.fr (revenus fonciers et locations meublées).
+
+## 8. Budget (US12, version légère)
+
+Moteur : `src/engine/core/budget.ts` (socle commun, indépendant du régime). Écran : Budget, un bien à la fois, une année à la fois (« Budget 2026 ▾ », de l'année de mise en location à l'année suivant celle de la date des données ; par défaut l'année de la date des données). L'année affichée est dans l'adresse (`#/budget?annee=2025`) et retenue pendant la session (retour du navigateur et menu) ; une nouvelle visite repart de l'année de la date des données. Itération 4c.
+
+**Lignes** (retours de recette du 05/11/2026) : intertitre **Entrées** (loyers et charges perçus) ; intertitre **Sorties** (une ligne par groupe de catégories, puis le prêt) ; **Total des sorties** et **Cash-flow (entrées − sorties)**, en gras (« À sortir de ta poche » avant le 05/11/2026). Les intertitres ont le style de « Trésorerie » et « Rentabilité » dans la Synthèse (petites capitales bleues), sur ordinateur et sur téléphone. Même structure pour les années en cours, terminées et futures.
+
+| Ligne | Catégories (jeu de test) |
+| --- | --- |
+| Loyers et charges perçus | toutes les recettes : loyer hors charges, provisions sur charges, régularisation de charges, taxe d'ordures ménagères refacturée, autres recettes |
+| Copropriété ✎ | groupe « Copropriété » (charges de copropriété) |
+| Gestion et comptable ✎ | groupe « Frais de gestion » : honoraires de gestion, de mise en location, du comptable, honoraires sur travaux (frais de gestion sur les travaux) ; et les frais bancaires (dépense régulière), repérés par leur nom en attendant un marqueur dédié (US02). Décisions d'Arthur du 05/11/2026 |
+| Impôts et taxes ✎ | groupe « Impôts et taxes » : taxe foncière, CFE |
+| Assurances ✎ | groupe « Assurances » : assurance PNO |
+| Entretien ✎ | groupe « Entretien et petit équipement » : entretien et réparations, petit équipement |
+| Autres dépenses ✎ | investissements à amortir (équipement, travaux d'amélioration), dépenses à qualifier, et tout autre groupe de dépense (« Autres charges » : catégorie autres charges ; les frais bancaires vont dans « Gestion et comptable ») |
+| Prêt (échéances) | échéances de tous les prêts du bien, d'après l'échéancier (pas de ✎) |
+| Total des sorties | dépenses + prêt (en gras, pas de ✎) |
+| Cash-flow (entrées − sorties) | entrées − total des sorties (en gras, pas de ✎), avec le signe et la couleur du cash-flow de la Synthèse : négatif, en rouge, quand on remet de l'argent (−3 083,50 € en 2025 sur le jeu de test) |
+
+Transferts et dépôt de garantie n'entrent pas dans le budget.
+
+**Colonnes**, pour l'année N :
+
+- **N−1 réel** = opérations de l'année N−1 par ligne (année civile entière, comme la Synthèse) ; prêt = échéances de N−1. Si la location a commencé en cours d'année N−1, les opérations sont ramenées à 12 mois : × 12 / mois de location de N−1 (mois de location du § 3, base 365/12) ; les échéances ne le sont pas (elles couvrent déjà l'année). L'en-tête l'indique : « 2024 réel (ramené à 12 mois) ». Jeu de test, budget 2025 : 2024 loué 228 jours, × 365 / 228.
+- **N prévu** = N−1 réel × (1 + évolution annuelle), évolution des Paramètres de vente (1,5 % par défaut) ; « Autres dépenses » : 0 par défaut (dépenses exceptionnelles) ; prêt : échéances de N d'après l'échéancier. Arrondi au centime. Une ligne ✎ se corrige (exemple : budget de copropriété voté en AG) : elle affiche « modifié » et « Revenir au calcul automatique ». Les valeurs modifiées sont enregistrées **par bien et par année** (table `budgets`, version 5 des données, sauvegarde et import compris) : corriger un budget ne change pas celui d'une autre année.
+- **N estimé fin d'année** (année en cours, N = année de la date des données) = payé à ce jour + reste prévu :
+  - payé à ce jour = opérations du 01/01/N à la date des données (incluse) ;
+  - reste prévu = opérations de N−1 sur la même période restante (du lendemain de la même date en N−1 au 31/12/N−1) × (N prévu / N−1 réel), pour respecter la saisonnalité (taxe foncière, liasse du comptable) ; si N−1 réel vaut 0 pour la ligne : N prévu × jours restants (après la date des données) / jours de l'année N ;
+  - prêt : échéances de l'échéancier (payées à ce jour + à venir dans l'année).
+- **N réel** (année terminée, N < année de la date des données) = opérations de l'année N (bilan définitif).
+- **Effet sur ton cash-flow** (décision d'Arthur du 05/11/2026, à la place de « Écart / prévu », dont le signe suivait le montant et la couleur l'effet) : le **signe suit l'effet pour le propriétaire**, comme la couleur.
+  - Entrées : effet = réel (ou estimé) − prévu ;
+  - sorties (chaque ligne, prêt et total des sorties) : effet = prévu − réel (ou estimé) ; payer plus que prévu donne un montant négatif ;
+  - cash-flow : effet = cash-flow réel (ou estimé) − cash-flow prévu ;
+  - positif en vert, négatif en rouge, 0 € en gris ;
+  - la somme des effets des entrées et du total des sorties est égale à l'effet sur le cash-flow (testé) ;
+  - jeu de test, Budget 2025 : loyers +108,08 ; copropriété −513,31 ; gestion et comptable +436,07 ; impôts et taxes +337,42 ; assurances +57,73 ; entretien +351,02 ; autres dépenses −1 590,11 ; total des sorties −921,18 ; cash-flow −813,10.
+- **Année future** (N > année de la date des données) : « N−1 réel ou estimé » (l'estimé fin d'année de l'année en cours) et « N prévu » (= estimé × (1 + évolution)) seulement.
+
+Montants arrondis à l'euro dans le tableau, le demi-euro en s'éloignant de zéro (−3 083,50 € → −3 084 €, comme 3 083,50 € → 3 084 €). Détail ⊕ sur toutes les lignes modifiables (pas sur le prêt ni les totaux), quelle que soit l'année, sur ordinateur : pour l'année en cours, une ligne « Au JJ/MM » (date des données) avec N−1 à la même date dans la colonne « N−1 réel » et le payé à ce jour dans la colonne « N estimé fin d'année », puis un lien vers les opérations de la ligne et de l'année (liste filtrée `#/operations?annee=2026&budget=copropriete`) ; pour une année terminée ou future, seulement ce lien, pour l'année affichée. Sous le tableau : « Prévu : année précédente + 1,5 %, sauf lignes modifiées. Estimé fin d'année : payé à ce jour + ce qui reste prévu. » Téléphone : « Cash-flow (entrées − sorties) » puis « Total des sorties » en premier, puis l'intertitre Entrées et sa carte, puis l'intertitre Sorties et une carte par ligne de sortie ; sans détail ⊕.
+
+**Jeu de test, Budget 2026 au 25/10/2026** (testé dans `budget.test.ts` et `e2e/us12-budget.spec.ts`) :
+
+| Ligne | 2025 réel | 2026 prévu | 2026 estimé fin d'année | Effet sur ton cash-flow |
+| --- | ---: | ---: | ---: | ---: |
+| *Entrées* | | | | |
+| Loyers et charges perçus | 13 703,15 | 13 908,70 | 13 959,28 | +50,58 |
+| *Sorties* | | | | |
+| Copropriété | 2 426,77 | 2 463,17 | 4 085,48 | −1 622,31 |
+| Gestion et comptable | 1 611,54 | 1 635,71 | 1 592,94 | +42,77 |
+| Impôts et taxes | 561,72 | 570,15 | 885,36 | −315,21 |
+| Assurances | 114,18 | 115,89 | 115,89 | 0,00 |
+| Entretien | 386,42 | 392,22 | 1 141,67 | −749,45 |
+| Autres dépenses | 1 590,11 | 0,00 | 0,00 | 0,00 |
+| Prêt (échéances) | 10 095,91 | 10 095,90 | 10 095,90 | 0,00 |
+| **Total des sorties** | **16 786,65** | **15 273,04** | **17 917,24** | **−2 644,20** |
+| **Cash-flow (entrées − sorties)** | **−3 083,50** | **−1 364,34** | **−3 957,96** | **−2 593,62** |
+
+Contrôle : +50,58 − 2 644,20 = −2 593,62.
+
+**Lien avec la simulation de vente** : voir § 6 (loyer net et dépenses projetés d'après le budget).
+
+**Budget d'une année passée** (décision d'Arthur du 05/11/2026) : seules les valeurs modifiées (✎) sont enregistrées, et elles ne sont jamais recalculées. Les lignes non modifiées restent calculées à chaque affichage (N−1 réel × (1 + évolution)) : elles changent si l'on modifie l'évolution annuelle des Paramètres de vente ou les opérations de l'année N−1. Ce comportement est voulu.

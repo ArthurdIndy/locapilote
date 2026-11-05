@@ -44,6 +44,7 @@ function normalize(data: Dataset): Dataset {
     preRentalExpenses: data.preRentalExpenses,
     assumptions: by((a: Dataset['assumptions'][number]) => a.propertyId)(data.assumptions),
     householdSettings: data.householdSettings,
+    budgets: by((b: Dataset['budgets'][number]) => `${b.propertyId}#${b.year}`)(data.budgets),
   };
 }
 
@@ -68,6 +69,8 @@ describe('sauvegarde complète (US18)', () => {
       source: null,
       comment: 'Ligne 1\nLigne 2',
     });
+    // Un budget modifié (US12).
+    await db.saveBudgetLine('APPART-01', 2026, 'coOwnership', 250000);
     // Et le placement de référence (paramètre du foyer, US11).
     await db.saveHouseholdSettings({
       id: 'household',
@@ -76,6 +79,9 @@ describe('sauvegarde complète (US18)', () => {
     });
     const before = await db.readAll();
     expect(before.householdSettings).toHaveLength(1);
+    expect(before.budgets).toEqual([
+      { propertyId: 'APPART-01', year: 2026, planned: { coOwnership: 250000 } },
+    ]);
     const file = serializeBackup(buildBackup(before, new Date('2026-10-31T12:00:00Z')));
 
     // Import dans une autre base, qui contenait déjà d'autres données.
@@ -144,6 +150,21 @@ describe('sauvegarde complète (US18)', () => {
     expect(parseBackup(JSON.stringify(v2)).data.householdSettings).toEqual([]);
   });
 
+  it('lit une sauvegarde de la version 4 (avant les budgets)', () => {
+    const v4 = JSON.parse(serializeBackup(buildBackup(loadTestDataset())));
+    v4.formatVersion = 4;
+    delete v4.data.budgets;
+    expect(parseBackup(JSON.stringify(v4)).data.budgets).toEqual([]);
+  });
+
+  it('refuse un budget invalide', () => {
+    const backup = buildBackup(loadTestDataset());
+    backup.data.budgets = [{ propertyId: 'APPART-01', year: 2026, planned: { coOwnership: 12.5 } }];
+    expect(() => parseBackup(serializeBackup(backup))).toThrow(/budget 2026/);
+    backup.data.budgets = [{ propertyId: 'inconnu', year: 2026, planned: {} }];
+    expect(() => parseBackup(serializeBackup(backup))).toThrow(/bien inconnu/);
+  });
+
   it('refuse une sauvegarde d’une version future', () => {
     const backup = { ...buildBackup(loadTestDataset()), formatVersion: 99 };
     expect(() => parseBackup(JSON.stringify(backup))).toThrow(/plus récente/);
@@ -167,6 +188,41 @@ describe('hypothèses de simulation (US11)', () => {
   });
 });
 
+describe('budget (US12)', () => {
+  it('enregistre une valeur modifiée par bien et par année, et le retour au calcul', async () => {
+    await startWithTestDataset(db);
+    await db.saveBudgetLine('APPART-01', 2026, 'coOwnership', 250000);
+    await db.saveBudgetLine('APPART-01', 2026, 'taxes', 60000);
+    await db.saveBudgetLine('APPART-01', 2027, 'coOwnership', 270000);
+    expect(await db.budgets.get(['APPART-01', 2026])).toEqual({
+      propertyId: 'APPART-01',
+      year: 2026,
+      planned: { coOwnership: 250000, taxes: 60000 },
+    });
+    // Retour au calcul automatique : la ligne disparaît, l'année 2027 ne bouge pas.
+    await db.saveBudgetLine('APPART-01', 2026, 'coOwnership', null);
+    expect((await db.budgets.get(['APPART-01', 2026]))!.planned).toEqual({ taxes: 60000 });
+    await db.saveBudgetLine('APPART-01', 2026, 'taxes', null);
+    expect(await db.budgets.get(['APPART-01', 2026])).toBeUndefined();
+    expect((await db.budgets.get(['APPART-01', 2027]))!.planned).toEqual({ coOwnership: 270000 });
+    await expect(db.saveBudgetLine('inconnu', 2026, 'taxes', 1)).rejects.toThrow(/Bien/);
+  });
+});
+
+describe('valeurs de projection (Paramètres de vente)', () => {
+  it('deux modifications rapprochées ne s’écrasent pas', async () => {
+    await startWithTestDataset(db);
+    await Promise.all([
+      db.saveProjection('APPART-01', { netRentMonthly: null }),
+      db.saveProjection('APPART-01', { annualExpensesExcludingLoan: null }),
+    ]);
+    const { projection } = (await db.assumptions.get('APPART-01'))!;
+    expect(projection.netRentMonthly).toBeNull();
+    expect(projection.annualExpensesExcludingLoan).toBeNull();
+    expect(projection.annualGrowth).toBe(0.015);
+  });
+});
+
 describe('enregistrement d’un mouvement', () => {
   it('refuse un bien ou une catégorie inconnus', async () => {
     await startWithTestDataset(db);
@@ -186,6 +242,41 @@ describe('enregistrement d’un mouvement', () => {
     await expect(db.saveTransaction({ ...base, categoryId: 'inconnue' })).rejects.toThrow(
       /Catégorie/,
     );
+  });
+});
+
+describe('migration de la base vers la version 5 (US12)', () => {
+  it('ajoute la table des budgets, vide, sans toucher aux données', async () => {
+    const name = `test-${n}-v4`;
+    const old = new Dexie(name);
+    old.version(4).stores({
+      properties: 'id',
+      categories: 'id',
+      transactions: 'id, propertyId, date, categoryId',
+      loans: 'id, propertyId',
+      loanInstallments: '[loanId+number], loanId',
+      assets: '++, propertyId, id',
+      accountantCarryforwards: '[propertyId+year], propertyId',
+      accountantFilings: '[propertyId+year], propertyId',
+      preRentalExpenses: '++, propertyId',
+      assumptions: 'propertyId',
+      householdSettings: 'id',
+    });
+    const data = loadTestDataset();
+    await old.table('properties').bulkAdd(data.properties);
+    await old.table('transactions').bulkAdd(data.transactions);
+    await old.table('assumptions').bulkAdd(data.assumptions);
+    old.close();
+
+    const upgraded = new LocapiloteDb(name);
+    const after = await upgraded.readAll();
+    expect(upgraded.verno).toBe(5);
+    expect(after.budgets).toEqual([]);
+    expect(after.transactions).toHaveLength(289);
+    expect(after.assumptions).toEqual(data.assumptions);
+    await upgraded.saveBudgetLine('APPART-01', 2026, 'income', 1400000);
+    expect(await upgraded.budgets.count()).toBe(1);
+    await upgraded.delete();
   });
 });
 

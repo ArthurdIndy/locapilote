@@ -8,6 +8,8 @@ J'y tiens le rôle de product owner (cadrage, user stories, priorités, recette)
 
 ![La synthèse annuelle, sur le jeu de test : trésorerie, rentabilité, patrimoine et résultat fiscal](docs/captures/synthese.png)
 
+![La simulation de vente, sur le jeu de test : prix, somme nette perçue, impôt sur la plus-value et somme payée de sa poche d'ici la vente](docs/captures/vente.png)
+
 ## Où en est le projet
 
 Projet personnel en cours de construction, MVP prévu en décembre 2026.
@@ -18,11 +20,12 @@ Déjà en ligne :
 - Saisir les opérations (loyers, charges, travaux) et charger le tableau d'amortissement du prêt
 - Voir chaque année le cash-flow, l'enrichissement et les rendements
 - Obtenir le récapitulatif fiscal en LMNP réel (charges, amortissements par composant, report) et le rapprocher des comptes du comptable
+- Simuler une vente : somme nette perçue, impôt sur la plus-value, remploi dans la résidence principale, comparaison de plusieurs dates
+- Suivre le budget de l'année : prévu, réalisé et écarts, sans rien saisir au départ
 - Exporter et réimporter toutes ses données
 
 À venir :
 
-- Simuler une vente à plusieurs dates (somme nette, impôt sur la plus-value, rendement réel) et suivre un budget prévisionnel
 - Un tableau de bord d'accueil, et donner l'outil à un proche
 
 ## La démarche

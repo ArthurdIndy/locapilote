@@ -3,7 +3,7 @@
  *
  * {
  *   "application": "locapilote",
- *   "formatVersion": 4,          // = version du schéma de la base au moment de l'export
+ *   "formatVersion": 5,          // = version du schéma de la base au moment de l'export
  *   "exportedAt": "2026-10-31T17:00:00.000Z",
  *   "data": { properties: [...], categories: [...], transactions: [...], ... }
  * }
@@ -18,9 +18,13 @@
  * Version 3 → 4 (US11 recentrée) : hypothèses de vente simplifiées et frais d'acquisition réels
  * sur la fiche du bien (voir `migrations.ts`).
  *
+ * Version 4 → 5 (US12) : la liste `budgets` (valeurs prévues modifiées, par bien et par année)
+ * apparaît ; vide à la lecture d'une sauvegarde plus ancienne.
+ *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
 import {
+  BUDGET_LINES,
   HOUSEHOLD_SETTINGS_ID,
   isTaxRegimeCompatible,
   RENTAL_TYPES,
@@ -67,6 +71,7 @@ const DATASET_KEYS = [
   'preRentalExpenses',
   'assumptions',
   'householdSettings',
+  'budgets',
 ] as const satisfies readonly (keyof Dataset)[];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -102,7 +107,8 @@ export function parseBackup(text: string): Backup {
   }
   const v2 = version < 2 ? upgradeFromV1(json.data) : json.data;
   const v3 = version < 3 ? { ...v2, householdSettings: v2.householdSettings ?? [] } : v2;
-  const data = version < 4 ? upgradeDataToV4(v3) : v3;
+  const v4 = version < 4 ? upgradeDataToV4(v3) : v3;
+  const data = version < 5 ? { ...v4, budgets: v4.budgets ?? [] } : v4;
   for (const key of DATASET_KEYS) {
     const table = data[key];
     if (!Array.isArray(table) || !table.every(isRow)) {
@@ -227,7 +233,20 @@ function checkDataset(data: Dataset): void {
       fail('taux du placement de référence invalide.');
     }
   }
+  const budgetKeys = new Set<string>();
+  for (const b of data.budgets) {
+    if (!Number.isInteger(b.year) || !isRow(b.planned)) fail('budget invalide.');
+    const key = `${b.propertyId}#${b.year}`;
+    if (budgetKeys.has(key)) fail(`budget ${b.year} en double.`);
+    budgetKeys.add(key);
+    for (const [line, amount] of Object.entries(b.planned)) {
+      if (!(BUDGET_LINES as readonly string[]).includes(line) || !isCents(amount)) {
+        fail(`montant invalide dans le budget ${b.year}.`);
+      }
+    }
+  }
   for (const row of [
+    ...data.budgets,
     ...data.assets,
     ...data.accountantCarryforwards,
     ...data.accountantFilings,

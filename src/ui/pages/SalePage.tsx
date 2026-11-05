@@ -79,13 +79,14 @@ interface Line {
   details?: { rows: DetailRow[]; extra?: ReactNode };
 }
 
-const REMAINING_HELP =
-  'Somme nette de la vente, moins ce que tu auras sorti de ta poche d’ici là. À prix égal, la date la plus intéressante est celle où ce montant est le plus élevé.';
+const POCKET_HELP =
+  'Ce que tu sortiras de ta poche, mois après mois, d’ici la vente : échéances et dépenses moins loyers. Cette somme n’est pas retirée de la somme nette perçue.';
 
 type Editing = { mode: 'new' } | { mode: 'edit'; index: number } | null;
 
 /**
- * Simulations › Vente (US11) : combien je touche, combien d'impôt, combien il me reste vraiment.
+ * Simulations › Vente (US11) : combien je touche, combien d'impôt, combien je paie de ma poche
+ * d'ici la vente.
  * Même modèle que la Synthèse : une colonne par scénario (une carte sur téléphone), quatre
  * lignes, les détails repliés derrière ⊕.
  */
@@ -118,7 +119,7 @@ export function SalePage({ data, property, today }: Props) {
   const save = (next: PropertyAssumptions) => db.saveAssumptions(next);
   const saveScenarios = (next: SaleScenario[]) => save({ ...assumptions, saleScenarios: next });
   const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
-    save({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
+    db.saveProjection(property.id, patch);
 
   const cols: Col[] = scenarios
     .map((scenario, index) => ({
@@ -510,16 +511,12 @@ function buildLines(
         : {}),
     },
     {
-      id: 'reste',
-      label: 'Ce qui te reste vraiment',
-      title: REMAINING_HELP,
-      value: (c) => eur0(c.sim.netAfterCashFlow),
+      id: 'poche',
+      label: 'Payé de ta poche d’ici la vente',
+      title: POCKET_HELP,
+      value: (c) => eur0(c.sim.paidFromPocketUntilSale),
       details: {
         rows: [
-          {
-            label: 'À remettre d’ici la vente',
-            value: (c) => eur(-c.sim.balance.cashFlowUntilSale),
-          },
           {
             label: 'Par mois (échéances − loyer net + dépenses)',
             value: (c) => {

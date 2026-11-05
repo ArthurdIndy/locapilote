@@ -13,6 +13,8 @@ import type {
   AccountantCarryforward,
   AccountantFiling,
   Asset,
+  Budget,
+  BudgetLine,
   Category,
   Dataset,
   HouseholdSettings,
@@ -20,6 +22,7 @@ import type {
   Loan,
   LoanInstallment,
   PreRentalExpense,
+  ProjectionAssumptions,
   Property,
   PropertyAssumptions,
   ScheduleSource,
@@ -28,7 +31,7 @@ import type {
 import { defaultAssumptions } from './defaultAssumptions';
 import { upgradeAssumptionsToV4 } from './migrations';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export class LocapiloteDb extends Dexie {
   properties!: Table<Property, string>;
@@ -43,6 +46,7 @@ export class LocapiloteDb extends Dexie {
   preRentalExpenses!: Table<PreRentalExpense, number>;
   assumptions!: Table<PropertyAssumptions, string>;
   householdSettings!: Table<HouseholdSettings, string>;
+  budgets!: Table<Budget, [string, number]>;
 
   constructor(name = 'locapilote') {
     super(name);
@@ -96,6 +100,8 @@ export class LocapiloteDb extends Dexie {
             }
           });
       });
+    // Version 5 (US12) : budgets, par bien et par année (valeurs prévues modifiées).
+    this.version(5).stores({ budgets: '[propertyId+year], propertyId' });
   }
 
   /** Les tables, dans l'ordre du `Dataset`. */
@@ -112,6 +118,7 @@ export class LocapiloteDb extends Dexie {
       this.preRentalExpenses,
       this.assumptions,
       this.householdSettings,
+      this.budgets,
     ];
   }
 
@@ -129,6 +136,7 @@ export class LocapiloteDb extends Dexie {
       preRentalExpenses: await this.preRentalExpenses.toArray(),
       assumptions: await this.assumptions.toArray(),
       householdSettings: await this.householdSettings.toArray(),
+      budgets: await this.budgets.toArray(),
     }));
   }
 
@@ -147,6 +155,7 @@ export class LocapiloteDb extends Dexie {
       await this.preRentalExpenses.bulkAdd(data.preRentalExpenses);
       await this.assumptions.bulkAdd(data.assumptions);
       await this.householdSettings.bulkAdd(data.householdSettings);
+      await this.budgets.bulkAdd(data.budgets);
     });
   }
 
@@ -258,11 +267,46 @@ export class LocapiloteDb extends Dexie {
     });
   }
 
+  /**
+   * Modifie quelques valeurs de projection d'un bien, à partir de ce qui est en base au moment
+   * d'écrire : deux modifications rapprochées (deux « Revenir au calcul automatique » de suite)
+   * ne s'écrasent pas. Crée les hypothèses par défaut si le bien n'en a pas.
+   */
+  async saveProjection(propertyId: string, patch: Partial<ProjectionAssumptions>): Promise<void> {
+    await this.transaction('rw', [this.assumptions, this.properties], async () => {
+      if (!(await this.properties.get(propertyId))) throw new Error('Bien inconnu');
+      const current = (await this.assumptions.get(propertyId)) ?? defaultAssumptions(propertyId);
+      await this.assumptions.put({ ...current, projection: { ...current.projection, ...patch } });
+    });
+  }
+
   /** Enregistre les hypothèses de simulation d'un bien (vente, projection, scénarios). */
   async saveAssumptions(assumptions: PropertyAssumptions): Promise<void> {
     await this.transaction('rw', [this.assumptions, this.properties], async () => {
       if (!(await this.properties.get(assumptions.propertyId))) throw new Error('Bien inconnu');
       await this.assumptions.put(assumptions);
+    });
+  }
+
+  /**
+   * Modifie le prévu d'une ligne du budget d'une année (✎) ; `null` = retour au calcul
+   * automatique. Les autres années ne changent pas.
+   */
+  async saveBudgetLine(
+    propertyId: string,
+    year: number,
+    line: BudgetLine,
+    planned: number | null,
+  ): Promise<void> {
+    await this.transaction('rw', [this.budgets, this.properties], async () => {
+      if (!(await this.properties.get(propertyId))) throw new Error('Bien inconnu');
+      const key: [string, number] = [propertyId, year];
+      const current = (await this.budgets.get(key))?.planned ?? {};
+      const next = { ...current };
+      if (planned === null) delete next[line];
+      else next[line] = planned;
+      if (Object.keys(next).length === 0) await this.budgets.delete(key);
+      else await this.budgets.put({ propertyId, year, planned: next });
     });
   }
 

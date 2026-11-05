@@ -1,6 +1,6 @@
 /**
  * Recette de l'itération 4b : menu réorganisé (maintenant, passé, présent, futur), bouton
- * « + Opération », liste « Toutes les opérations », page Budget (en attente de l'itération 4c)
+ * « + Opération », liste « Toutes les opérations », page Budget (remplie à l'itération 4c, voir us12-budget.spec.ts)
  * et Synthèse limitée aux 3 dernières années sur ordinateur (docs/backlog.md, « Navigation »).
  */
 import {
@@ -141,18 +141,6 @@ test('les entrées du menu s’ouvrent dans l’ordre : Accueil, Synthèse, Budg
     await expect(page).toHaveURL(url);
     await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible();
   }
-});
-
-test('Budget : une page d’attente, remplie à l’itération 4c', async ({ page }, testInfo) => {
-  await goTo(page, 'Budget');
-  const main = page.getByRole('main');
-  await expect(main).toContainText('Budget de l’année : prévu, réalisé et écarts. Prochainement.');
-  await expect(main.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);
-  await expect(
-    page.getByRole('navigation', { name: 'Navigation principale' }).locator('[aria-current]'),
-  ).toHaveText('Budget');
-  await expectNoHorizontalScroll(page);
-  await capture(page, testInfo, 'it4b-budget', { fullPage: false });
 });
 
 test('« + Opération » ouvre le formulaire de saisie depuis n’importe quelle page, et « Fermer » y ramène', async ({

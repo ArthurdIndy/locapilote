@@ -14,6 +14,7 @@ import { formatDate, formatEuros, formatMonths, formatPercent } from '../format'
 import { REGIME_LABELS } from '../labels';
 import { propertyHref, routeHref } from '../router';
 import { useOpenDetails } from '../openDetails';
+import { initialViewValue, rememberViewValue } from '../viewMemory';
 import { DataAsOfBar } from './DataAsOfBar';
 import { PropertyTitle } from '../components/PropertyTitle';
 
@@ -21,7 +22,13 @@ interface Props {
   data: Dataset;
   property: Property | null;
   today: string;
+  /** Paramètres de l'adresse : `annees=2021-2023`, la fenêtre d'années affichée sur ordinateur. */
+  params?: URLSearchParams;
 }
+
+/** Fenêtre d'années dans l'adresse et pour la session (voir `viewMemory.ts`). */
+const WINDOW_PARAM = 'annees';
+const WINDOW_KEY = 'locapilote.synthese.annees';
 
 /** Ligne d'un détail replié ; `href` : lien vers les opérations de cette ligne et de l'année. */
 interface DetailRow {
@@ -216,9 +223,18 @@ function windowLabel(years: readonly YearSynthesis[]): string {
   return first === last ? String(first) : `${first}–${last}`;
 }
 
-export function SynthesisPage({ data, property, today }: Props) {
+/** Fenêtre dans l'adresse : « 2021-2023 ». */
+function windowParam(years: readonly YearSynthesis[]): string {
+  return `${years[0]!.year}-${years.at(-1)!.year}`;
+}
+
+export function SynthesisPage({ data, property, today, params }: Props) {
   const details = useOpenDetails(OPEN_DETAILS_KEY);
-  const [windowIndex, setWindowIndex] = useState(0);
+  // Fenêtre affichée : celle de l'adresse, sinon la dernière de la session, sinon les 3
+  // dernières années.
+  const [windowChoice, setWindowChoice] = useState(() =>
+    initialViewValue(params, WINDOW_PARAM, WINDOW_KEY),
+  );
   if (!property) {
     return (
       <section className="card">
@@ -252,10 +268,21 @@ export function SynthesisPage({ data, property, today }: Props) {
   // Ordinateur : une fenêtre de 3 ans, les 3 dernières par défaut ; ‹ et › passent à la
   // fenêtre précédente ou suivante.
   const windowCount = Math.max(1, Math.ceil(years.length / WINDOW_YEARS));
-  const current = Math.min(windowIndex, windowCount - 1);
   const slice = (index: number) => {
     const { start, end } = yearWindow(years.length, index);
     return years.slice(start, end);
+  };
+  const chosenIndex =
+    years.length === 0
+      ? -1
+      : Array.from({ length: windowCount }, (_, i) => i).findIndex(
+          (i) => windowParam(slice(i)) === windowChoice,
+        );
+  const current = Math.max(0, chosenIndex);
+  const showWindow = (index: number) => {
+    const value = windowParam(slice(index));
+    setWindowChoice(value);
+    rememberViewValue('synthese', WINDOW_PARAM, value, WINDOW_KEY);
   };
   const wideYears = slice(current);
   const previousYears = current + 1 < windowCount ? slice(current + 1) : null;
@@ -299,7 +326,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                     type="button"
                     className="button small"
                     aria-label={`Années précédentes : ${windowLabel(previousYears)}`}
-                    onClick={() => setWindowIndex(current + 1)}
+                    onClick={() => showWindow(current + 1)}
                   >
                     ‹ {windowLabel(previousYears)}
                   </button>
@@ -309,7 +336,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                     type="button"
                     className="button small year-window-next"
                     aria-label={`Années suivantes : ${windowLabel(nextYears)}`}
-                    onClick={() => setWindowIndex(current - 1)}
+                    onClick={() => showWindow(current - 1)}
                   >
                     {windowLabel(nextYears)} ›
                   </button>
@@ -389,7 +416,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                 <h3>{y.year}</h3>
                 {sections.map((section) => (
                   <div key={section.title}>
-                    <h4>
+                    <h4 className="section-title">
                       {section.title}
                       {section.link && (
                         <a className="section-link" href={section.link.href}>

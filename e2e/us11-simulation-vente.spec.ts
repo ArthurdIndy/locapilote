@@ -97,10 +97,9 @@ async function columnAction(page: Page, date: string, action: 'Modifier' | 'Supp
     .click();
 }
 
-const REMAINING = 'Ce qui te reste vraiment';
-/** Ce qui te reste vraiment = somme nette − à remettre d'ici la vente (expected.json). */
-const remaining = (i: number) =>
-  num('Somme nette perçue', i) - num('Cash-flow à remettre de votre poche (total)', i) * -1;
+const POCKET = 'Payé de ta poche d’ici la vente';
+/** Payé de ta poche d'ici la vente = cash-flow à remettre (expected.json), en positif. */
+const pocket = (i: number) => -num('Cash-flow à remettre de votre poche (total)', i);
 
 test('le jeu de test : quatre lignes, détails repliés', async ({ page }, testInfo) => {
   const phone = isPhone(testInfo);
@@ -115,7 +114,7 @@ test('le jeu de test : quatre lignes, détails repliés', async ({ page }, testI
       'Prix',
       /^Somme nette perçue/,
       /^Impôt sur la plus-value/,
-      /^Ce qui te reste vraiment/,
+      /^Payé de ta poche d’ici la vente/,
     ]);
   } else {
     await expect(
@@ -124,13 +123,13 @@ test('le jeu de test : quatre lignes, détails repliés', async ({ page }, testI
       'Prix',
       /^Somme nette perçue/,
       /^Impôt sur la plus-value/,
-      /^Ce qui te reste vraiment/,
+      /^Payé de ta poche d’ici la vente/,
     ]);
     // Pas de colonne vide : l'en-tête n'a que la colonne des libellés et celle du scénario.
     await expect(page.locator('table[aria-label="Simulation de vente"] thead th')).toHaveCount(2);
-    await expect(page.getByRole('rowheader', { name: REMAINING })).toHaveAttribute(
+    await expect(page.getByRole('rowheader', { name: POCKET })).toHaveAttribute(
       'title',
-      'Somme nette de la vente, moins ce que tu auras sorti de ta poche d’ici là. À prix égal, la date la plus intéressante est celle où ce montant est le plus élevé.',
+      'Ce que tu sortiras de ta poche, mois après mois, d’ici la vente : échéances et dépenses moins loyers. Cette somme n’est pas retirée de la somme nette perçue.',
     );
   }
   await expect(cell(page, phone, 'Prix', 0, d)).toHaveText(eur0(279000));
@@ -138,14 +137,14 @@ test('le jeu de test : quatre lignes, détails repliés', async ({ page }, testI
     eur0(num('Somme nette perçue', 0)),
   );
   await expect(cell(page, phone, 'Impôt sur la plus-value', 0, d)).toHaveText(eur0(0));
-  // 182 343,65 − 2 515,02 = 179 828,63 €.
-  await expect(cell(page, phone, REMAINING, 0, d)).toHaveText(eur0(179828.63));
+  // Payé de ta poche d'ici le 30/06/2027 : 2 515,02 € (pas retiré de la somme nette).
+  await expect(cell(page, phone, POCKET, 0, d)).toHaveText(eur0(2515.02));
 
   // Détails et paramètres repliés par défaut ; plus de lignes remploi, à remettre, attendre.
   for (const label of [
     'Somme nette perçue',
     'Impôt sur la plus-value',
-    REMAINING,
+    POCKET,
     'Paramètres de vente',
   ]) {
     await expect(
@@ -153,11 +152,18 @@ test('le jeu de test : quatre lignes, détails repliés', async ({ page }, testI
     ).toHaveAttribute('aria-expanded', 'false');
   }
   const main = page.getByRole('main');
-  for (const text of ['Avec remploi', 'Attendre', 'À remettre', 'Budget prévisionnel', 'TRI']) {
+  for (const text of [
+    'Avec remploi',
+    'Attendre',
+    'À remettre',
+    'Ce qui te reste vraiment',
+    'Budget prévisionnel',
+    'TRI',
+  ]) {
     await expect(main.getByText(text).filter({ visible: true })).toHaveCount(0);
   }
   await expect(page.getByTestId('resume-parametres')).toHaveText(
-    /Frais d’agence 0,00\s%\s· frais divers de vente 1\s674,00\s€ · indemnités de remboursement anticipé 0,00\s€ · loyer net projeté 1\s056,61\s€\/mois · dépenses projetées 5\s598,60\s€\/an · évolution 1,5\s%\/an · frais de l’année de la vente 558,00\s€/,
+    /Frais d’agence 0,00\s%\s· frais divers de vente 1\s674,00\s€ · indemnités de remboursement anticipé 0,00\s€ · loyer net projeté 1\s056,61\s€\/mois · dépenses projetées 5\s598,60\s€\/an \(valeurs modifiées\) · évolution 1,5\s%\/an · frais de l’année de la vente 558,00\s€/,
   );
   await expect(
     page.getByText('Estimation, pas un conseil fiscal : à confirmer avec un notaire.'),
@@ -190,7 +196,7 @@ test('sans scénario : vente dans 12 mois à la valeur estimée, sinon invitatio
   await capture(page, testInfo, 'us11-scenario-par-defaut');
 });
 
-test('trois dates : ce qui te reste vraiment, modifier avec le formulaire visible, supprimer', async ({
+test('trois dates : payé de ta poche d’ici la vente, modifier avec le formulaire visible, supprimer', async ({
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
@@ -199,7 +205,7 @@ test('trois dates : ce qui te reste vraiment, modifier avec le formulaire visibl
   await addDate(page, '2028-06-30', '279000');
   await addDate(page, '2029-06-30', '279000');
   const dates = ['30/06/2027', '30/06/2028', '30/06/2029'];
-  const values = [179828.63, 185105.15, 189835.3];
+  const values = [2515.02, 5370.09, 8116.55];
   for (const [i, d] of dates.entries()) {
     await expect(cell(page, phone, 'Somme nette perçue', i, d)).toHaveText(
       eur0(num('Somme nette perçue', i)),
@@ -207,8 +213,8 @@ test('trois dates : ce qui te reste vraiment, modifier avec le formulaire visibl
     await expect(cell(page, phone, 'Impôt sur la plus-value', i, d)).toHaveText(
       eur0(num('Impôt sur la plus-value', i)),
     );
-    await expect(cell(page, phone, REMAINING, i, d)).toHaveText(eur0(values[i]!));
-    expect(Math.abs(remaining(i) - values[i]!)).toBeLessThan(0.01);
+    await expect(cell(page, phone, POCKET, i, d)).toHaveText(eur0(values[i]!));
+    expect(Math.abs(pocket(i) - values[i]!)).toBeLessThan(0.01);
   }
   if (phone) await expectNoHorizontalScroll(page);
   await capture(page, testInfo, 'us11-comparaison');
@@ -255,7 +261,7 @@ test('« + Autre date » : formulaire visible, doublon refusé', async ({ page }
   await expect(page.getByText('Scénario du 30/06/2027 ajouté.')).toBeVisible();
 });
 
-test('les détails ⊕ : somme perçue, plus-value et remploi, ce qui te reste', async ({
+test('les détails ⊕ : somme perçue, plus-value et remploi, payé de ta poche', async ({
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
@@ -292,9 +298,9 @@ test('les détails ⊕ : somme perçue, plus-value et remploi, ce qui te reste',
     `${eur(num('Somme nette avec remploi', 1))} perçus si tu réinvestis dans ta résidence principale`,
   );
 
-  await openDetail(page, REMAINING);
-  // Seulement les montants, sans répéter le libellé.
-  await expect(cell(page, phone, 'À remettre d’ici la vente', 0, d0)).toHaveText(eur(2515.02));
+  await openDetail(page, POCKET);
+  // Seulement les montants, sans répéter le libellé ; trois lignes, comme avant.
+  await expect(cell(page, phone, POCKET, 1, d1)).toHaveText(eur0(5370.09));
   await expect(cell(page, phone, 'Par mois (échéances − loyer net + dépenses)', 0, d0)).toHaveText(
     eur(244.63),
   );
@@ -400,7 +406,9 @@ test('paramètres de vente : frais et projection, communs à tous les scénarios
   await expect(projection.getByLabel('Loyer net projeté (€ / mois)', { exact: true })).toHaveValue(
     '1056,61',
   );
-  await expect(projection.getByText(/calcul automatique : 7\s782,55\s€/)).toBeVisible();
+  // Calcul automatique d'après le budget 2026 : 2 463,17 + 570,15 + 508,11 = 3 541,43 €.
+  await expect(projection.getByText(/calcul automatique : 3\s541,43\s€/)).toBeVisible();
+  await expect(projection.getByText(/Budget 2026 : copropriété, impôts et taxes/)).toBeVisible();
   await expect(projection.getByText(/Honoraires du comptable de 2025/)).toBeVisible();
   await capture(page, testInfo, 'us11-parametres-vente');
 });

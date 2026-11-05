@@ -42,6 +42,11 @@ export interface ProjectionValues {
   annualExpensesExcludingLoan: number;
   annualGrowth: number;
   saleYearCosts: Cents;
+  /**
+   * Projection mensuelle d'une année (loyer net − dépenses / 12), quand elle vient du budget
+   * (US12). Absente : loyer net − dépenses / 12, × (1 + évolution)^(année − année des données).
+   */
+  monthlyProjectionForYear?: (year: number) => number;
 }
 
 export interface OwnerBalanceInput {
@@ -156,7 +161,10 @@ export function ownerBalance(input: OwnerBalanceInput): OwnerBalance {
     const projected =
       monthStart <= dataAsOf
         ? 0
-        : monthlyProjection * Math.pow(1 + projection.annualGrowth, yearOf(monthStart) - dataYear);
+        : projection.monthlyProjectionForYear
+          ? projection.monthlyProjectionForYear(yearOf(monthStart))
+          : monthlyProjection *
+            Math.pow(1 + projection.annualGrowth, yearOf(monthStart) - dataYear);
     const rent = avoidedRent(monthStart, property, projection);
     if (monthStart > dataAsOf) {
       monthsUntilSale += 1;

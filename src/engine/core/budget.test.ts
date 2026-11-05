@@ -1,0 +1,437 @@
+import { describe, expect, it } from 'vitest';
+import { defaultCategories } from '../../db/defaultCategories';
+import { defaultAssumptions } from '../../db/defaultAssumptions';
+import { loadTestDataset } from '../../db/testDataset';
+import { resolveSaleAssumptions } from '../sale-defaults';
+import type { Budget, Dataset, IsoDate, Property, Transaction } from '../types';
+import {
+  budgetLineOf,
+  budgetProjection,
+  budgetYears,
+  hasBudget,
+  yearBudget,
+  type BudgetRowId,
+  type YearBudget,
+} from './budget';
+
+/**
+ * Petits jeux de données calculés à la main. Catégories : celles proposées par défaut
+ * (identifiant = nom). Montants en centimes.
+ */
+const PROPERTY: Property = {
+  ...loadTestDataset().properties[0]!,
+  id: 'B',
+  rentalStartDate: '2024-01-01',
+};
+
+let n = 0;
+function tx(date: IsoDate, categoryId: string, amount: number): Transaction {
+  n += 1;
+  return {
+    id: `t${n}`,
+    propertyId: 'B',
+    date,
+    account: 'Banque',
+    categoryId,
+    label: '',
+    amount,
+    document: null,
+    source: null,
+    comment: null,
+  };
+}
+
+function dataset(
+  transactions: Transaction[],
+  options: { property?: Partial<Property>; budgets?: Budget[]; loan?: boolean } = {},
+): Dataset {
+  const loan = options.loan ?? false;
+  return {
+    properties: [{ ...PROPERTY, ...options.property }],
+    categories: defaultCategories(),
+    transactions,
+    loans: loan
+      ? [
+          {
+            id: 'L',
+            propertyId: 'B',
+            bank: 'Banque',
+            label: 'Prêt',
+            principal: 1_000_000,
+            annualRate: 0.01,
+            durationMonths: 36,
+            firstInstallmentDate: '2025-01-05',
+            lastInstallmentDate: '2027-12-05',
+            monthlyInsurance: 500,
+          },
+        ]
+      : [],
+    // Une échéance de 300 € (dont 5 € d'assurance) le 5 de chaque mois, de 2025 à 2027.
+    loanInstallments: loan
+      ? Array.from({ length: 36 }, (_, i) => ({
+          loanId: 'L',
+          number: i + 1,
+          date: `${2025 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}-05`,
+          principalBefore: 0,
+          principal: 27_000,
+          interest: 2_500,
+          insurance: 500,
+        }))
+      : [],
+    assets: [],
+    accountantCarryforwards: [],
+    accountantFilings: [],
+    preRentalExpenses: [],
+    assumptions: [],
+    householdSettings: [],
+    budgets: options.budgets ?? [],
+  };
+}
+
+const GROWTH = 0.015;
+
+function row(budget: YearBudget, id: BudgetRowId) {
+  return budget.rows.find((r) => r.id === id)!;
+}
+
+describe('rattachement des catégories aux lignes du budget', () => {
+  it('chaque catégorie du jeu de test a sa ligne', () => {
+    const lines = Object.fromEntries(
+      defaultCategories().map((c) => [c.name, budgetLineOf(c, PROPERTY)]),
+    );
+    expect(lines).toEqual({
+      'Loyer hors charges': 'income',
+      'Provisions sur charges': 'income',
+      'Régularisation de charges locataire': 'income',
+      'Taxe ordures ménagères refacturée': 'income',
+      'Autres recettes': 'income',
+      'Honoraires de gestion': 'management',
+      'Honoraires de mise en location': 'management',
+      'Honoraires sur travaux': 'management',
+      'Honoraires comptable': 'management',
+      'Charges de copropriété': 'coOwnership',
+      'Assurance PNO': 'insurance',
+      'Taxe foncière': 'taxes',
+      CFE: 'taxes',
+      'Entretien et réparations': 'maintenance',
+      'Petit équipement': 'maintenance',
+      'Frais bancaires': 'management',
+      'Autres charges': 'other',
+      'Équipement / mobilier (à amortir)': 'other',
+      "Travaux d'amélioration (à amortir)": 'other',
+      'À qualifier': 'other',
+      'Transfert entrant': null,
+      'Transfert sortant': null,
+      'Dépôt de garantie reçu': null,
+      'Dépôt de garantie restitué': null,
+    });
+  });
+});
+
+describe('frais bancaires (dépense régulière)', () => {
+  it('comptent dans « Gestion et comptable », prévus à l’année précédente + 1,5 %', () => {
+    // 2025 : 12 × 10 € de frais bancaires et 50 € d'autres charges.
+    const transactions = [
+      ...Array.from({ length: 12 }, (_, m) =>
+        tx(`2025-${String(m + 1).padStart(2, '0')}-28`, 'Frais bancaires', 1_000),
+      ),
+      tx('2025-06-15', 'Autres charges', 5_000),
+    ];
+    const data = dataset(transactions);
+    const b = yearBudget(data, data.properties[0]!, 2026, '2026-06-30', GROWTH);
+    expect(row(b, 'management')).toMatchObject({ previous: 12_000, planned: 12_180 });
+    // « Autres charges » reste dans « Autres dépenses » : prévu à 0.
+    expect(row(b, 'other')).toMatchObject({ previous: 5_000, planned: 0 });
+  });
+});
+
+describe('budget de l’année en cours', () => {
+  // 2025 : loyers 12 × 1 000 €, copropriété 4 × 500 € (trimestres), taxe foncière 1 000 € en
+  // octobre, une dépense à amortir de 2 000 €. 2026, au 30/06 : loyers 6 × 1 050 €, copropriété
+  // 2 × 520 €, rien d'autre.
+  const transactions = [
+    ...Array.from({ length: 12 }, (_, m) =>
+      tx(`2025-${String(m + 1).padStart(2, '0')}-01`, 'Loyer hors charges', 100_000),
+    ),
+    ...['01', '04', '07', '10'].map((m) => tx(`2025-${m}-10`, 'Charges de copropriété', 50_000)),
+    tx('2025-10-15', 'Taxe foncière', 100_000),
+    tx('2025-03-01', 'Équipement / mobilier (à amortir)', 200_000),
+    ...Array.from({ length: 6 }, (_, m) => tx(`2026-0${m + 1}-01`, 'Loyer hors charges', 105_000)),
+    tx('2026-01-10', 'Charges de copropriété', 52_000),
+    tx('2026-04-10', 'Charges de copropriété', 52_000),
+    // Après la date des données : pas compté dans le payé à ce jour.
+    tx('2026-07-01', 'Loyer hors charges', 105_000),
+  ];
+  const data = dataset(transactions, { loan: true });
+  const b = yearBudget(data, data.properties[0]!, 2026, '2026-06-30', GROWTH);
+
+  it('N−1 réel : opérations de l’année précédente', () => {
+    expect(b.kind).toBe('current');
+    expect(b.previousProrated).toBe(false);
+    expect(row(b, 'income').previous).toBe(1_200_000);
+    expect(row(b, 'coOwnership').previous).toBe(200_000);
+    expect(row(b, 'taxes').previous).toBe(100_000);
+    expect(row(b, 'other').previous).toBe(200_000);
+    expect(row(b, 'loan').previous).toBe(360_000);
+  });
+
+  it('prévu par défaut : N−1 réel + 1,5 %, autres dépenses à 0, prêt d’après l’échéancier', () => {
+    expect(row(b, 'income').planned).toBe(1_218_000);
+    expect(row(b, 'coOwnership').planned).toBe(203_000);
+    expect(row(b, 'taxes').planned).toBe(101_500);
+    expect(row(b, 'management').planned).toBe(0);
+    expect(row(b, 'other').planned).toBe(0);
+    expect(row(b, 'loan').planned).toBe(360_000);
+    expect(row(b, 'income').modified).toBe(false);
+    // Cash-flow = 12 180 − (2 030 + 1 015 + 3 600) = +5 535 € (le bien rapporte).
+    expect(row(b, 'cashFlow').planned).toBe(1_218_000 - (203_000 + 101_500 + 360_000));
+  });
+
+  it('estimé fin d’année : payé à ce jour + N−1 sur la période restante × prévu / N−1', () => {
+    const income = row(b, 'income');
+    expect(income.paidToDate).toBe(630_000);
+    expect(income.previousToDate).toBe(600_000);
+    // 6 300 + 6 000 × 12 180 / 12 000 = 12 390 €.
+    expect(income.actual).toBe(1_239_000);
+    // Entrées : effet = estimé − prévu (210 € de loyers en plus : favorable).
+    expect(income.effect).toBe(21_000);
+    // Copropriété : 1 040 + 1 000 × 2 030 / 2 000 = 2 055 €.
+    expect(row(b, 'coOwnership').actual).toBe(205_500);
+  });
+
+  it('saisonnalité : la taxe foncière d’octobre reste à venir au 30/06', () => {
+    const taxes = row(b, 'taxes');
+    expect(taxes.paidToDate).toBe(0);
+    expect(taxes.actual).toBe(101_500);
+    expect(taxes.effect).toBe(0);
+  });
+
+  it('prêt : échéances réelles de l’échéancier ; autres dépenses : ce qui est payé', () => {
+    expect(row(b, 'loan').paidToDate).toBe(180_000);
+    expect(row(b, 'loan').actual).toBe(360_000);
+    // Prévu à 0 : le reste prévu est nul même si N−1 avait une dépense sur la même période.
+    expect(row(b, 'other').actual).toBe(0);
+    // Total des sorties = dépenses + prêt ; cash-flow = entrées − total des sorties.
+    const expenses = row(b, 'totalExpenses');
+    expect(expenses.planned).toBe(203_000 + 101_500 + 360_000);
+    expect(expenses.actual).toBe(205_500 + 101_500 + 360_000);
+    // Sorties : effet = prévu − estimé (25 € de copropriété en plus : défavorable).
+    expect(expenses.effect).toBe(-2_500);
+    expect(row(b, 'coOwnership').effect).toBe(-2_500);
+    const cashFlow = row(b, 'cashFlow');
+    expect(cashFlow.actual).toBe(1_239_000 - expenses.actual!);
+    expect(cashFlow.effect).toBe(cashFlow.actual! - cashFlow.planned);
+    // La somme des effets des entrées et du total des sorties est l'effet sur le cash-flow.
+    expect(row(b, 'income').effect! + expenses.effect!).toBe(cashFlow.effect);
+  });
+
+  it('valeur modifiée : elle remplace le prévu de l’année, le calcul automatique reste connu', () => {
+    const modified = dataset(transactions, {
+      loan: true,
+      budgets: [{ propertyId: 'B', year: 2026, planned: { coOwnership: 240_000 } }],
+    });
+    const m = yearBudget(modified, modified.properties[0]!, 2026, '2026-06-30', GROWTH);
+    const copro = row(m, 'coOwnership');
+    expect(copro).toMatchObject({ planned: 240_000, automatic: 203_000, modified: true });
+    // Reste prévu à la même saisonnalité : 1 040 + 1 000 × 2 400 / 2 000 = 2 240 €.
+    expect(copro.actual).toBe(224_000);
+    // 160 € de moins que prévu : favorable.
+    expect(copro.effect).toBe(16_000);
+    expect(row(m, 'cashFlow').planned).toBe(1_218_000 - (240_000 + 101_500 + 360_000));
+    // Un budget d'une autre année ne change rien.
+    const other = dataset(transactions, {
+      loan: true,
+      budgets: [{ propertyId: 'B', year: 2027, planned: { coOwnership: 1 } }],
+    });
+    expect(
+      row(yearBudget(other, other.properties[0]!, 2026, '2026-06-30', GROWTH), 'coOwnership')
+        .planned,
+    ).toBe(203_000);
+  });
+
+  it('ligne sans historique : reste prévu = prévu × part de l’année restante', () => {
+    const modified = dataset(transactions, {
+      budgets: [{ propertyId: 'B', year: 2026, planned: { management: 120_000 } }],
+    });
+    const m = yearBudget(modified, modified.properties[0]!, 2026, '2026-06-30', GROWTH);
+    // 184 jours restants (01/07 au 31/12) sur 365 : 1 200 × 184 / 365 = 604,93 €.
+    expect(row(m, 'management').actual).toBe(60_493);
+  });
+});
+
+describe('budget d’une année terminée ou future', () => {
+  const transactions = [
+    tx('2024-06-01', 'Loyer hors charges', 1_000_000),
+    tx('2025-06-01', 'Loyer hors charges', 1_100_000),
+    tx('2025-11-15', 'Taxe foncière', 80_000),
+    tx('2026-02-01', 'Loyer hors charges', 500_000),
+  ];
+  const data = dataset(transactions);
+  const property = data.properties[0]!;
+
+  it('année terminée : N réel = opérations de l’année, écart = réel − prévu', () => {
+    const b = yearBudget(data, property, 2025, '2026-03-31', GROWTH);
+    expect(b.kind).toBe('past');
+    expect(row(b, 'income')).toMatchObject({
+      previous: 1_000_000,
+      planned: 1_015_000,
+      actual: 1_100_000,
+      effect: 85_000,
+      paidToDate: null,
+    });
+    // 800 € de taxe foncière non prévus : défavorable.
+    expect(row(b, 'taxes')).toMatchObject({ planned: 0, actual: 80_000, effect: -80_000 });
+  });
+
+  it('année future : N−1 estimé, N prévu = estimé + 1,5 %, ni réel ni écart', () => {
+    const current = yearBudget(data, property, 2026, '2026-03-31', GROWTH);
+    const b = yearBudget(data, property, 2027, '2026-03-31', GROWTH);
+    expect(b.kind).toBe('future');
+    // N−1 = 2026, estimé fin d'année : 5 000 € perçus + le loyer de juin 2025 × 11 165 / 11 000.
+    expect(row(b, 'income').previous).toBe(row(current, 'income').actual);
+    expect(row(b, 'income').planned).toBe(Math.round(row(current, 'income').actual! * 1.015));
+    expect(row(b, 'taxes').previous).toBe(row(current, 'taxes').actual);
+    expect(row(b, 'income').actual).toBeNull();
+    expect(row(b, 'income').effect).toBeNull();
+  });
+
+  it('années proposées : de la mise en location à l’année suivant celle des données', () => {
+    expect(budgetYears(property, '2026-03-31')).toEqual([2024, 2025, 2026, 2027]);
+    expect(budgetYears({ ...property, rentalStartDate: null }, '2026-03-31')).toEqual([]);
+  });
+});
+
+describe('première année de location incomplète', () => {
+  it('N−1 ramené à 12 mois au prorata des jours loués', () => {
+    // Loué depuis le 01/07/2025 : 184 jours, soit 184 / (365 / 12) mois ; 6 loyers de 1 000 €.
+    const transactions = Array.from({ length: 6 }, (_, m) =>
+      tx(`2025-${String(m + 7).padStart(2, '0')}-01`, 'Loyer hors charges', 100_000),
+    );
+    const data = dataset([...transactions, tx('2025-09-01', 'Taxe foncière', 46_000)], {
+      property: { rentalStartDate: '2025-07-01' },
+      loan: true,
+    });
+    const b = yearBudget(data, data.properties[0]!, 2026, '2026-06-30', GROWTH);
+    expect(b.previousProrated).toBe(true);
+    // 6 000 × 365 / 184 = 11 902,17 € ; 460 × 365 / 184 = 912,50 €.
+    expect(row(b, 'income').previous).toBe(1_190_217);
+    expect(row(b, 'taxes').previous).toBe(91_250);
+    // Les échéances de prêt ne sont pas ramenées : elles couvrent déjà l'année.
+    expect(row(b, 'loan').previous).toBe(360_000);
+    expect(row(b, 'income').planned).toBe(Math.round(1_190_217 * 1.015));
+  });
+
+  it('année de la mise en location : pas de budget (pas de N−1), sauf ligne modifiée', () => {
+    const data = dataset([], { property: { rentalStartDate: '2026-03-01' } });
+    const property = data.properties[0]!;
+    expect(hasBudget(data, property, 2026)).toBe(false);
+    expect(hasBudget(data, property, 2027)).toBe(true);
+    const withSaved = dataset([], {
+      property: { rentalStartDate: '2026-03-01' },
+      budgets: [{ propertyId: 'B', year: 2026, planned: { income: 900_000 } }],
+    });
+    expect(hasBudget(withSaved, withSaved.properties[0]!, 2026)).toBe(true);
+  });
+});
+
+describe('budget du jeu de test au 25/10/2026', () => {
+  const data = loadTestDataset();
+  const property = data.properties[0]!;
+  const b = yearBudget(data, property, 2026, '2026-10-25', GROWTH);
+  const values = (id: BudgetRowId) => {
+    const r = row(b, id);
+    return [r.previous, r.planned, r.actual, r.effect].map((v) => v! / 100);
+  };
+
+  it('2025 réel, 2026 prévu, estimé fin d’année, effet sur le cash-flow', () => {
+    expect(values('income')).toEqual([13703.15, 13908.7, 13959.28, 50.58]);
+    expect(values('coOwnership')).toEqual([2426.77, 2463.17, 4085.48, -1622.31]);
+    // Gestion et comptable : honoraires sur travaux compris (59,30 € en 2025, 29,96 € en 2026).
+    expect(values('management')).toEqual([1611.54, 1635.71, 1592.94, 42.77]);
+    expect(values('taxes')).toEqual([561.72, 570.15, 885.36, -315.21]);
+    // Assurance PNO de 2025 payée après le 25/10 : restant à venir en 2026 (saisonnalité).
+    expect(values('insurance')).toEqual([114.18, 115.89, 115.89, 0]);
+    expect(values('maintenance')).toEqual([386.42, 392.22, 1141.67, -749.45]);
+    expect(values('other')).toEqual([1590.11, 0, 0, 0]);
+    expect(values('loan')).toEqual([10095.91, 10095.9, 10095.9, 0]);
+    expect(values('totalExpenses')).toEqual([16786.65, 15273.04, 17917.24, -2644.2]);
+    // Cash-flow négatif : de l'argent à remettre, comme dans la Synthèse.
+    expect(values('cashFlow')).toEqual([-3083.5, -1364.34, -3957.96, -2593.62]);
+  });
+
+  it('Budget 2025 : effet sur le cash-flow de chaque ligne (année terminée)', () => {
+    const past = yearBudget(data, property, 2025, '2026-10-25', GROWTH);
+    const effect = (id: BudgetRowId) => row(past, id).effect! / 100;
+    expect(effect('income')).toBe(108.08);
+    expect(effect('coOwnership')).toBe(-513.31);
+    expect(effect('management')).toBe(436.07);
+    expect(effect('other')).toBe(-1590.11);
+    expect(effect('totalExpenses')).toBe(-921.18);
+    expect(effect('cashFlow')).toBe(-813.1);
+    expect(row(past, 'income').effect! + row(past, 'totalExpenses').effect!).toBe(
+      row(past, 'cashFlow').effect,
+    );
+  });
+
+  it('détail « Au 25/10 » : N−1 à la même date et payé à ce jour', () => {
+    expect(row(b, 'coOwnership').previousToDate).toBe(213_723);
+    expect(row(b, 'coOwnership').paidToDate).toBe(379_160);
+  });
+});
+
+describe('projection de la vente d’après le budget', () => {
+  const data = loadTestDataset();
+  const property = data.properties[0]!;
+  const asOf = '2026-10-25';
+
+  it('loyer net = (loyers − gestion et comptable) / 12 ; dépenses = copropriété, impôts, assurances', () => {
+    const p = budgetProjection(data, property, asOf, GROWTH)!;
+    expect(p.years).toEqual([2026]);
+    // (13 908,70 − 1 635,71) / 12 ; 2 463,17 + 570,15 + 115,89 + 392,22.
+    expect(p.netRentMonthly(2026)).toBeCloseTo((1_390_870 - 163_571) / 12, 6);
+    expect(p.annualExpenses(2026)).toBe(246_317 + 57_015 + 11_589 + 39_222);
+    // Années suivantes : dernier budget × (1 + évolution).
+    expect(p.annualExpenses(2028)).toBeCloseTo(
+      (246_317 + 57_015 + 11_589 + 39_222) * 1.015 ** 2,
+      6,
+    );
+  });
+
+  it('un budget enregistré pour l’année suivante prend le relais', () => {
+    const withNext = {
+      ...data,
+      budgets: [{ propertyId: property.id, year: 2027, planned: { coOwnership: 300_000 } }],
+    };
+    const p = budgetProjection(withNext, property, asOf, GROWTH)!;
+    expect(p.years).toEqual([2026, 2027]);
+    const next = yearBudget(withNext, property, 2027, asOf, GROWTH).rows;
+    const plan = (id: BudgetRowId) => next.find((r) => r.id === id)!.planned;
+    expect(p.annualExpenses(2027)).toBe(
+      300_000 + plan('taxes') + plan('insurance') + plan('maintenance'),
+    );
+    expect(p.annualExpenses(2029)).toBeCloseTo(p.annualExpenses(2027) * 1.015 ** 2, 6);
+  });
+
+  it('Paramètres de vente : budget en calcul automatique, valeur modifiée prioritaire', () => {
+    const auto = resolveSaleAssumptions(data, property, defaultAssumptions(property.id), asOf);
+    expect(auto.projectionSource).toEqual({ kind: 'budget', years: [2026] });
+    expect(auto.netRentMonthly.value).toBeCloseTo((1_390_870 - 163_571) / 12, 6);
+    expect(auto.annualExpensesExcludingLoan.value).toBe(354_143);
+    expect(auto.projection.monthlyProjectionForYear!(2027)).toBeCloseTo(
+      ((1_390_870 - 163_571) / 12 - 354_143 / 12) * 1.015,
+      6,
+    );
+    // Le jeu de test garde ses valeurs modifiées : la projection n'utilise pas le budget.
+    const seed = resolveSaleAssumptions(data, property, data.assumptions[0]!, asOf);
+    expect(seed.netRentMonthly).toMatchObject({ value: 105_661, modified: true });
+    expect(seed.projection.monthlyProjectionForYear).toBeUndefined();
+  });
+
+  it('sans budget (location commencée l’année des données) : 12 derniers mois du journal', () => {
+    const recent = { ...property, rentalStartDate: '2026-01-01' };
+    const d = { ...data, properties: [recent] };
+    const r = resolveSaleAssumptions(d, recent, defaultAssumptions(recent.id), asOf);
+    expect(r.projectionSource).toEqual({ kind: 'journal' });
+    expect(r.projection.monthlyProjectionForYear).toBeUndefined();
+  });
+});
