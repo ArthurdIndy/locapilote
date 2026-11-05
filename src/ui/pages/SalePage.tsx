@@ -119,7 +119,7 @@ export function SalePage({ data, property, today }: Props) {
   const save = (next: PropertyAssumptions) => db.saveAssumptions(next);
   const saveScenarios = (next: SaleScenario[]) => save({ ...assumptions, saleScenarios: next });
   const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
-    save({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
+    db.saveProjection(property.id, patch);
 
   const cols: Col[] = scenarios
     .map((scenario, index) => ({

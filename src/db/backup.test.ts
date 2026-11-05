@@ -209,6 +209,20 @@ describe('budget (US12)', () => {
   });
 });
 
+describe('valeurs de projection (Paramètres de vente)', () => {
+  it('deux modifications rapprochées ne s’écrasent pas', async () => {
+    await startWithTestDataset(db);
+    await Promise.all([
+      db.saveProjection('APPART-01', { netRentMonthly: null }),
+      db.saveProjection('APPART-01', { annualExpensesExcludingLoan: null }),
+    ]);
+    const { projection } = (await db.assumptions.get('APPART-01'))!;
+    expect(projection.netRentMonthly).toBeNull();
+    expect(projection.annualExpensesExcludingLoan).toBeNull();
+    expect(projection.annualGrowth).toBe(0.015);
+  });
+});
+
 describe('enregistrement d’un mouvement', () => {
   it('refuse un bien ou une catégorie inconnus', async () => {
     await startWithTestDataset(db);

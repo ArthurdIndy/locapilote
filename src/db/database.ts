@@ -22,6 +22,7 @@ import type {
   Loan,
   LoanInstallment,
   PreRentalExpense,
+  ProjectionAssumptions,
   Property,
   PropertyAssumptions,
   ScheduleSource,
@@ -263,6 +264,19 @@ export class LocapiloteDb extends Dexie {
       if (!(await this.properties.get(propertyId))) throw new Error('Bien inconnu');
       const current = (await this.assumptions.get(propertyId)) ?? defaultAssumptions(propertyId);
       await this.assumptions.put({ ...current, dataAsOf });
+    });
+  }
+
+  /**
+   * Modifie quelques valeurs de projection d'un bien, à partir de ce qui est en base au moment
+   * d'écrire : deux modifications rapprochées (deux « Revenir au calcul automatique » de suite)
+   * ne s'écrasent pas. Crée les hypothèses par défaut si le bien n'en a pas.
+   */
+  async saveProjection(propertyId: string, patch: Partial<ProjectionAssumptions>): Promise<void> {
+    await this.transaction('rw', [this.assumptions, this.properties], async () => {
+      if (!(await this.properties.get(propertyId))) throw new Error('Bien inconnu');
+      const current = (await this.assumptions.get(propertyId)) ?? defaultAssumptions(propertyId);
+      await this.assumptions.put({ ...current, projection: { ...current.projection, ...patch } });
     });
   }
 

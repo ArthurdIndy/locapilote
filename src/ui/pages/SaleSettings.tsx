@@ -57,7 +57,7 @@ export function SaleSettings({
   }
 
   const saveProjection = (patch: Partial<ProjectionAssumptions>) =>
-    db.saveAssumptions({ ...assumptions, projection: { ...assumptions.projection, ...patch } });
+    db.saveProjection(assumptions.propertyId, patch);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
