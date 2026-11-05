@@ -3,17 +3,20 @@
  * (US11) : chacune peut être remplacée par une valeur modifiée (non `null` dans les
  * hypothèses du bien). Voir docs/regles-de-calcul.md § 6.
  *
- * - loyer net et dépenses projetés : 12 derniers mois du journal (jusqu'à la date de mise à
- *   jour), annualisés si le bien est loué depuis moins longtemps, hors dépenses immobilisées et
- *   catégories de travaux ; le budget (US12) les remplacera ;
+ * - loyer net et dépenses projetés : d'après le budget quand l'année des données en a un (US12 :
+ *   loyers prévus − gestion et comptable ; copropriété + impôts et taxes + assurances et
+ *   entretien), sinon 12 derniers mois du journal (jusqu'à la date de mise à jour), annualisés
+ *   si le bien est loué depuis moins longtemps, hors dépenses immobilisées et catégories de
+ *   travaux ;
  * - évolution annuelle : 1,5 % ;
  * - amortissements déduits des années futures : ceux de la dernière année complète (LMNP réel) ;
  * - frais de l'année de la vente : honoraires du comptable de la dernière année complète ;
  * - part du prix réinvestie (remploi) : calculée par scénario dans `simulateSale` (ce qui reste
  *   du prix de cession après remboursement du prêt, voir `defaultReinvestedShare`).
  */
+import { budgetProjection } from './core/budget';
 import type { ProjectionValues } from './core/irr';
-import { addDays, addMonths, daysBetween } from './dates';
+import { addDays, addMonths, daysBetween, yearOf } from './dates';
 import { LMNP_REEL, lastCompleteYearDeductedDepreciation } from './tax/lmnp-reel';
 import type {
   Category,
@@ -60,6 +63,11 @@ export interface ResolvedSaleAssumptions {
   reinvestedShare: Resolved;
   /** Période du journal retenue pour le loyer et les dépenses (vide si le bien n'est pas loué). */
   journalWindow: { from: IsoDate; to: IsoDate } | null;
+  /**
+   * Origine du loyer net et des dépenses calculés : le budget (années budgétées : celle des
+   * données, puis les suivantes déjà budgétées), ou les 12 derniers mois du journal.
+   */
+  projectionSource: { kind: 'budget'; years: number[] } | { kind: 'journal' };
   /** Dernière année complète (amortissements, honoraires du comptable). */
   lastCompleteYear: number;
   /** Valeurs pour le bilan depuis l'achat (`ownerBalance`). */
@@ -125,7 +133,10 @@ export function resolveSaleAssumptions(
   dataAsOf: IsoDate,
 ): ResolvedSaleAssumptions {
   const p = assumptions.projection;
+  const growth = resolve(p.annualGrowth, DEFAULT_ANNUAL_GROWTH);
+  const budget = budgetProjection(data, property, dataAsOf, growth.value);
   const journal = journalLastTwelveMonths(data, property, dataAsOf);
+  const dataYear = yearOf(dataAsOf);
   const depreciation =
     property.taxRegime === LMNP_REEL
       ? lastCompleteYearDeductedDepreciation(data, property, dataAsOf)
@@ -136,16 +147,38 @@ export function resolveSaleAssumptions(
           amount: 0,
         };
   const resolved = {
-    netRentMonthly: resolve(p.netRentMonthly, journal ? journal.income / 12 : 0),
-    annualExpensesExcludingLoan: resolve(p.annualExpensesExcludingLoan, journal?.expenses ?? 0),
-    annualGrowth: resolve(p.annualGrowth, DEFAULT_ANNUAL_GROWTH),
+    netRentMonthly: resolve(
+      p.netRentMonthly,
+      budget ? budget.netRentMonthly(dataYear) : journal ? journal.income / 12 : 0,
+    ),
+    annualExpensesExcludingLoan: resolve(
+      p.annualExpensesExcludingLoan,
+      budget ? budget.annualExpenses(dataYear) : (journal?.expenses ?? 0),
+    ),
+    annualGrowth: growth,
     depreciationDeductedPerYear: resolve(p.depreciationDeductedPerYear, depreciation.amount),
     saleYearCosts: resolve(p.saleYearCosts, accountantFees(data, property, depreciation.year)),
     reinvestedShare: resolve(p.mainResidenceReinvestedShare, 1),
   };
+  // Une valeur modifiée dans Paramètres de vente reste prioritaire : elle évolue chaque année
+  // de (1 + évolution). Sinon, chaque année prend son budget (ou le dernier, × évolution).
+  const indexed = (value: number) => (year: number) =>
+    value * Math.pow(1 + growth.value, year - dataYear);
+  const netRentForYear =
+    budget && !resolved.netRentMonthly.modified
+      ? budget.netRentMonthly
+      : indexed(resolved.netRentMonthly.value);
+  const expensesForYear =
+    budget && !resolved.annualExpensesExcludingLoan.modified
+      ? budget.annualExpenses
+      : indexed(resolved.annualExpensesExcludingLoan.value);
+  const usesBudget =
+    budget !== null &&
+    (!resolved.netRentMonthly.modified || !resolved.annualExpensesExcludingLoan.modified);
   return {
     ...resolved,
     journalWindow: journal ? { from: journal.from, to: journal.to } : null,
+    projectionSource: budget ? { kind: 'budget', years: budget.years } : { kind: 'journal' },
     lastCompleteYear: depreciation.year,
     projection: {
       avoidedRentMonthlyAtPurchase: p.avoidedRentMonthlyAtPurchase,
@@ -154,6 +187,12 @@ export function resolveSaleAssumptions(
       annualExpensesExcludingLoan: resolved.annualExpensesExcludingLoan.value,
       annualGrowth: resolved.annualGrowth.value,
       saleYearCosts: resolved.saleYearCosts.value,
+      ...(usesBudget
+        ? {
+            monthlyProjectionForYear: (year: number) =>
+              netRentForYear(year) - expensesForYear(year) / 12,
+          }
+        : {}),
     },
   };
 }

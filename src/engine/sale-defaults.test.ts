@@ -17,14 +17,32 @@ const automatic = defaultAssumptions(property.id, dataAsOf);
 describe('valeurs de la simulation de vente calculées automatiquement', () => {
   const r = resolveSaleAssumptions(dataset, property, automatic, dataAsOf);
 
-  it('loyer net et dépenses : 12 derniers mois du journal (26/10/2025 au 25/10/2026)', () => {
+  it('loyer net et dépenses : d’après le budget 2026 (US12)', () => {
+    expect(r.projectionSource).toEqual({ kind: 'budget', years: [2026] });
+    // (loyers et charges 13 908,70 − gestion et comptable 1 575,52) / 12.
+    expect(r.netRentMonthly.value).toBeCloseTo((1390870 - 157552) / 12, 6);
+    // Copropriété 2 463,17 + impôts et taxes 570,15 + assurances et entretien 508,11.
+    expect(r.annualExpensesExcludingLoan.value).toBe(354143);
+    expect(r.netRentMonthly.modified).toBe(false);
+  });
+
+  it('sans budget : 12 derniers mois du journal (26/10/2025 au 25/10/2026)', () => {
     expect(r.journalWindow).toEqual({ from: '2025-10-26', to: '2026-10-25' });
     const journal = journalLastTwelveMonths(dataset, property, dataAsOf)!;
     expect(journal.income).toBe(1392070); // 13 920,70 € de recettes
     expect(journal.expenses).toBe(778255); // 7 782,55 € : hors immobilisations et travaux (29,96 €)
-    expect(r.netRentMonthly.value).toBeCloseTo(1392070 / 12, 6);
-    expect(r.annualExpensesExcludingLoan.value).toBe(778255);
-    expect(r.netRentMonthly.modified).toBe(false);
+    // Bien loué depuis le 01/01/2026 : pas de budget 2026 (pas d'année précédente).
+    const recent = { ...property, rentalStartDate: '2026-01-01' };
+    const j = resolveSaleAssumptions(
+      { ...dataset, properties: [recent] },
+      recent,
+      automatic,
+      dataAsOf,
+    );
+    expect(j.projectionSource).toEqual({ kind: 'journal' });
+    const window = journalLastTwelveMonths(dataset, recent, dataAsOf)!;
+    expect(j.netRentMonthly.value).toBeCloseTo(window.income / 12, 6);
+    expect(j.annualExpensesExcludingLoan.value).toBeCloseTo(window.expenses, 6);
   });
 
   it('projection : dépenses immobilisées et catégories de travaux exclues, rien d’autre', () => {

@@ -259,6 +259,31 @@ export interface HouseholdSettings {
 
 export const HOUSEHOLD_SETTINGS_ID = 'household';
 
+/**
+ * Lignes du budget qui se corrigent (✎), dans l'ordre de l'écran (US12). Le prêt (d'après
+ * l'échéancier) et « À sortir de ta poche » (total) sont calculés.
+ */
+export const BUDGET_LINES = [
+  'income', // Loyers et charges perçus
+  'coOwnership', // Copropriété
+  'management', // Gestion et comptable
+  'taxes', // Impôts et taxes
+  'insuranceMaintenance', // Assurances et entretien
+  'other', // Autres dépenses (travaux, investissements à amortir, à qualifier)
+] as const;
+export type BudgetLine = (typeof BUDGET_LINES)[number];
+
+/**
+ * Budget d'un bien pour une année : seulement les montants prévus modifiés (✎). Une ligne
+ * absente est calculée (année précédente + évolution). Enregistré par année : corriger un
+ * budget ne touche pas ceux des autres années.
+ */
+export interface Budget {
+  propertyId: string;
+  year: number;
+  planned: Partial<Record<BudgetLine, Cents>>;
+}
+
 /** L'ensemble des données d'un utilisateur. */
 export interface Dataset {
   properties: Property[];
@@ -273,4 +298,6 @@ export interface Dataset {
   assumptions: PropertyAssumptions[];
   /** Paramètres du foyer : au plus une ligne. */
   householdSettings: HouseholdSettings[];
+  /** Budgets (valeurs prévues modifiées), par bien et par année. */
+  budgets: Budget[];
 }
