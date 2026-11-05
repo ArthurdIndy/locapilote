@@ -155,7 +155,7 @@ export class LocapiloteDb extends Dexie {
     return (await this.categories.count()) > 0 || (await this.properties.count()) > 0;
   }
 
-  /** Enregistre un mouvement : vérifie que son bien et sa catégorie existent. */
+  /** Enregistre une opération : vérifie que son bien et sa catégorie existent. */
   async saveTransaction(transaction: Transaction): Promise<void> {
     await this.transaction(
       'rw',

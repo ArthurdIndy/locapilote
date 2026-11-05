@@ -69,13 +69,13 @@ test.describe('US01 · Biens', () => {
   });
 });
 
-test.describe('US03 · Mouvements', () => {
-  test('saisir un mouvement en choisissant la catégorie par recherche sans accents', async ({
+test.describe('US03 · Opérations', () => {
+  test('saisir une opération en choisissant la catégorie par recherche sans accents', async ({
     page,
   }, testInfo) => {
     await startWithTestData(page);
-    await goTo(page, 'Mouvements');
-    await page.getByRole('button', { name: 'Nouveau mouvement' }).click();
+    await goTo(page, 'Opérations');
+    await page.getByRole('button', { name: 'Nouvelle opération' }).click();
     const category = page.getByPlaceholder(/Tape pour chercher/);
     await expect(category).toBeFocused();
     await category.fill('equipement');
@@ -86,20 +86,22 @@ test.describe('US03 · Mouvements', () => {
     await page.getByLabel('Libellé').fill('Ampoules');
     await page.getByLabel('Montant (€)').fill('12,90');
     await page.getByRole('button', { name: 'Enregistrer' }).click();
-    await expect(page.getByText('Mouvement enregistré (Petit équipement · 12,90 €)')).toBeVisible();
+    await expect(
+      page.getByText('Opération enregistrée (Petit équipement · 12,90 €)'),
+    ).toBeVisible();
     // On enchaîne : la catégorie est vide, prête pour la saisie suivante.
     await expect(category).toHaveValue('');
     await page.getByRole('button', { name: 'Fermer' }).click();
-    await expect(page.getByText('290 mouvements')).toBeVisible();
+    await expect(page.getByText('290 opérations')).toBeVisible();
     await expect(page.locator('.transaction', { hasText: 'Ampoules' })).toBeVisible();
     await capture(page, testInfo, 'it1-mouvements');
     await expectNoHorizontalScroll(page);
   });
 
-  test('refuse un mouvement sans catégorie ni montant', async ({ page }) => {
+  test('refuse une opération sans catégorie ni montant', async ({ page }) => {
     await startWithTestData(page);
-    await goTo(page, 'Mouvements');
-    await page.getByRole('button', { name: 'Nouveau mouvement' }).click();
+    await goTo(page, 'Opérations');
+    await page.getByRole('button', { name: 'Nouvelle opération' }).click();
     await page.getByRole('button', { name: 'Enregistrer' }).click();
     await expect(page.getByRole('alert')).toContainText('Choisis une catégorie dans la liste.');
     await expect(page.getByRole('alert')).toContainText('Montant invalide');
@@ -107,25 +109,25 @@ test.describe('US03 · Mouvements', () => {
 
   test('filtrer par année et catégorie, modifier puis supprimer', async ({ page }) => {
     await startWithTestData(page);
-    await goTo(page, 'Mouvements');
+    await goTo(page, 'Opérations');
     const filters = page.getByRole('region', { name: 'Filtres' });
     await filters.getByLabel('Année').selectOption('2025');
     await filters.getByLabel('Catégorie').selectOption('Loyer hors charges');
-    await expect(page.getByText(/^14 mouvements · recettes 12\s387,89\s€/)).toBeVisible();
+    await expect(page.getByText(/^14 opérations · recettes 12\s387,89\s€/)).toBeVisible();
 
     const first = page.locator('.transaction').first();
     await first.getByRole('button', { name: 'Modifier' }).click();
     await page.getByLabel('Libellé').fill('Loyer décembre (corrigé)');
     await page.getByRole('button', { name: 'Enregistrer' }).click();
-    await expect(page.getByText(/^Mouvement modifié/)).toBeVisible();
+    await expect(page.getByText(/^Opération modifiée/)).toBeVisible();
     await expect(first).toContainText('Loyer décembre (corrigé)');
 
     await first.getByRole('button', { name: 'Supprimer' }).click();
-    await expect(page.getByText('Mouvement supprimé.')).toBeVisible();
-    await expect(page.getByText(/^13 mouvements/)).toBeVisible();
+    await expect(page.getByText('Opération supprimée.')).toBeVisible();
+    await expect(page.getByText(/^13 opérations/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Effacer les filtres' }).click();
-    await expect(page.getByText(/^288 mouvements/)).toBeVisible();
+    await expect(page.getByText(/^288 opérations/)).toBeVisible();
   });
 });
 
@@ -143,14 +145,14 @@ test.describe('US18 · Données', () => {
     expect(backup.data.transactions).toHaveLength(289);
     expect(backup.data.loanInstallments).toHaveLength(240);
 
-    // On supprime un mouvement, puis on réimporte la sauvegarde.
-    await goTo(page, 'Mouvements');
+    // On supprime une opération, puis on réimporte la sauvegarde.
+    await goTo(page, 'Opérations');
     await page.locator('.transaction').first().getByRole('button', { name: 'Supprimer' }).click();
-    await expect(page.getByText(/^288 mouvements/)).toBeVisible();
+    await expect(page.getByText(/^288 opérations/)).toBeVisible();
     await goTo(page, 'Paramètres');
     await page.locator('input[type=file]').setInputFiles(file);
     await expect(
-      page.getByText(/Import terminé : 1 bien, 289 mouvements, 240 échéances/),
+      page.getByText(/Import terminé : 1 bien, 289 opérations, 240 échéances/),
     ).toBeVisible();
   });
 
@@ -167,11 +169,11 @@ test.describe('US18 · Données', () => {
     ).toBeVisible();
   });
 
-  test('exporter les mouvements en CSV pour Excel', async ({ page }, testInfo) => {
+  test('exporter les opérations en CSV pour Excel', async ({ page }, testInfo) => {
     await startWithTestData(page);
     await goTo(page, 'Paramètres');
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Exporter les mouvements (CSV)' }).click();
+    await page.getByRole('button', { name: 'Exporter les opérations (CSV)' }).click();
     const download = await downloadPromise;
     const csv = readFileSync(await download.path(), 'utf8');
     expect(csv.startsWith('﻿Date;Bien;Compte;Catégorie;Sens;Libellé;Montant')).toBe(true);

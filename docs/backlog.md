@@ -6,8 +6,9 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | --- | --- | --- |
 | Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
 | Rentabilité réelle : TRI, gain total et comparaison à un placement | Voir le détail ci-dessous. **Moteur prêt et testé à l'itération 4a ; affichage reporté** (retiré de Simulations › Vente et de la Synthèse à la recette du 03/11/2026), par exemple sur l'Accueil ou dans un « mode investisseur » | Demande d'Arthur, 01/11/2026 |
-| Export CSV filtré | Exporter en CSV uniquement les mouvements affichés (filtres bien, année, catégorie) depuis la page Mouvements | Recette de l'itération 1 |
-| Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis** |
+| Export CSV filtré | Exporter en CSV uniquement les opérations affichées (filtres année, groupe, catégorie) depuis la liste « Toutes les opérations » | Recette de l'itération 1 |
+| Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis, remplacé à l'itération 4b** |
+| Navigation : maintenant, passé, présent, futur | Voir le détail ci-dessous (section Navigation) | Demande d'Arthur, 04/11/2026 · **fait à l'itération 4b** |
 | US20 · Assistant Claude | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
 | Assurance emprunteur variable | La carte du prêt affiche l'assurance comme une valeur fixe (« assurance 21,59 € / mois ») alors qu'elle peut changer en cours de prêt (dans le jeu de test, elle baisse en décembre 2032 et l'échéance avec elle). Afficher l'assurance de l'échéance en cours (« assurance actuelle ») et signaler qu'elle varie, avec la date du changement | Recette de l'itération 2 · **fait à l'itération 3 bis** |
 | Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur · **fait à l'itération 3 bis** |
@@ -35,7 +36,7 @@ Critères d'acceptation :
 
 - les détails sont fermés par défaut ; l'état ouvert ou fermé est mémorisé dans le navigateur ;
 - la somme des lignes de détail est égale au total de la ligne (contrôlé par un test) ;
-- un clic sur une ligne de détail ouvre la page Mouvements filtrée sur ce groupe et cette année (pour retrouver le ballon d'eau chaude, par exemple) ;
+- un clic sur une ligne de détail ouvre la liste des opérations filtrée sur ce groupe et cette année (pour retrouver le ballon d'eau chaude, par exemple) ;
 - les groupes viennent des catégories paramétrées : un nouveau groupe apparaît sans modification du code ;
 - ce détail montre ce qui a été payé ; il ne remplace pas le récapitulatif fiscal (ce qui est déductible) ;
 - lisible sur téléphone, dans la carte de chaque année.
@@ -87,9 +88,9 @@ Critères d'acceptation :
 
 Exemples : « j'ai payé 572 € de taxe foncière hier » ; le relevé mensuel de l'agence ; un avis de taxe ou de CFE ; le nouvel échéancier après une renégociation du prêt ; une facture de travaux à amortir ; un nouveau loyer après révision.
 
-**Toutes les données sont concernées**, pas seulement les mouvements : mouvements, prêts et échéanciers (une renégociation remplace les échéances futures et garde l'historique), immobilisations, biens (loyer, valeur estimée), hypothèses de vente.
+**Toutes les données sont concernées**, pas seulement les opérations : opérations, prêts et échéanciers (une renégociation remplace les échéances futures et garde l'historique), immobilisations, biens (loyer, valeur estimée), hypothèses de vente.
 
-**Automatique, mais jamais à l'aveugle** : Claude prépare les modifications, affiche un récapitulatif clair (« j'ajoute 1 mouvement de 572 € en Taxe foncière ; je remplace 133 échéances futures du prêt »), et rien n'est enregistré sans confirmation. Une erreur de lecture finirait sinon dans la déclaration fiscale.
+**Automatique, mais jamais à l'aveugle** : Claude prépare les modifications, affiche un récapitulatif clair (« j'ajoute 1 opération de 572 € en Taxe foncière ; je remplace 133 échéances futures du prêt »), et rien n'est enregistré sans confirmation. Une erreur de lecture finirait sinon dans la déclaration fiscale.
 
 **Complémentaire** : la saisie manuelle et les imports restent disponibles.
 
@@ -122,8 +123,8 @@ Contenu, **dans la carte de chaque bien** de l'Accueil (règle multi-biens, voir
 | Trois indicateurs de l'année en cours | Cash-flow mensuel moyen | Synthèse (US08) |
 | | Enrichissement de l'année | Synthèse (US08) |
 | | Somme nette si je vends aujourd'hui | Simulation de vente (US11), à la date du jour |
-| À faire | Mouvements « À valider » à qualifier | Mouvements |
-| | Date du dernier mouvement saisi (« données à jour au … ») | Mouvements |
+| À faire | Opérations « À valider » à qualifier | Opérations |
+| | Date de la dernière opération saisie (« données à jour au … ») | Opérations |
 | | Rappel quand la dernière sauvegarde date de plus d'un mois (commun à tous les biens : au-dessus des cartes) | Export (US18) |
 | Accès | La carte entière : un clic ouvre la synthèse du bien | — |
 
@@ -139,7 +140,44 @@ Critères d'acceptation :
 - un clic sur la carte d'un bien en fait le bien courant et ouvre sa synthèse ;
 - lisible sur téléphone (cartes et indicateurs empilés).
 
-## Navigation : 6 entrées au lieu de 10
+## Navigation : maintenant, passé, présent, futur (itération 4b)
+
+« En tant que propriétaire, je veux trouver les écrans dans l'ordre où je me pose les questions (où j'en suis, comment se sont passées les années, où j'en suis cette année, que se passera-t-il si je vends), et saisir une opération de partout. »
+
+Remplace l'organisation en 6 entrées de l'itération 3 bis (ci-dessous, gardée pour l'historique). Aucun calcul ne change.
+
+| Entrée | Rôle | Place |
+| --- | --- | --- |
+| Accueil | Maintenant | Menu principal |
+| Synthèse | Les années passées | Menu principal |
+| Budget | L'année en cours (US12, itération 4c ; d'ici là, une page « Prochainement ») | Menu principal |
+| Simulations | Le futur : la vente seulement | Menu principal |
+| Fiscalité | Déclaration, une fois par an | Second plan |
+| Mon bien | Fiche du bien | Second plan |
+| + Opération | Ouvre directement le formulaire de saisie (recette ou dépense) | Bouton, sur toutes les pages |
+| Toutes les opérations | La liste (filtres, modification, suppression), qui n'est plus dans le menu principal | Lien à côté du formulaire ; menu ☰ sur téléphone |
+| ⚙ Paramètres | Données (export, import, jeu de test) | Second plan |
+
+- **Ordinateur** : à gauche, Accueil · Synthèse · Budget · Simulations ; à droite, plus petit et plus discret, Fiscalité · Mon bien · bouton « + Opération » · ⚙.
+- **Téléphone (375 px)** : 4 onglets en haut (Accueil, Synthèse, Budget, Simulations), qui tiennent avec leur libellé complet ; le bouton « + Opération » dans la barre du haut, à côté de ☰ ; le menu ☰ contient Fiscalité, Mon bien, Toutes les opérations, ⚙ Paramètres.
+- **Vocabulaire** : « mouvement » devient « opération » partout dans l'interface (boutons, titres, messages, aides, export pour Excel) ; le code garde `transaction`.
+- **Synthèse** : sur ordinateur, une fenêtre de 3 ans, les 3 dernières années par défaut ; à gauche « ‹ 2021–2023 » (fenêtre précédente), à droite « 2024–2026 › » (fenêtre suivante) quand elle existe. Le tableau garde toujours 3 colonnes d'années (la plus ancienne fenêtre est complétée : 2020–2022). La colonne des libellés a une largeur fixe et ne passe jamais à la ligne ; ce sont les colonnes d'années qui s'adaptent. Téléphone inchangé : une carte par année, la plus récente en premier. (Recette du 04/11/2026 : le bouton « Années précédentes », qui dépliait toutes les années, rendait le tableau illisible.)
+- **Résultat fiscal non disponible** (régime pas encore calculé) : « — » en texte normal dans chaque colonne, et la raison une seule fois sous le tableau.
+- **« + Opération »** devient « × Fermer » (bouton enfoncé) tant que le formulaire est ouvert ; un nouveau clic le referme et ramène à la page d'origine.
+- **Barres de défilement** : partout, la barre fine aux couleurs du thème (un seul style commun).
+- **Adresses** : la liste est à `#/operations`, le formulaire à `#/nouvelle-operation`, le budget à `#/budget`. L'ancienne adresse `#/mouvements` (avec ses filtres) redirige vers `#/operations`. « Fermer » sur le formulaire ramène à la page d'où l'on vient.
+
+Critères d'acceptation (tests : `e2e/it4b-nav-operations.spec.ts`) :
+
+- le menu sur ordinateur et sur téléphone est conforme à la description ci-dessus, sur une ligne, sans défilement horizontal ;
+- « + Opération » ouvre le formulaire depuis chaque page et « Fermer » y ramène ;
+- « Toutes les opérations » est à côté du formulaire (et dans le menu ☰ sur téléphone) ;
+- les liens de la Synthèse et de la Fiscalité ouvrent la liste filtrée ;
+- Synthèse : fenêtres de 3 ans (« ‹ » et « › ») pour un bien loué depuis plus de 3 ans, toujours 3 colonnes, libellés sur une ligne, sans défilement ;
+- « + Opération » devient « × Fermer » tant que le formulaire est ouvert ;
+- Simulations ne mentionne plus le budget.
+
+## Navigation : 6 entrées au lieu de 10 (itération 3 bis, remplacée à l'itération 4b)
 
 « En tant que propriétaire, je veux trouver vite ce que je consulte souvent, sans être noyé dans les écrans de paramétrage. »
 

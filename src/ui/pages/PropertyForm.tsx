@@ -242,7 +242,7 @@ export function PropertyForm({ initial, onSave, onCancel }: Props) {
         )}
         <p className="muted small">
           Meublée ou saisonnière : régimes LMNP ou LMP. Nue : micro-foncier ou réel foncier. Changer
-          de régime ne demande aucune ressaisie : les mouvements restent les mêmes.
+          de régime ne demande aucune ressaisie : les opérations restent les mêmes.
         </p>
       </fieldset>
 

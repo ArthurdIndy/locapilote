@@ -11,7 +11,7 @@ type Status = { kind: 'success' | 'error'; text: string } | null;
 function describe(data: Dataset): string {
   const p = data.properties.length;
   const t = data.transactions.length;
-  return `${p} bien${p > 1 ? 's' : ''}, ${t} mouvement${t > 1 ? 's' : ''}, ${data.loanInstallments.length} échéances de prêt`;
+  return `${p} bien${p > 1 ? 's' : ''}, ${t} opération${t > 1 ? 's' : ''}, ${data.loanInstallments.length} échéances de prêt`;
 }
 
 export function DataPage({ data, today }: { data: Dataset; today: string }) {
@@ -31,11 +31,11 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
 
   const exportCsv = async () => {
     downloadText(
-      `locapilote-mouvements-${today}.csv`,
+      `locapilote-operations-${today}.csv`,
       transactionsToCsv(await db.readAll()),
       'text/csv;charset=utf-8',
     );
-    setStatus({ kind: 'success', text: 'Fichier CSV des mouvements téléchargé.' });
+    setStatus({ kind: 'success', text: 'Fichier CSV des opérations téléchargé.' });
   };
 
   const importJson = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -110,13 +110,13 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
       </section>
 
       <section className="card">
-        <h3>Mouvements pour Excel</h3>
+        <h3>Opérations pour Excel</h3>
         <p>
-          Tous les mouvements dans un fichier CSV qui s’ouvre directement dans Excel (colonnes
+          Toutes les opérations dans un fichier CSV qui s’ouvre directement dans Excel (colonnes
           séparées par des points-virgules, montants avec une virgule).
         </p>
         <button type="button" className="button" onClick={exportCsv}>
-          Exporter les mouvements (CSV)
+          Exporter les opérations (CSV)
         </button>
       </section>
 

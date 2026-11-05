@@ -40,10 +40,10 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | --- | --- | --- | --- | --- |
 | US01 | Biens | Créer un bien avec son régime fiscal, sa date d'achat, son coût et sa date de mise en location | Le bien apparaît dans toutes les vues ; changer de régime ne demande aucune ressaisie | Must |
 | US02 | Biens | Adapter les catégories de recettes et de dépenses | Chaque catégorie porte son traitement fiscal pour chaque régime | Should |
-| US03 | Mouvements | Saisir un mouvement (date, bien, catégorie, montant, pièce) | Moins de 30 secondes, catégorie choisie dans une liste | Must |
-| US04 | Mouvements | Importer le CSV de ma banque en ne gardant que les lignes du bien | Doublons détectés ; règles de catégorisation retenues | Should |
-| US05 | Mouvements | Importer le relevé de l'agence | Solde de l'agence rapproché au centime | Could |
-| US06 | Mouvements | Joindre une pièce justificative | La pièce s'ouvre depuis le mouvement | Could |
+| US03 | Opérations | Saisir une opération (date, bien, catégorie, montant, pièce) | Moins de 30 secondes, catégorie choisie dans une liste | Must |
+| US04 | Opérations | Importer le CSV de ma banque en ne gardant que les lignes du bien | Doublons détectés ; règles de catégorisation retenues | Should |
+| US05 | Opérations | Importer le relevé de l'agence | Solde de l'agence rapproché au centime | Could |
+| US06 | Opérations | Joindre une pièce justificative | La pièce s'ouvre depuis l'opération | Could |
 | US07 | Prêt | Charger le tableau d'amortissement de la banque | Capital, intérêts, assurance par an ; capital restant dû à toute date | Must |
 | US08 | Suivi | Voir par bien et par année recettes, dépenses, cash-flow, enrichissement, rendements | Mêmes chiffres que l'Excel de référence | Must |
 | US09 | Fiscalité | Obtenir le récapitulatif LMNP réel | Retombe sur les comptes du comptable, écarts expliqués | Must |
@@ -66,7 +66,7 @@ Les 10 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18, US21
 
 Le MVP est terminé quand :
 
-- [ ] le jeu de test est entièrement repris (289 mouvements, 240 échéances, immobilisations) ;
+- [ ] le jeu de test est entièrement repris (289 opérations, 240 échéances, immobilisations) ;
 - [ ] la synthèse et la simulation de vente retombent sur `data/expected.json` ;
 - [ ] un budget annuel est saisi et comparé au réel mois par mois ;
 - [ ] un proche crée son bien et saisit son premier mois seul en moins de 30 minutes ;
@@ -93,25 +93,28 @@ Pourquoi le web plutôt qu'une application de bureau : partage par simple lien, 
 
 **Rôle de chaque écran.**
 
+Le menu suit l'ordre « maintenant, puis passé, présent, futur » (itération 4b). Quatre écrans de premier plan, deux de second plan, et la saisie accessible de partout.
+
 | Écran | Rôle | Fréquence |
 | --- | --- | --- |
-| Accueil | Où j'en suis maintenant : une carte par bien | À chaque visite |
-| Mouvements | Saisie au fil de l'eau | Chaque mois |
-| Synthèse | Les années passées : trésorerie, rentabilité, patrimoine | Quand on veut faire le point |
-| Fiscalité | Déclaration et rapprochement avec le comptable | Une fois par an |
-| Simulations | Le futur : vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, quatre lignes — prix, somme nette, impôt, ce qui te reste vraiment — et les détails repliés), budget | Ponctuellement |
-| Mon bien | Fiche du bien, saisie une fois : informations, prêt, immobilisations | Rarement |
+| Accueil | Maintenant : où j'en suis, une carte par bien | À chaque visite |
+| Synthèse | Les années passées : trésorerie, rentabilité, patrimoine (sur ordinateur, une fenêtre de 3 ans, les 3 dernières par défaut, avec « ‹ 2021–2023 » et « 2024–2026 › » pour passer d'une fenêtre à l'autre ; libellés sur une ligne, de largeur fixe) | Quand on veut faire le point |
+| Budget | L'année en cours : prévu, réalisé et écarts (US12, itération 4c) | Chaque mois |
+| Simulations | Le futur : la vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, quatre lignes — prix, somme nette, impôt, ce qui te reste vraiment — et les détails repliés) | Ponctuellement |
+| Fiscalité *(second plan)* | Déclaration et rapprochement avec le comptable | Une fois par an |
+| Mon bien *(second plan)* | Fiche du bien, saisie une fois : informations, prêt, immobilisations | Rarement |
+| + Opération | Saisie d'une recette ou d'une dépense, depuis n'importe quelle page ; lien « Toutes les opérations » vers la liste (filtres, modification, suppression) | Au fil de l'eau |
 
-Sur ordinateur, les 6 écrans sont dans le menu, plus ⚙ Paramètres (données). Sur téléphone, seuls Accueil, Mouvements et Simulations restent en onglets ; Synthèse, Fiscalité, Mon bien et ⚙ sont dans le menu ☰, et chaque carte de l'Accueil mène à la Synthèse de son bien.
+Sur ordinateur : Accueil · Synthèse · Budget · Simulations à gauche ; à droite, plus petit et plus discret, Fiscalité · Mon bien · bouton « + Opération » · ⚙ Paramètres. Sur téléphone : les 4 écrans de premier plan en onglets en haut, le bouton « + Opération » dans la barre du haut, et le reste dans le menu ☰ (Fiscalité, Mon bien, Toutes les opérations, ⚙ Paramètres) ; chaque carte de l'Accueil mène à la Synthèse de son bien. La liste des opérations n'est plus une entrée du menu principal ; on y arrive par le lien « Toutes les opérations » (à côté du formulaire de saisie, ou dans le menu ☰) et par les liens de la Synthèse et de la Fiscalité, qui l'ouvrent filtrée.
 
-**Règle multi-biens (écrans).** L'Accueil est la seule page qui montre tous les biens : une carte par bien (nom, type de location, régime fiscal). Un clic sur une carte en fait le bien courant et ouvre sa Synthèse. Toutes les autres pages (Mouvements, Synthèse, Fiscalité, Simulations, Mon bien) montrent le bien courant, avec un titre-sélecteur : le nom du bien, dans le titre de la page, est un menu déroulant qui change le bien courant (avec un seul bien, c'est un simple texte). Le bien courant est mémorisé dans le navigateur ; un lien vers les mouvements d'un bien le rend courant.
+**Règle multi-biens (écrans).** L'Accueil est la seule page qui montre tous les biens : une carte par bien (nom, type de location, régime fiscal). Un clic sur une carte en fait le bien courant et ouvre sa Synthèse. Toutes les autres pages (Synthèse, Budget, Simulations, Fiscalité, Mon bien, Opérations) montrent le bien courant, avec un titre-sélecteur : le nom du bien, dans le titre de la page, est un menu déroulant qui change le bien courant (avec un seul bien, c'est un simple texte). Le bien courant est mémorisé dans le navigateur ; un lien vers les opérations d'un bien le rend courant.
 
 ## Roadmap
 
 | Itération | Contenu | Période (2026) |
 | --- | --- | --- |
 | 0 · Mise en place | Dépôt, outils, jeu de test anonymisé, squelette | 31 octobre au 6 novembre |
-| 1 · Biens et mouvements | US01, US03, US18 | 9 au 13 novembre |
+| 1 · Biens et opérations | US01, US03, US18 | 9 au 13 novembre |
 | 2 · Prêt et synthèse | US07, US08 | 16 au 20 novembre |
 | 3 · Fiscalité LMNP réel | US09, contrôle sur l'Excel | 23 au 27 novembre |
 | 4 · Simulations | US11, US12 | 30 novembre au 4 décembre |

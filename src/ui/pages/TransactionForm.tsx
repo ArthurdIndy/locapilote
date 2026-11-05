@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { db } from '../../db/database';
 import type { Dataset, Transaction } from '../../engine/types';
 import { CategoryPicker } from '../components/CategoryPicker';
@@ -6,17 +6,19 @@ import { centsToInput, formatEuros, parseEurosInput } from '../format';
 
 interface Props {
   data: Dataset;
-  /** Mouvement à modifier, ou null pour une nouvelle saisie. */
+  /** Opération à modifier, ou null pour une nouvelle saisie. */
   initial: Transaction | null;
   defaultPropertyId: string;
   today: string;
   onClose: () => void;
   onSaved: (message: string) => void;
+  /** Affiché à droite du titre du formulaire (lien « Toutes les opérations »). */
+  aside?: ReactNode;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Compte du dernier mouvement (par date) de ce bien : souvent le bon pour la saisie suivante. */
+/** Compte de la dernière opération (par date) de ce bien : souvent le bon pour la saisie suivante. */
 function lastAccount(data: Dataset, propertyId: string): string {
   let last: Transaction | null = null;
   for (const t of data.transactions) {
@@ -32,6 +34,7 @@ export function TransactionForm({
   today,
   onClose,
   onSaved,
+  aside,
 }: Props) {
   const propertyId0 = initial?.propertyId ?? defaultPropertyId;
   const [date, setDate] = useState(initial?.date ?? today);
@@ -91,11 +94,11 @@ export function TransactionForm({
     const category = data.categories.find((c) => c.id === categoryId);
     const summary = `${category?.name ?? ''} · ${formatEuros(cents)}`;
     if (initial) {
-      onSaved(`Mouvement modifié (${summary}).`);
+      onSaved(`Opération modifiée (${summary}).`);
       onClose();
     } else {
       // On garde date, bien et compte pour enchaîner les saisies.
-      onSaved(`Mouvement enregistré (${summary}). Tu peux saisir le suivant.`);
+      onSaved(`Opération enregistrée (${summary}). Tu peux saisir la suivante.`);
       setCategoryId(null);
       setLabel('');
       setAmount('');
@@ -107,7 +110,10 @@ export function TransactionForm({
 
   return (
     <form className="card form" onSubmit={submit} noValidate>
-      <h2>{initial ? 'Modifier le mouvement' : 'Nouveau mouvement'}</h2>
+      <div className="toolbar form-title">
+        <h2>{initial ? 'Modifier l’opération' : 'Nouvelle opération'}</h2>
+        {aside}
+      </div>
       <div className="row">
         <label className="field">
           <span>Date</span>

@@ -266,12 +266,12 @@ export function parseSeed(raw: RawSeed): Dataset {
 
   const transactions = raw.mouvements.map((m, index) => {
     if (!categoryIds.has(m.categorie)) {
-      throw new Error(`Mouvement ${index + 1} : catégorie inconnue « ${m.categorie} »`);
+      throw new Error(`Opération ${index + 1} : catégorie inconnue « ${m.categorie} »`);
     }
     return {
       id: `T${String(index + 1).padStart(4, '0')}`,
-      propertyId: checkProperty(m.bien, `Mouvement ${index + 1}`),
-      date: isoDate(m.date, `Mouvement ${index + 1}`),
+      propertyId: checkProperty(m.bien, `Opération ${index + 1}`),
+      date: isoDate(m.date, `Opération ${index + 1}`),
       account: m.compte,
       categoryId: m.categorie,
       label: m.libelle,

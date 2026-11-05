@@ -60,11 +60,13 @@ export async function createProperty(
 }
 
 /**
- * Va sur une page par le menu : la barre de navigation (en bas de l'écran sur téléphone), ou,
- * pour les entrées qui n'y sont pas sur téléphone (« Mon bien », « ⚙ Paramètres »), le menu ☰.
+ * Va sur une page par le menu : la barre de navigation (Accueil, Synthèse, Budget, Simulations,
+ * et sur ordinateur Fiscalité et Mon bien, à droite), ou, sur téléphone, le menu ☰ pour les
+ * entrées qui ne sont pas en onglets. « Opérations » : la liste de toutes les opérations.
  */
 export async function goTo(page: Page, label: string): Promise<void> {
   if (label === 'Paramètres') return openSettings(page);
+  if (label === 'Opérations') return goToTransactions(page);
   const link = page
     .getByRole('navigation', { name: 'Navigation principale' })
     .getByRole('link', { name: label, exact: true });
@@ -74,6 +76,34 @@ export async function goTo(page: Page, label: string): Promise<void> {
     .getByRole('navigation', { name: 'Menu' })
     .getByRole('link', { name: label, exact: true })
     .click();
+}
+
+/** Ouvre le formulaire de saisie par le bouton « + Opération » (en haut de chaque page). */
+export async function openNewTransaction(page: Page): Promise<void> {
+  await page.getByRole('link', { name: '+ Opération', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Nouvelle opération' })).toBeVisible();
+}
+
+/**
+ * Ouvre la liste de toutes les opérations : par le menu ☰ sur téléphone ; sur ordinateur, par
+ * le lien « Toutes les opérations » à côté du formulaire de saisie.
+ */
+export async function goToTransactions(page: Page): Promise<void> {
+  const menuButton = page.getByRole('button', { name: 'Menu' });
+  if (await menuButton.isVisible()) {
+    await openPhoneMenu(page);
+    await page
+      .getByRole('navigation', { name: 'Menu' })
+      .getByRole('link', { name: 'Toutes les opérations', exact: true })
+      .click();
+  } else {
+    // Le formulaire est peut-être déjà ouvert (le bouton est alors « × Fermer »).
+    if (!(await page.getByRole('link', { name: 'Toutes les opérations ›' }).isVisible())) {
+      await openNewTransaction(page);
+    }
+    await page.getByRole('link', { name: 'Toutes les opérations ›' }).click();
+  }
+  await expect(page.getByRole('heading', { level: 2, name: /^Opérations/ })).toBeVisible();
 }
 
 /** Ouvre le menu ☰ (téléphone). */

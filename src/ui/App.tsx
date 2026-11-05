@@ -5,7 +5,9 @@ import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
 import { CurrentPropertyContext } from './propertyContext';
 import { todayIso } from './format';
+import { BudgetPage } from './pages/BudgetPage';
 import { HomePage } from './pages/HomePage';
+import { NewTransactionPage } from './pages/NewTransactionPage';
 import { MyPropertyPage } from './pages/MyPropertyPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SimulationsPage } from './pages/SimulationsPage';
@@ -13,7 +15,15 @@ import { SynthesisPage } from './pages/SynthesisPage';
 import { TaxPage } from './pages/TaxPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { WelcomePage } from './pages/WelcomePage';
-import { MAIN_NAV, routeHref, useLocation, type Location, type RouteId } from './router';
+import {
+  goBack,
+  MAIN_NAV,
+  routeHref,
+  SECONDARY_NAV,
+  useLocation,
+  type Location,
+  type RouteId,
+} from './router';
 
 type LoadState =
   { status: 'ready'; initialized: boolean; data: Dataset } | { status: 'error'; message: string };
@@ -71,19 +81,24 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
   const { current, setCurrentId } = useCurrentProperty(data.properties);
   const today = todayIso();
 
-  // Un lien vers les mouvements d'un bien (#/mouvements?bien=…) rend ce bien courant.
-  const requestedId = params.get('bien');
+  // Un lien vers les opérations d'un bien (#/operations?bien=…) rend ce bien courant.
+  // Relu à chaque changement d'adresse, même quand on revient sur le même lien après avoir
+  // changé de bien entre-temps.
   useEffect(() => {
+    const requestedId = location.params.get('bien');
     if (requestedId && data.properties.some((p) => p.id === requestedId)) {
       setCurrentId(requestedId);
     }
-  }, [requestedId, data.properties, setCurrentId]);
+  }, [location, data.properties, setCurrentId]);
 
   return (
     <CurrentPropertyContext.Provider value={{ properties: data.properties, current, setCurrentId }}>
       <Layout route={route}>
         {route === 'accueil' && <HomePage data={data} onOpen={setCurrentId} />}
-        {route === 'mouvements' && (
+        {route === 'nouvelle-operation' && (
+          <NewTransactionPage data={data} currentPropertyId={current?.id ?? null} today={today} />
+        )}
+        {route === 'operations' && (
           <TransactionsPage
             key={location.key}
             data={data}
@@ -93,6 +108,7 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
           />
         )}
         {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
+        {route === 'budget' && <BudgetPage property={current} />}
         {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
         {route === 'simulations' && (
           <SimulationsPage data={data} property={current} today={today} />
@@ -117,11 +133,42 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-/** Entrées du menu ☰ (téléphone) : celles qui ne sont pas en onglets, puis ⚙. */
+/** Entrées du menu ☰ (téléphone) : tout ce qui n'est pas en onglet, puis ⚙. */
 const PHONE_MENU: readonly { id: RouteId; label: string }[] = [
-  ...MAIN_NAV.filter((r) => !r.phoneTab),
+  ...SECONDARY_NAV,
+  { id: 'operations', label: 'Toutes les opérations' },
   { id: 'parametres', label: '⚙ Paramètres' },
 ];
+
+/**
+ * Bouton « + Opération » : ouvre directement le formulaire de saisie, depuis toute page. Tant que
+ * le formulaire est ouvert, il devient « × Fermer » (enfoncé) : un nouveau clic le referme et
+ * ramène à la page d'où l'on vient, comme le bouton « Fermer » du formulaire.
+ */
+function NewTransactionLink({ route, className }: { route: RouteId; className: string }) {
+  if (route === 'nouvelle-operation') {
+    return (
+      <button
+        type="button"
+        className={`${className} new-transaction-link pressed`}
+        aria-pressed="true"
+        title="Fermer la saisie et revenir à la page précédente"
+        onClick={goBack}
+      >
+        × Fermer
+      </button>
+    );
+  }
+  return (
+    <a
+      className={`${className} new-transaction-link`}
+      href={routeHref('nouvelle-operation')}
+      title="Saisir une recette ou une dépense"
+    >
+      + Opération
+    </a>
+  );
+}
 
 function Layout({ route, children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -142,35 +189,26 @@ function Layout({ route, children }: LayoutProps) {
     <div className="page">
       <header className="header">
         <div className="header-top">
-          <div>
+          <div className="brand">
             <h1>Locapilote</h1>
             <p className="tagline">Piloter un logement en location</p>
           </div>
-          <div className="header-tools">
-            {route && (
-              <>
-                <a
-                  className="settings-link"
-                  href={routeHref('parametres')}
-                  aria-label="Paramètres"
-                  title="Paramètres : données (export, import, jeu de test)"
-                  aria-current={route === 'parametres' ? 'page' : undefined}
-                >
-                  ⚙
-                </a>
-                <button
-                  type="button"
-                  className={inPhoneMenu ? 'menu-button active' : 'menu-button'}
-                  aria-label="Menu"
-                  aria-expanded={menuOpen}
-                  aria-controls="menu-telephone"
-                  onClick={() => setMenuOpen((open) => !open)}
-                >
-                  ☰
-                </button>
-              </>
-            )}
-          </div>
+          {route && (
+            <div className="header-tools">
+              {/* Téléphone : « + Opération » et ☰ dans la barre du haut. */}
+              <NewTransactionLink route={route} className="button primary phone-only" />
+              <button
+                type="button"
+                className={inPhoneMenu ? 'menu-button active' : 'menu-button'}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                aria-controls="menu-telephone"
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                ☰
+              </button>
+            </div>
+          )}
         </div>
         {route && menuOpen && (
           <nav id="menu-telephone" className="phone-menu" aria-label="Menu">
@@ -191,7 +229,6 @@ function Layout({ route, children }: LayoutProps) {
             {MAIN_NAV.map((r) => (
               <a
                 key={r.id}
-                className={r.phoneTab ? undefined : 'nav-secondary'}
                 href={routeHref(r.id)}
                 aria-current={r.id === route ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}
@@ -199,6 +236,28 @@ function Layout({ route, children }: LayoutProps) {
                 {r.label}
               </a>
             ))}
+            {/* Ordinateur : à droite, plus discret. Sur téléphone, dans le menu ☰. */}
+            <span className="nav-secondary">
+              {SECONDARY_NAV.map((r) => (
+                <a
+                  key={r.id}
+                  href={routeHref(r.id)}
+                  aria-current={r.id === route ? 'page' : undefined}
+                >
+                  {r.label}
+                </a>
+              ))}
+              <NewTransactionLink route={route} className="button primary small" />
+              <a
+                className="settings-link"
+                href={routeHref('parametres')}
+                aria-label="Paramètres"
+                title="Paramètres : données (export, import, jeu de test)"
+                aria-current={route === 'parametres' ? 'page' : undefined}
+              >
+                ⚙
+              </a>
+            </span>
           </nav>
         )}
       </header>

@@ -168,17 +168,17 @@ function checkDataset(data: Dataset): void {
   );
 
   for (const t of data.transactions) {
-    if (!isString(t.id)) fail('un mouvement n’a pas d’identifiant.');
-    if (!propertyIds.has(t.propertyId)) fail(`le mouvement ${t.id} renvoie à un bien inconnu.`);
+    if (!isString(t.id)) fail('une opération n’a pas d’identifiant.');
+    if (!propertyIds.has(t.propertyId)) fail(`l’opération ${t.id} renvoie à un bien inconnu.`);
     if (!categoryIds.has(t.categoryId)) {
-      fail(`le mouvement ${t.id} renvoie à une catégorie inconnue.`);
+      fail(`l’opération ${t.id} renvoie à une catégorie inconnue.`);
     }
-    if (!isDate(t.date)) fail(`date invalide pour le mouvement ${t.id}.`);
-    if (!isCents(t.amount)) fail(`montant invalide pour le mouvement ${t.id}.`);
+    if (!isDate(t.date)) fail(`date invalide pour l’opération ${t.id}.`);
+    if (!isCents(t.amount)) fail(`montant invalide pour l’opération ${t.id}.`);
   }
   unique(
     data.transactions.map((t) => t.id),
-    'les mouvements',
+    'les opérations',
   );
 
   for (const l of data.loans) {

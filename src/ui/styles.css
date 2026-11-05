@@ -51,7 +51,7 @@ body {
 }
 
 .page {
-  max-width: 820px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
@@ -163,10 +163,76 @@ h3 {
 
 .nav {
   display: flex;
+  align-items: center;
   gap: 4px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+}
+
+/* À droite du menu, plus petit et plus discret : Fiscalité, Mon bien, « + Opération », ⚙. */
+.nav-secondary {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.nav .nav-secondary a:not(.button, .settings-link) {
+  padding: 10px 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.nav .nav-secondary .button {
+  margin-left: 6px;
+  padding: 6px 12px;
+  border-bottom: none;
+  color: var(--surface);
+  white-space: nowrap;
+}
+
+.nav .nav-secondary .settings-link {
+  width: 36px;
+  height: 36px;
+  margin-left: 6px;
+  padding: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav .nav-secondary .settings-link[aria-current='page'] {
+  border-color: var(--accent);
+}
+
+.brand {
+  min-width: 0;
+}
+
+.phone-only,
+.button.phone-only {
+  display: none;
+}
+
+/* « × Fermer » : le bouton « + Opération » enfoncé, tant que le formulaire est ouvert. */
+.button.new-transaction-link.pressed {
+  background: var(--surface);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.15);
+}
+
+.nav .nav-secondary .button.pressed {
+  color: var(--accent);
+}
+
+/* Lien « Toutes les opérations », à droite du titre du formulaire de saisie. */
+.form-title {
+  margin-bottom: 4px;
+}
+
+.all-transactions-link {
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .nav a {
@@ -570,7 +636,7 @@ details summary {
   margin: 4px 0 0;
 }
 
-/* ---------- Mouvements ---------- */
+/* ---------- Opérations ---------- */
 
 .filters {
   display: flex;
@@ -686,22 +752,50 @@ details summary {
   }
 
   /*
-   * Téléphone : trois onglets seulement (Accueil, Mouvements, Simulations), qui tiennent sur
-   * 375 px sans défilement. Synthèse, Fiscalité, Mon bien et ⚙ passent dans le menu ☰.
+   * Téléphone : quatre onglets (Accueil, Synthèse, Budget, Simulations), qui tiennent sur
+   * 375 px sans défilement. « + Opération » et ☰ sont dans la barre du haut ; Fiscalité,
+   * Mon bien, Toutes les opérations et ⚙ passent dans le menu ☰.
    */
   .nav {
     gap: 0;
   }
 
-  .nav a {
-    flex: 1 1 0;
-    padding: 10px 4px;
+  .nav > a {
+    flex: 1 1 auto;
+    padding: 10px 2px;
     text-align: center;
+    font-size: 0.95rem;
   }
 
-  .nav a.nav-secondary,
-  .settings-link {
+  .nav-secondary {
     display: none;
+  }
+
+  .phone-only,
+  .button.phone-only {
+    display: inline-flex;
+  }
+
+  .header-top {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .header-tools {
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-tools .button {
+    height: 44px;
+    padding: 0 12px;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .tagline {
+    margin-bottom: 8px;
+    font-size: 0.85rem;
   }
 
   .menu-button {
@@ -1235,7 +1329,7 @@ ul.warning {
   font-size: 0.9rem;
 }
 
-/* ---------- Titre-sélecteur : « Mouvements · Bien 22 ▾ », sur une seule ligne ---------- */
+/* ---------- Titre-sélecteur : « Opérations · Bien 22 ▾ », sur une seule ligne ---------- */
 
 .property-title {
   position: relative;
@@ -1353,24 +1447,7 @@ ul.warning {
   white-space: normal;
 }
 
-/* Au-delà de 4 scénarios : barre de défilement fine, libellés fixés à gauche. */
-.sale-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
-}
-
-.sale-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.sale-scroll::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 3px;
-}
-
-.sale-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Au-delà de 4 scénarios : la table défile (barre fine commune), libellés fixés à gauche. */
 
 .sale-table th[scope='row'],
 .sale-table thead th:first-child {
@@ -1526,4 +1603,53 @@ ul.warning {
   font-size: 0.8rem;
   font-style: italic;
   color: var(--muted);
+}
+
+/* Synthèse sur ordinateur : fenêtre de 3 ans, « ‹ 2021–2023 » à gauche, « 2024–2026 › » à droite. */
+.year-window {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.year-window-next {
+  margin-left: auto;
+}
+
+/*
+ * Synthèse sur ordinateur : la colonne des libellés prend la largeur de son plus long libellé,
+ * sur une ligne (la même quelle que soit la fenêtre d'années, et quelle que soit la police) ;
+ * les colonnes d'années se partagent le reste.
+ */
+.synthesis-years th[scope='row'] {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.table-note {
+  margin: 8px 0 0;
+}
+
+/*
+ * Barres de défilement : partout, la barre fine aux couleurs du thème (au lieu de la barre
+ * blanche par défaut du navigateur). Un seul style commun.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
 }

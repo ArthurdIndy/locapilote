@@ -59,7 +59,10 @@ function isOperatingExpense(category: Category, property: Property): boolean {
 
 /**
  * Mois de location de l'année : jours de MAX(1er janvier, mise en location) à
- * MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, / (365 / 12).
+ * MIN(31 décembre, fin du mois de la date de mise à jour), bornes incluses, / (365 / 12),
+ * plafonnés à 12 : une année entière compte 12 mois, y compris bissextile (366 jours). Comme
+ * dans l'Excel, une période partielle d'année bissextile reste en base 365 (au plus 1 jour
+ * d'écart).
  */
 export function rentalMonths(year: number, rentalStart: IsoDate | null, dataAsOf: IsoDate): number {
   if (!rentalStart) return 0;
@@ -67,7 +70,7 @@ export function rentalMonths(year: number, rentalStart: IsoDate | null, dataAsOf
   const lastDataDay = endOfMonth(dataAsOf);
   const to = lastDataDay < `${year}-12-31` ? lastDataDay : `${year}-12-31`;
   const days = daysBetween(from, to) + 1;
-  return days > 0 ? days / (365 / 12) : 0;
+  return days > 0 ? Math.min(12, days / (365 / 12)) : 0;
 }
 
 /** Années affichées : de l'année de mise en location à celle de la date de mise à jour. */

@@ -3,28 +3,36 @@ import { useEffect, useState } from 'react';
 /** Toutes les pages de l'application. */
 export const ROUTES = [
   { id: 'accueil', label: 'Accueil' },
-  { id: 'mouvements', label: 'Mouvements' },
   { id: 'synthese', label: 'Synthèse' },
-  { id: 'fiscalite', label: 'Fiscalité' },
+  { id: 'budget', label: 'Budget' },
   { id: 'simulations', label: 'Simulations' },
+  { id: 'fiscalite', label: 'Fiscalité' },
   { id: 'mon-bien', label: 'Mon bien' },
+  { id: 'nouvelle-operation', label: 'Nouvelle opération' },
+  { id: 'operations', label: 'Toutes les opérations' },
   { id: 'parametres', label: 'Paramètres' },
 ] as const;
 
 export type RouteId = (typeof ROUTES)[number]['id'];
 
 /**
- * Les 6 entrées du menu principal, toutes visibles sur ordinateur. Sur téléphone, seules
- * celles marquées `phoneTab` restent en onglets (elles tiennent sur 375 px) ; les autres
- * passent dans le menu ☰, avec ⚙ Paramètres.
+ * Menu principal, dans l'ordre « maintenant, puis passé, présent, futur ». Ces 4 entrées sont à
+ * gauche sur ordinateur, et en onglets en haut sur téléphone.
  */
-export const MAIN_NAV: readonly { id: RouteId; label: string; phoneTab: boolean }[] = [
-  { id: 'accueil', label: 'Accueil', phoneTab: true },
-  { id: 'mouvements', label: 'Mouvements', phoneTab: true },
-  { id: 'synthese', label: 'Synthèse', phoneTab: false },
-  { id: 'fiscalite', label: 'Fiscalité', phoneTab: false },
-  { id: 'simulations', label: 'Simulations', phoneTab: true },
-  { id: 'mon-bien', label: 'Mon bien', phoneTab: false },
+export const MAIN_NAV: readonly { id: RouteId; label: string }[] = [
+  { id: 'accueil', label: 'Accueil' },
+  { id: 'synthese', label: 'Synthèse' },
+  { id: 'budget', label: 'Budget' },
+  { id: 'simulations', label: 'Simulations' },
+];
+
+/**
+ * Entrées de second plan : à droite du menu sur ordinateur, plus discrètes (suivies du bouton
+ * « + Opération » et de ⚙) ; dans le menu ☰ sur téléphone.
+ */
+export const SECONDARY_NAV: readonly { id: RouteId; label: string }[] = [
+  { id: 'fiscalite', label: 'Fiscalité' },
+  { id: 'mon-bien', label: 'Mon bien' },
 ];
 
 /** Sections de la fiche « Mon bien » (paramètre `section` de l'adresse). */
@@ -45,11 +53,22 @@ const LEGACY_ROUTES: Record<string, { route: RouteId; params?: Record<string, st
   pret: { route: 'mon-bien', params: { section: 'pret' } },
   immobilisations: { route: 'mon-bien', params: { section: 'immobilisations' } },
   donnees: { route: 'parametres' },
+  // « Mouvements » est devenu « opérations » (itération 4b) ; les filtres sont conservés.
+  mouvements: { route: 'operations' },
 };
+
+/** Vrai dès qu'on a changé de page dans l'application : « retour » y reste. */
+let navigatedInApp = false;
+
+/** Revient à la page précédente de l'application, ou à l'Accueil si on vient d'ailleurs. */
+export function goBack(): void {
+  if (navigatedInApp) window.history.back();
+  else window.location.hash = routeHref('accueil');
+}
 
 export interface Location {
   route: RouteId;
-  /** Paramètres après « ? » (#/mouvements?annee=2024), pour arriver sur une vue filtrée. */
+  /** Paramètres après « ? » (#/operations?annee=2024), pour arriver sur une vue filtrée. */
   params: URLSearchParams;
   /** Adresse complète après « # », pour remonter un écran quand ses paramètres changent. */
   key: string;
@@ -81,6 +100,7 @@ export function useLocation(): Location {
   const [location, setLocation] = useState(readLocation);
   useEffect(() => {
     const onChange = () => {
+      navigatedInApp = true;
       setLocation(readLocation());
       window.scrollTo(0, 0);
     };

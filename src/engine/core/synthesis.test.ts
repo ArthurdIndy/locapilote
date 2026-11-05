@@ -79,6 +79,17 @@ describe('mois de location', () => {
     expect(rentalMonths(2025, '2024-05-18', '2026-10-25')).toBe(12);
   });
 
+  it('une année bissextile entièrement louée compte exactement 12 mois', () => {
+    // 2024 : 366 jours, soit 12,03 mois en base 365/12, plafonnés à 12.
+    expect(rentalMonths(2024, '2023-06-01', '2026-10-25')).toBe(12);
+    expect(rentalMonths(2024, '2024-01-01', '2026-10-25')).toBe(12);
+    expect(rentalMonths(2028, '2024-05-18', '2028-12-31')).toBe(12);
+  });
+
+  it('le jeu de test 2024 (période partielle, année bissextile) reste inchangé', () => {
+    expect(rentalMonths(2024, '2024-05-18', '2026-10-25')).toBeCloseTo(7.49589, 5);
+  });
+
   it("s'arrête à la fin du mois de la date de mise à jour", () => {
     expect(rentalMonths(2026, '2024-05-18', '2026-10-25')).toBeCloseTo((304 * 12) / 365, 10);
   });
