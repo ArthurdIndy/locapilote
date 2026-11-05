@@ -40,7 +40,7 @@ export const BUDGET_EXPENSE_LINES: readonly BudgetLine[] = BUDGET_LINES.filter(
 
 /**
  * Groupe de synthèse des catégories → ligne du budget. Un groupe absent de cette table (par
- * exemple « Autres charges » : frais bancaires, autres charges) va dans « Autres dépenses ».
+ * exemple « Autres charges ») va dans « Autres dépenses », sauf les frais bancaires.
  */
 const GROUP_LINES: Readonly<Record<string, BudgetLine>> = {
   Copropriété: 'coOwnership',
@@ -57,14 +57,21 @@ const GROUP_LINES: Readonly<Record<string, BudgetLine>> = {
  */
 const WORKS = /travaux/i;
 
+/**
+ * Frais bancaires : dépense régulière, dans « Gestion et comptable » (décision d'Arthur du
+ * 05/11/2026), alors que leur groupe de synthèse est « Autres charges ». Repérés par leur nom
+ * en attendant un marqueur dédié (US02).
+ */
+const BANK_FEES = /frais bancaires/i;
+
 function treatmentFor(category: Category, property: Property): TaxTreatment | undefined {
   return category.taxTreatment[property.taxRegime] ?? category.taxTreatment['lmnp-reel'];
 }
 
 /**
  * Ligne du budget d'une catégorie : toutes les recettes dans « Loyers et charges perçus » ;
- * investissements à amortir, dépenses à qualifier et travaux dans « Autres dépenses » ; les
- * autres dépenses selon leur groupe. `null` : transfert ou dépôt de garantie (hors budget).
+ * investissements à amortir, dépenses à qualifier et travaux dans « Autres dépenses » ; frais
+ * bancaires dans « Gestion et comptable » ; les autres dépenses selon leur groupe. `null` : transfert ou dépôt de garantie (hors budget).
  */
 export function budgetLineOf(category: Category, property: Property): BudgetLine | null {
   if (category.direction === 'income') return 'income';
@@ -73,6 +80,7 @@ export function budgetLineOf(category: Category, property: Property): BudgetLine
   if (treatment === 'depreciable' || treatment === 'to-review' || WORKS.test(category.name)) {
     return 'other';
   }
+  if (BANK_FEES.test(category.name)) return 'management';
   return GROUP_LINES[category.group] ?? 'other';
 }
 

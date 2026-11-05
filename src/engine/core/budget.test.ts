@@ -115,7 +115,7 @@ describe('rattachement des catégories aux lignes du budget', () => {
       CFE: 'taxes',
       'Entretien et réparations': 'insuranceMaintenance',
       'Petit équipement': 'insuranceMaintenance',
-      'Frais bancaires': 'other',
+      'Frais bancaires': 'management',
       'Autres charges': 'other',
       'Équipement / mobilier (à amortir)': 'other',
       "Travaux d'amélioration (à amortir)": 'other',
@@ -125,6 +125,23 @@ describe('rattachement des catégories aux lignes du budget', () => {
       'Dépôt de garantie reçu': null,
       'Dépôt de garantie restitué': null,
     });
+  });
+});
+
+describe('frais bancaires (dépense régulière)', () => {
+  it('comptent dans « Gestion et comptable », prévus à l’année précédente + 1,5 %', () => {
+    // 2025 : 12 × 10 € de frais bancaires et 50 € d'autres charges.
+    const transactions = [
+      ...Array.from({ length: 12 }, (_, m) =>
+        tx(`2025-${String(m + 1).padStart(2, '0')}-28`, 'Frais bancaires', 1_000),
+      ),
+      tx('2025-06-15', 'Autres charges', 5_000),
+    ];
+    const data = dataset(transactions);
+    const b = yearBudget(data, data.properties[0]!, 2026, '2026-06-30', GROWTH);
+    expect(row(b, 'management')).toMatchObject({ previous: 12_000, planned: 12_180 });
+    // « Autres charges » reste dans « Autres dépenses » : prévu à 0.
+    expect(row(b, 'other')).toMatchObject({ previous: 5_000, planned: 0 });
   });
 });
 

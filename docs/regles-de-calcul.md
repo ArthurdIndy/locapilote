@@ -218,10 +218,10 @@ Moteur : `src/engine/core/budget.ts` (socle commun, indépendant du régime). É
 | --- | --- |
 | Loyers et charges perçus | toutes les recettes : loyer hors charges, provisions sur charges, régularisation de charges, taxe d'ordures ménagères refacturée, autres recettes |
 | Copropriété ✎ | groupe « Copropriété » (charges de copropriété) |
-| Gestion et comptable ✎ | groupe « Frais de gestion » : honoraires de gestion, de mise en location, du comptable |
+| Gestion et comptable ✎ | groupe « Frais de gestion » : honoraires de gestion, de mise en location, du comptable ; et les frais bancaires (dépense régulière, décision d'Arthur du 05/11/2026), repérés par leur nom en attendant un marqueur dédié (US02) |
 | Impôts et taxes ✎ | groupe « Impôts et taxes » : taxe foncière, CFE |
 | Assurances et entretien ✎ | groupes « Assurances » et « Entretien et petit équipement » : assurance PNO, entretien et réparations, petit équipement |
-| Autres dépenses ✎ | investissements à amortir, dépenses à qualifier, catégories de travaux (honoraires sur travaux), et tout autre groupe de dépense (« Autres charges » : frais bancaires, autres charges) |
+| Autres dépenses ✎ | investissements à amortir, dépenses à qualifier, catégories de travaux (honoraires sur travaux), et tout autre groupe de dépense (« Autres charges » : catégorie autres charges ; les frais bancaires vont dans « Gestion et comptable ») |
 | Prêt (échéances) | échéances de tous les prêts du bien, d'après l'échéancier (pas de ✎) |
 | À sortir de ta poche | dépenses + prêt − loyers (en gras) |
 
@@ -256,4 +256,4 @@ Montants arrondis à l'euro dans le tableau. Détail ⊕ d'une ligne modifiable 
 
 **Lien avec la simulation de vente** : voir § 6 (loyer net et dépenses projetés d'après le budget).
 
-**Point d'attention** : les lignes non modifiées d'un budget passé restent calculées (N−1 réel × (1 + évolution)) ; elles ne bougent que si l'on change l'évolution annuelle des Paramètres de vente ou les opérations de N−1. Seules les valeurs modifiées sont enregistrées.
+**Budget d'une année passée** (décision d'Arthur du 05/11/2026) : seules les valeurs modifiées (✎) sont enregistrées, et elles ne sont jamais recalculées. Les lignes non modifiées restent calculées à chaque affichage (N−1 réel × (1 + évolution)) : elles changent si l'on modifie l'évolution annuelle des Paramètres de vente ou les opérations de l'année N−1. Ce comportement est voulu.
