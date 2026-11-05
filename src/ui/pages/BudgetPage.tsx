@@ -17,6 +17,7 @@ import { PropertyTitle } from '../components/PropertyTitle';
 import { centsToInput, formatDate, parseEurosInput } from '../format';
 import { BUDGET_LINE_SLUGS, BUDGET_ROW_LABELS } from '../labels';
 import { useOpenDetails } from '../openDetails';
+import { initialViewValue, rememberViewValue } from '../viewMemory';
 import { propertyHref, routeHref } from '../router';
 import { assumptionsOf } from '../saleSummary';
 import { percentToInput } from '../valueFormat';
@@ -25,7 +26,13 @@ interface Props {
   data: Dataset;
   property: Property | null;
   today: string;
+  /** Paramètres de l'adresse : `annee=2025`, l'année affichée. */
+  params?: URLSearchParams;
 }
+
+/** Année affichée dans l'adresse et pour la session (voir `viewMemory.ts`). */
+const YEAR_PARAM = 'annee';
+const YEAR_KEY = 'locapilote.budget.annee';
 
 const euroRounded = new Intl.NumberFormat('fr-FR', {
   style: 'currency',
@@ -84,7 +91,7 @@ const ROW_HELP: Partial<Record<BudgetRowId, string>> = {
 };
 
 /** Budget (US12) : l'année en cours du bien courant, prévu, réalisé et écarts. */
-export function BudgetPage({ data, property, today }: Props) {
+export function BudgetPage({ data, property, today, params }: Props) {
   if (!property) {
     return (
       <section className="card">
@@ -100,7 +107,7 @@ export function BudgetPage({ data, property, today }: Props) {
     <div className="stack">
       <PropertyTitle title="Budget" />
       {/* Un bien à la fois : changer de bien revient à l'année en cours. */}
-      <BudgetView key={property.id} data={data} property={property} today={today} />
+      <BudgetView key={property.id} data={data} property={property} today={today} params={params} />
     </div>
   );
 }
@@ -109,16 +116,23 @@ function BudgetView({
   data,
   property,
   today,
+  params,
 }: {
   data: Dataset;
   property: Property;
   today: string;
+  params: URLSearchParams | undefined;
 }) {
   const details = useOpenDetails('locapilote.budget.detailsOuverts');
   const asOf = effectiveDataAsOf(data.assumptions, property.id, today).date;
   const dataYear = yearOf(asOf);
   const years = budgetYears(property, asOf);
-  const [chosen, setChosen] = useState(dataYear);
+  // Année affichée : celle de l'adresse, sinon la dernière de la session, sinon l'année en cours
+  // (une année hors de la liste revient aussi à l'année en cours).
+  const [chosen, setChosen] = useState(() => {
+    const value = Number(initialViewValue(params, YEAR_PARAM, YEAR_KEY));
+    return Number.isInteger(value) && value > 0 ? value : dataYear;
+  });
   const [editing, setEditing] = useState<BudgetLine | null>(null);
 
   if (years.length === 0) {
@@ -196,6 +210,7 @@ function BudgetView({
             onChange={(e) => {
               setEditing(null);
               setChosen(Number(e.target.value));
+              rememberViewValue('budget', YEAR_PARAM, e.target.value, YEAR_KEY);
             }}
           >
             {years.map((y) => (

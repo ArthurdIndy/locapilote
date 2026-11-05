@@ -424,3 +424,88 @@ test('bien sans date de mise en location : invitation à la saisir', async ({ pa
   await goTo(page, 'Budget');
   await expect(page.getByText(/Indique la date de mise en location du bien/)).toBeVisible();
 });
+
+test('année du budget : gardée par le retour du navigateur, le menu et l’adresse', async ({
+  page,
+}, testInfo) => {
+  const phone = isPhone(testInfo);
+  await startWithTestData(page);
+  await goToBudget(page);
+  const select = page.getByLabel('Année du budget');
+  await select.selectOption('2025');
+  await expect(page).toHaveURL(/#\/budget\?annee=2025$/);
+
+  if (!phone) {
+    // Lien ⊕ vers les opérations, puis retour du navigateur : Budget 2025.
+    await page.getByRole('button', { name: 'Copropriété', exact: true }).click();
+    await page.getByRole('link', { name: 'Voir les opérations 2025 ›' }).click();
+    await expect(page.getByText('Ligne « Copropriété » du budget.')).toBeVisible();
+  } else {
+    // Téléphone (pas de ⊕) : on passe par le menu ☰.
+    await goTo(page, 'Opérations');
+  }
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/budget\?annee=2025$/);
+  await expect(select).toHaveValue('2025');
+  await expect(page.locator('table[aria-label="Budget 2025"]')).toHaveCount(1);
+
+  // Menu Opérations, puis menu Budget (adresse sans année) : la dernière année de la session.
+  await goTo(page, 'Opérations');
+  await goTo(page, 'Budget');
+  await expect(page).toHaveURL(/#\/budget$/);
+  await expect(select).toHaveValue('2025');
+
+  // Un lien vers une année précise.
+  await page.goto('/#/budget?annee=2027');
+  await expect(select).toHaveValue('2027');
+
+  // Nouvelle visite (nouvel onglet, session vide) : l'année en cours.
+  const other = await page.context().newPage();
+  await other.clock.setFixedTime(new Date('2026-11-01T10:00:00'));
+  await other.goto('/');
+  await expect(other.getByRole('heading', { name: 'Appartement exemple' })).toBeVisible();
+  await goTo(other, 'Budget');
+  await expect(other.getByLabel('Année du budget')).toHaveValue('2026');
+  await other.close();
+});
+
+test('fenêtre d’années de la Synthèse : gardée par le retour du navigateur et le menu', async ({
+  page,
+}, testInfo) => {
+  test.skip(isPhone(testInfo), 'Fenêtre de 3 ans sur ordinateur seulement.');
+  await startWithTestData(page);
+  await goTo(page, 'Mon bien');
+  await page.getByRole('button', { name: 'Ajouter un bien' }).click();
+  await createProperty(page, 'Studio ancien', { rentalStart: '2020-03-15' });
+  await goTo(page, 'Synthèse');
+  const headers = page.getByRole('table', { name: 'Synthèse annuelle' }).locator('thead th');
+  await expect(headers).toHaveText(['Indicateur', '2024', '2025', '2026']);
+  await page.getByRole('button', { name: /^Années précédentes/ }).click();
+  await expect(headers).toHaveText(['Indicateur', '2021', '2022', '2023']);
+  await expect(page).toHaveURL(/#\/synthese\?annees=2021-2023$/);
+
+  // Lien d'un détail ⊕ vers les opérations, puis retour du navigateur : 2021–2023.
+  const button = page.getByRole('button', { name: 'Recettes encaissées', exact: true });
+  if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+  await page
+    .getByRole('link', { name: /^Loyers 2022 :/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/#\/operations\?.*annee=2022/);
+  await page.goBack();
+  await expect(headers).toHaveText(['Indicateur', '2021', '2022', '2023']);
+
+  // Menu Opérations, puis menu Synthèse : la fenêtre quittée.
+  await goTo(page, 'Opérations');
+  await goTo(page, 'Synthèse');
+  await expect(page).toHaveURL(/#\/synthese$/);
+  await expect(headers).toHaveText(['Indicateur', '2021', '2022', '2023']);
+  await capture(page, testInfo, 'us12-synthese-fenetre-gardee', { fullPage: false });
+
+  // Retour à la fenêtre la plus récente : retenue elle aussi.
+  await page.getByRole('button', { name: /^Années suivantes/ }).click();
+  await expect(headers).toHaveText(['Indicateur', '2024', '2025', '2026']);
+  await goTo(page, 'Budget');
+  await goTo(page, 'Synthèse');
+  await expect(headers).toHaveText(['Indicateur', '2024', '2025', '2026']);
+});

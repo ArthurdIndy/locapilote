@@ -210,7 +210,7 @@ Sources :
 
 ## 8. Budget (US12, version légère)
 
-Moteur : `src/engine/core/budget.ts` (socle commun, indépendant du régime). Écran : Budget, un bien à la fois, une année à la fois (« Budget 2026 ▾ », de l'année de mise en location à l'année suivant celle de la date des données ; par défaut l'année de la date des données). Itération 4c.
+Moteur : `src/engine/core/budget.ts` (socle commun, indépendant du régime). Écran : Budget, un bien à la fois, une année à la fois (« Budget 2026 ▾ », de l'année de mise en location à l'année suivant celle de la date des données ; par défaut l'année de la date des données). L'année affichée est dans l'adresse (`#/budget?annee=2025`) et retenue pendant la session (retour du navigateur et menu) ; une nouvelle visite repart de l'année de la date des données. Itération 4c.
 
 **Lignes** (retours de recette du 05/11/2026) : intertitre **Entrées** (loyers et charges perçus) ; intertitre **Sorties** (une ligne par groupe de catégories, puis le prêt) ; **Total des sorties** et **Cash-flow (entrées − sorties)**, en gras (« À sortir de ta poche » avant le 05/11/2026). Les intertitres ont le style de « Trésorerie » et « Rentabilité » dans la Synthèse (petites capitales bleues), sur ordinateur et sur téléphone. Même structure pour les années en cours, terminées et futures.
 

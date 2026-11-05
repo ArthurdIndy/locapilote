@@ -107,8 +107,25 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
             params={params}
           />
         )}
-        {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
-        {route === 'budget' && <BudgetPage data={data} property={current} today={today} />}
+        {/* Remontées quand l'adresse change (lien vers une autre année, retour du navigateur). */}
+        {route === 'synthese' && (
+          <SynthesisPage
+            key={location.key}
+            data={data}
+            property={current}
+            today={today}
+            params={params}
+          />
+        )}
+        {route === 'budget' && (
+          <BudgetPage
+            key={location.key}
+            data={data}
+            property={current}
+            today={today}
+            params={params}
+          />
+        )}
         {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
         {route === 'simulations' && (
           <SimulationsPage data={data} property={current} today={today} />
