@@ -74,28 +74,51 @@ async function goToBudget(page: Page): Promise<void> {
 const BUDGET_2026: [string, number, number, number, number][] = [
   ['Loyers et charges perçus', 13703.15, 13908.7, 13959.28, 50.58],
   ['Copropriété', 2426.77, 2463.17, 4085.48, 1622.31],
-  ['Gestion et comptable', 1552.24, 1575.52, 1562.98, -12.54],
+  ['Gestion et comptable', 1611.54, 1635.71, 1592.94, -42.77],
   ['Impôts et taxes', 561.72, 570.15, 885.36, 315.21],
-  ['Assurances et entretien', 500.6, 508.11, 1257.56, 749.45],
-  ['Autres dépenses', 1649.41, 0, 29.96, 29.96],
+  ['Assurances', 114.18, 115.89, 115.89, 0],
+  ['Entretien', 386.42, 392.22, 1141.67, 749.45],
+  ['Autres dépenses', 1590.11, 0, 0, 0],
   ['Prêt (échéances)', 10095.91, 10095.9, 10095.9, 0],
-  ['À sortir de ta poche', 3083.5, 1304.15, 3957.96, 2653.81],
+  ['Total des sorties', 16786.65, 15273.04, 17917.24, 2644.2],
+  ['À sortir de ta poche', 3083.5, 1364.34, 3957.96, 2593.62],
 ];
 
-test('Budget 2026 du jeu de test : une ligne par groupe, quatre colonnes', async ({
+/** Style des intertitres : celui de « Trésorerie » dans la Synthèse (petites capitales bleues). */
+const TITLE_STYLE = ['color', 'font-size', 'font-weight', 'text-transform', 'letter-spacing'];
+async function styleOf(locator: Locator): Promise<string[]> {
+  return locator.evaluate(
+    (e, props) => props.map((p) => getComputedStyle(e).getPropertyValue(p)),
+    TITLE_STYLE,
+  );
+}
+
+test('Budget 2026 du jeu de test : entrées, sorties, totaux, quatre colonnes', async ({
   page,
 }, testInfo) => {
   const phone = isPhone(testInfo);
   await startWithTestData(page);
+  // Style de référence : l'intertitre « Trésorerie » de la Synthèse.
+  await goTo(page, 'Synthèse');
+  const reference = await styleOf(
+    page.locator('.synthesis-table .section-row th', { hasText: 'Trésorerie' }),
+  );
+  expect(reference).toEqual([expect.any(String), '12.8px', '700', 'uppercase', '0.512px']);
   await goToBudget(page);
   await expect(page.getByLabel('Année du budget')).toHaveValue('2026');
   if (phone) {
-    // Une carte par ligne, « À sortir de ta poche » en premier.
-    const cards = page.locator('.budget-card h3');
-    await expect(cards).toHaveText([
-      'À sortir de ta poche',
-      ...BUDGET_2026.slice(0, -1).map(([label]) => label),
+    // « À sortir de ta poche » et « Total des sorties », puis Entrées, puis Sorties.
+    await expect(page.locator('.synthesis-narrow > *')).toHaveText([
+      /^À sortir de ta poche/,
+      /^Total des sorties/,
+      'Entrées',
+      /^Loyers et charges perçus/,
+      'Sorties',
+      ...BUDGET_2026.slice(1, -2).map(([label]) => new RegExp(`^${escapeRegExp(label)}`)),
     ]);
+    const titles = page.locator('.synthesis-narrow .section-title');
+    await expect(titles).toHaveText(['Entrées', 'Sorties']);
+    expect(await styleOf(titles.first())).toEqual(reference);
     // Pas de détail ⊕ sur téléphone.
     await expect(
       page.locator('.synthesis-narrow').getByRole('button', { name: 'Copropriété', exact: true }),
@@ -107,7 +130,13 @@ test('Budget 2026 du jeu de test : une ligne par groupe, quatre colonnes', async
     await expect(table.locator('tbody th[scope="row"]')).toHaveText(
       BUDGET_2026.map(([label]) => new RegExp(`^${escapeRegExp(label)}`)),
     );
-    await expect(table.locator('tr.strong th')).toHaveText('À sortir de ta poche');
+    const titles = table.locator('tr.section-row th');
+    await expect(titles).toHaveText(['Entrées', 'Sorties']);
+    expect(await styleOf(titles.first())).toEqual(reference);
+    await expect(table.locator('tr.strong th')).toHaveText([
+      'Total des sorties',
+      'À sortir de ta poche',
+    ]);
   }
   for (const [row, previous, planned, estimate, gap] of BUDGET_2026) {
     const values = [eur0(previous), eur0(planned), eur0(estimate), gap0(gap)];
@@ -126,17 +155,39 @@ test('Budget 2026 du jeu de test : une ligne par groupe, quatre colonnes', async
   await expect(cell(page, phone, 2026, 'Prêt (échéances)', 'Écart / prévu')).toHaveClass(
     /gap-zero/,
   );
+  await expect(cell(page, phone, 2026, 'Total des sorties', 'Écart / prévu')).toHaveClass(
+    /negative/,
+  );
   await expect(
     page.getByText(
       'Prévu : année précédente + 1,5 %, sauf lignes modifiées. Estimé fin d’année : payé à ce jour + ce qui reste prévu.',
     ),
   ).toBeVisible();
-  // Prêt et total : pas de ✎.
-  await expect(
-    page.getByRole('button', { name: 'Modifier le prévu : Prêt (échéances)' }),
-  ).toHaveCount(0);
+  // Prêt et totaux : pas de ✎.
+  for (const label of ['Prêt (échéances)', 'Total des sorties', 'À sortir de ta poche']) {
+    await expect(page.getByRole('button', { name: `Modifier le prévu : ${label}` })).toHaveCount(0);
+  }
   await capture(page, testInfo, 'us12-budget-2026');
 });
+
+/** Années terminées et futures : mêmes intertitres et mêmes totaux que l'année en cours. */
+async function expectSameStructure(page: Page, phone: boolean, year: number): Promise<void> {
+  if (phone) {
+    await expect(page.locator('.synthesis-narrow .section-title')).toHaveText([
+      'Entrées',
+      'Sorties',
+    ]);
+    await expect(page.locator('.budget-card h4').first()).toHaveText('À sortir de ta poche');
+    await expect(page.locator('.budget-card h4').nth(1)).toHaveText('Total des sorties');
+  } else {
+    const table = page.locator(`table[aria-label="Budget ${year}"]`);
+    await expect(table.locator('tr.section-row th')).toHaveText(['Entrées', 'Sorties']);
+    await expect(table.locator('tr.strong th')).toHaveText([
+      'Total des sorties',
+      'À sortir de ta poche',
+    ]);
+  }
+}
 
 test('sélecteur d’année : année terminée et année future', async ({ page }, testInfo) => {
   const phone = isPhone(testInfo);
@@ -170,6 +221,7 @@ test('sélecteur d’année : année terminée et année future', async ({ page 
     );
   }
   await expect(page.getByText(/Estimé fin d’année/)).toHaveCount(0);
+  await expectSameStructure(page, phone, 2025);
   await capture(page, testInfo, 'us12-budget-2025');
 
   // 2027, année future : « 2026 estimé » et « 2027 prévu » seulement.
@@ -185,6 +237,7 @@ test('sélecteur d’année : année terminée et année future', async ({ page 
   }
   await expect(cell(page, phone, 2027, 'Copropriété', '2026 estimé')).toHaveText(eur0(4085.48));
   await expect(cell(page, phone, 2027, 'Copropriété', '2027 prévu')).toHaveText(eur0(4146.76));
+  await expectSameStructure(page, phone, 2027);
   await capture(page, testInfo, 'us12-budget-2027');
 });
 
@@ -210,7 +263,7 @@ test('✎ : corriger un prévu, « modifié », enregistré par année, retour a
   await expect(copro('2026 estimé fin d’année')).toHaveText(eur0(4149.53));
   await expect(copro('Écart / prévu')).toHaveText(gap0(1149.53));
   await expect(cell(page, phone, 2026, 'À sortir de ta poche', '2026 prévu')).toHaveText(
-    eur0(1304.15 - 2463.17 + 3000),
+    eur0(1364.34 - 2463.17 + 3000),
   );
   await capture(page, testInfo, 'us12-budget-modifie');
 
@@ -272,9 +325,10 @@ test('lien avec la simulation de vente : projection d’après le budget 2026', 
       .getByRole('button', { name: `Revenir au calcul automatique : ${label}` })
       .click();
   }
-  // (13 908,70 − 1 575,52) / 12 = 1 027,77 €/mois ; 2 463,17 + 570,15 + 508,11 = 3 541,43 €/an.
+  // (13 908,70 − 1 635,71) / 12 = 1 022,75 €/mois (gestion : honoraires sur travaux compris) ;
+  // 2 463,17 + 570,15 + 115,89 + 392,22 = 3 541,43 €/an.
   await expect(page.getByTestId('resume-parametres')).toContainText(
-    /loyer net projeté 1\s027,77\s€\/mois · dépenses projetées 3\s541,43\s€\/an \(d’après le budget 2026\)/,
+    /loyer net projeté 1\s022,75\s€\/mois · dépenses projetées 3\s541,43\s€\/an \(d’après le budget 2026\)/,
   );
   await capture(page, testInfo, 'us12-vente-d-apres-budget');
 

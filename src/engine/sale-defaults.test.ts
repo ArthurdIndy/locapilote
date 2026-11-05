@@ -19,9 +19,10 @@ describe('valeurs de la simulation de vente calculées automatiquement', () => {
 
   it('loyer net et dépenses : d’après le budget 2026 (US12)', () => {
     expect(r.projectionSource).toEqual({ kind: 'budget', years: [2026] });
-    // (loyers et charges 13 908,70 − gestion et comptable 1 575,52) / 12.
-    expect(r.netRentMonthly.value).toBeCloseTo((1390870 - 157552) / 12, 6);
-    // Copropriété 2 463,17 + impôts et taxes 570,15 + assurances et entretien 508,11.
+    // (loyers et charges 13 908,70 − gestion et comptable 1 635,71) / 12 : la gestion comprend
+    // les honoraires sur travaux et les frais bancaires.
+    expect(r.netRentMonthly.value).toBeCloseTo((1390870 - 163571) / 12, 6);
+    // Copropriété 2 463,17 + impôts et taxes 570,15 + assurances 115,89 + entretien 392,22.
     expect(r.annualExpensesExcludingLoan.value).toBe(354143);
     expect(r.netRentMonthly.modified).toBe(false);
   });

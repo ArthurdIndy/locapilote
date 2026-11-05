@@ -3,9 +3,10 @@
  * ou perçu, et ce qui dérive. Socle commun, indépendant du régime fiscal.
  * Voir docs/regles-de-calcul.md § 8 (Budget).
  *
- * Une ligne par groupe de catégories (loyers et charges perçus, copropriété, gestion et
- * comptable, impôts et taxes, assurances et entretien, autres dépenses), plus le prêt (d'après
- * l'échéancier) et « À sortir de ta poche » = dépenses + prêt − loyers.
+ * Entrées : loyers et charges perçus. Sorties : une ligne par groupe de catégories
+ * (copropriété, gestion et comptable, impôts et taxes, assurances, entretien, autres dépenses)
+ * et le prêt (d'après l'échéancier) ; « Total des sorties » ; « À sortir de ta poche » = total
+ * des sorties − entrées.
  *
  * Colonnes, pour l'année N :
  * - N−1 réel : opérations de l'année précédente, ramenées à 12 mois au prorata des mois loués
@@ -30,8 +31,11 @@ import {
 import { installmentTotal } from './loan';
 import { rentalMonths } from './synthesis';
 
-/** Ligne du tableau : une ligne modifiable, le prêt, ou le total « À sortir de ta poche ». */
-export type BudgetRowId = BudgetLine | 'loan' | 'outOfPocket';
+/**
+ * Ligne du tableau : une ligne modifiable, le prêt, « Total des sorties » ou « À sortir de ta
+ * poche ».
+ */
+export type BudgetRowId = BudgetLine | 'loan' | 'totalExpenses' | 'outOfPocket';
 
 /** Lignes de dépense (tout sauf les loyers). */
 export const BUDGET_EXPENSE_LINES: readonly BudgetLine[] = BUDGET_LINES.filter(
@@ -46,16 +50,9 @@ const GROUP_LINES: Readonly<Record<string, BudgetLine>> = {
   Copropriété: 'coOwnership',
   'Frais de gestion': 'management',
   'Impôts et taxes': 'taxes',
-  Assurances: 'insuranceMaintenance',
-  'Entretien et petit équipement': 'insuranceMaintenance',
+  Assurances: 'insurance',
+  'Entretien et petit équipement': 'maintenance',
 };
-
-/**
- * Catégories de travaux (honoraires sur travaux, travaux de copropriété…) : dans « Autres
- * dépenses », comme elles sont exclues de la projection de la vente. Repérées par leur nom en
- * attendant un marqueur dédié (US02).
- */
-const WORKS = /travaux/i;
 
 /**
  * Frais bancaires : dépense régulière, dans « Gestion et comptable » (décision d'Arthur du
@@ -70,16 +67,16 @@ function treatmentFor(category: Category, property: Property): TaxTreatment | un
 
 /**
  * Ligne du budget d'une catégorie : toutes les recettes dans « Loyers et charges perçus » ;
- * investissements à amortir, dépenses à qualifier et travaux dans « Autres dépenses » ; frais
- * bancaires dans « Gestion et comptable » ; les autres dépenses selon leur groupe. `null` : transfert ou dépôt de garantie (hors budget).
+ * investissements à amortir et dépenses à qualifier dans « Autres dépenses » ; frais bancaires
+ * dans « Gestion et comptable » ; les autres dépenses selon leur groupe (les honoraires sur
+ * travaux, du groupe « Frais de gestion », vont donc dans « Gestion et comptable »). `null` :
+ * transfert ou dépôt de garantie (hors budget).
  */
 export function budgetLineOf(category: Category, property: Property): BudgetLine | null {
   if (category.direction === 'income') return 'income';
   if (category.direction !== 'expense') return null;
   const treatment = treatmentFor(category, property);
-  if (treatment === 'depreciable' || treatment === 'to-review' || WORKS.test(category.name)) {
-    return 'other';
-  }
+  if (treatment === 'depreciable' || treatment === 'to-review') return 'other';
   if (BANK_FEES.test(category.name)) return 'management';
   return GROUP_LINES[category.group] ?? 'other';
 }
@@ -93,7 +90,8 @@ function zero(): Amounts {
     coOwnership: 0,
     management: 0,
     taxes: 0,
-    insuranceMaintenance: 0,
+    insurance: 0,
+    maintenance: 0,
     other: 0,
     loan: 0,
   };
@@ -128,9 +126,14 @@ const mapAmounts = (a: Amounts, f: (value: number, line: BudgetLine | 'loan') =>
     (Object.keys(a) as (BudgetLine | 'loan')[]).map((line) => [line, f(a[line], line)]),
   ) as Amounts;
 
-/** À sortir de ta poche = dépenses + prêt − loyers. */
-function outOfPocket(a: Amounts): number {
-  return BUDGET_EXPENSE_LINES.reduce((sum, l) => sum + a[l], 0) + a.loan - a.income;
+/** Total des sorties = dépenses + prêt. */
+function totalExpenses(a: Amounts): number {
+  return BUDGET_EXPENSE_LINES.reduce((sum, l) => sum + a[l], 0) + a.loan;
+}
+
+/** Vrai pour une ligne qui se corrige (✎). */
+export function isBudgetLine(id: BudgetRowId): id is BudgetLine {
+  return (BUDGET_LINES as readonly string[]).includes(id);
 }
 
 export type BudgetYearKind = 'past' | 'current' | 'future';
@@ -159,7 +162,10 @@ export interface YearBudget {
   year: number;
   kind: BudgetYearKind;
   dataAsOf: IsoDate;
-  /** Dans l'ordre de l'écran : loyers, dépenses, prêt, puis « À sortir de ta poche ». */
+  /**
+   * Dans l'ordre du tableau : loyers (entrées), dépenses et prêt (sorties), « Total des
+   * sorties », puis « À sortir de ta poche ».
+   */
   rows: BudgetRow[];
   /** N−1 ramené à 12 mois (location commencée en cours d'année N−1). */
   previousProrated: boolean;
@@ -207,7 +213,9 @@ export function yearBudget(
     const before = yearBudget(data, property, year - 1, dataAsOf, growth);
     previous = zero();
     for (const row of before.rows) {
-      if (row.id !== 'outOfPocket') previous[row.id] = row.actual ?? row.planned;
+      if (row.id !== 'outOfPocket' && row.id !== 'totalExpenses') {
+        previous[row.id] = row.actual ?? row.planned;
+      }
     }
   }
 
@@ -251,9 +259,15 @@ export function yearBudget(
     });
   }
 
-  const ids: BudgetRowId[] = [...BUDGET_LINES, 'loan', 'outOfPocket'];
+  const ids: BudgetRowId[] = [...BUDGET_LINES, 'loan', 'totalExpenses', 'outOfPocket'];
   const value = (a: Amounts | null, id: BudgetRowId) =>
-    a === null ? null : id === 'outOfPocket' ? outOfPocket(a) : a[id];
+    a === null
+      ? null
+      : id === 'totalExpenses'
+        ? totalExpenses(a)
+        : id === 'outOfPocket'
+          ? totalExpenses(a) - a.income
+          : a[id];
   const rows = ids.map((id): BudgetRow => {
     const plan = value(planned, id)!;
     const act = value(actual, id);
@@ -262,7 +276,7 @@ export function yearBudget(
       previous: value(previous, id)!,
       planned: plan,
       automatic: value(automatic, id)!,
-      modified: id !== 'loan' && id !== 'outOfPocket' && saved[id] !== undefined,
+      modified: isBudgetLine(id) && saved[id] !== undefined,
       actual: act,
       paidToDate: value(paid, id),
       previousToDate: value(previousToDate, id),
@@ -303,7 +317,7 @@ export interface BudgetProjection {
   years: number[];
   /** Loyer net par mois = (loyers et charges perçus − gestion et comptable) prévus / 12. */
   netRentMonthly: (year: number) => number;
-  /** Dépenses par an = copropriété + impôts et taxes + assurances et entretien prévus. */
+  /** Dépenses par an = copropriété + impôts et taxes + assurances + entretien prévus. */
   annualExpenses: (year: number) => number;
 }
 
@@ -336,7 +350,8 @@ export function budgetProjection(
         y,
         {
           netRentMonthly: (plan('income') - plan('management')) / 12,
-          annualExpenses: plan('coOwnership') + plan('taxes') + plan('insuranceMaintenance'),
+          annualExpenses:
+            plan('coOwnership') + plan('taxes') + plan('insurance') + plan('maintenance'),
         },
       ] as const;
     }),

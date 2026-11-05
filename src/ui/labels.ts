@@ -46,9 +46,11 @@ export const BUDGET_ROW_LABELS: Record<BudgetRowId, string> = {
   coOwnership: 'Copropriété',
   management: 'Gestion et comptable',
   taxes: 'Impôts et taxes',
-  insuranceMaintenance: 'Assurances et entretien',
+  insurance: 'Assurances',
+  maintenance: 'Entretien',
   other: 'Autres dépenses',
   loan: 'Prêt (échéances)',
+  totalExpenses: 'Total des sorties',
   outOfPocket: 'À sortir de ta poche',
 };
 
@@ -58,6 +60,7 @@ export const BUDGET_LINE_SLUGS: Record<BudgetLine, string> = {
   coOwnership: 'copropriete',
   management: 'gestion',
   taxes: 'impots',
-  insuranceMaintenance: 'assurances',
+  insurance: 'assurances',
+  maintenance: 'entretien',
   other: 'autres',
 };

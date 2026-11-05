@@ -261,14 +261,15 @@ export const HOUSEHOLD_SETTINGS_ID = 'household';
 
 /**
  * Lignes du budget qui se corrigent (✎), dans l'ordre de l'écran (US12). Le prêt (d'après
- * l'échéancier) et « À sortir de ta poche » (total) sont calculés.
+ * l'échéancier), « Total des sorties » et « À sortir de ta poche » sont calculés.
  */
 export const BUDGET_LINES = [
   'income', // Loyers et charges perçus
   'coOwnership', // Copropriété
   'management', // Gestion et comptable
   'taxes', // Impôts et taxes
-  'insuranceMaintenance', // Assurances et entretien
+  'insurance', // Assurances
+  'maintenance', // Entretien
   'other', // Autres dépenses (travaux, investissements à amortir, à qualifier)
 ] as const;
 export type BudgetLine = (typeof BUDGET_LINES)[number];

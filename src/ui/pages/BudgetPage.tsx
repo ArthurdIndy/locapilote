@@ -3,6 +3,7 @@ import { db } from '../../db/database';
 import { effectiveDataAsOf } from '../../db/defaultAssumptions';
 import {
   budgetYears,
+  isBudgetLine,
   yearBudget,
   type BudgetRow,
   type BudgetRowId,
@@ -10,7 +11,7 @@ import {
 } from '../../engine/core/budget';
 import { yearOf } from '../../engine/dates';
 import { DEFAULT_ANNUAL_GROWTH, resolve } from '../../engine/sale-defaults';
-import { BUDGET_LINES, type BudgetLine, type Dataset, type Property } from '../../engine/types';
+import type { BudgetLine, Dataset, Property } from '../../engine/types';
 import { DisclosureButton } from '../components/DisclosureButton';
 import { PropertyTitle } from '../components/PropertyTitle';
 import { centsToInput, formatDate, parseEurosInput } from '../format';
@@ -54,15 +55,18 @@ function gapClass(id: BudgetRowId, gap: number): string {
   return good ? 'positive' : 'negative';
 }
 
-const isEditable = (id: BudgetRowId): id is BudgetLine =>
-  (BUDGET_LINES as readonly string[]).includes(id);
+const isEditable = isBudgetLine;
+
+/** Lignes de total, en gras. */
+const STRONG: ReadonlySet<BudgetRowId> = new Set(['totalExpenses', 'outOfPocket']);
 
 /** Aide au survol de certaines lignes. */
 const ROW_HELP: Partial<Record<BudgetRowId, string>> = {
   other:
     'Travaux, investissements à amortir, dépenses à qualifier. Prévu à 0 par défaut : dépenses exceptionnelles.',
   loan: 'D’après l’échéancier du prêt.',
-  outOfPocket: 'Dépenses + prêt − loyers.',
+  totalExpenses: 'Dépenses + prêt.',
+  outOfPocket: 'Total des sorties − entrées.',
 };
 
 /** Budget (US12) : l'année en cours du bien courant, prévu, réalisé et écarts. */
@@ -123,6 +127,40 @@ function BudgetView({
     db.saveBudgetLine(property.id, year, line, value);
 
   const cellProps = { budget, editing, setEditing, save };
+  const byId = (id: BudgetRowId) => budget.rows.find((r) => r.id === id)!;
+  const income = byId('income');
+  const totalExpenses = byId('totalExpenses');
+  const outOfPocket = byId('outOfPocket');
+  // Sorties : les lignes de dépense, puis le prêt.
+  const expenses = budget.rows.filter(
+    (r) => r.id !== 'income' && r.id !== 'totalExpenses' && r.id !== 'outOfPocket',
+  );
+
+  const card = (row: BudgetRow) => {
+    const label = BUDGET_ROW_LABELS[row.id];
+    return (
+      <section
+        key={row.id}
+        className={`card year-card budget-card${STRONG.has(row.id) ? ' strong' : ''}`}
+        aria-label={label}
+      >
+        <div className="card-head">
+          <h4>{label}</h4>
+          {isEditable(row.id) && <EditButton line={row.id} {...cellProps} />}
+        </div>
+        <dl className="year-lines">
+          {columns.map((c) => (
+            <div key={c.key}>
+              <dt>{c.label}</dt>
+              <dd className={c.className?.(row)}>
+                {c.key === 'planned' ? <PlannedCell row={row} {...cellProps} /> : c.value(row)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    );
+  };
   const dayMonth = formatDate(asOf).slice(0, 5);
   const showDetails = budget.kind === 'current';
   const operationsHref = (line: BudgetLine) =>
@@ -153,7 +191,7 @@ function BudgetView({
         </label>
       </div>
 
-      {/* Grand écran : un tableau, une ligne par groupe (modèle de la Synthèse). */}
+      {/* Grand écran : un tableau au modèle de la Synthèse, intertitres Entrées et Sorties. */}
       <div className="synthesis-wide">
         <table className="synthesis-table budget-table" aria-label={`Budget ${year}`}>
           <thead>
@@ -168,94 +206,86 @@ function BudgetView({
               ))}
             </tr>
           </thead>
-          <tbody>
-            {budget.rows.map((row) => {
-              const editable = isEditable(row.id);
-              const hasDetail = showDetails && editable;
-              const label = BUDGET_ROW_LABELS[row.id];
-              return (
-                <Fragment key={row.id}>
-                  <tr className={row.id === 'outOfPocket' ? 'strong' : undefined}>
-                    <th scope="row" title={ROW_HELP[row.id]}>
-                      <span className="budget-label">
-                        {hasDetail ? (
-                          <DisclosureButton
-                            label={label}
-                            open={details.isOpen(row.id)}
-                            onToggle={() => details.toggle(row.id)}
-                          />
-                        ) : (
-                          label
-                        )}
-                        {editable && <EditButton line={row.id as BudgetLine} {...cellProps} />}
-                      </span>
-                    </th>
-                    {columns.map((c) => (
-                      <td key={c.key} className={c.className?.(row)}>
-                        {c.key === 'planned' ? (
-                          <PlannedCell row={row} {...cellProps} />
-                        ) : (
-                          c.value(row)
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                  {hasDetail && details.isOpen(row.id) && (
-                    <>
-                      <tr className="detail">
-                        <th scope="row">Au {dayMonth}</th>
-                        <td>{eur0(row.previousToDate ?? 0)}</td>
-                        <td />
-                        <td>{eur0(row.paidToDate ?? 0)}</td>
-                        <td />
-                      </tr>
-                      <tr className="detail">
-                        <th scope="row" colSpan={columns.length + 1}>
-                          <a href={operationsHref(row.id as BudgetLine)}>
-                            Voir les opérations {year} ›
-                          </a>
-                        </th>
-                      </tr>
-                    </>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
+          {[
+            { title: 'Entrées', rows: [income] },
+            { title: 'Sorties', rows: [...expenses, totalExpenses] },
+            { title: null, rows: [outOfPocket] },
+          ].map((section) => (
+            <tbody key={section.title ?? 'total'}>
+              {section.title && (
+                <tr className="section-row">
+                  <th scope="rowgroup" colSpan={columns.length + 1}>
+                    {section.title}
+                  </th>
+                </tr>
+              )}
+              {section.rows.map((row) => {
+                const editable = isEditable(row.id);
+                const hasDetail = showDetails && editable;
+                const label = BUDGET_ROW_LABELS[row.id];
+                return (
+                  <Fragment key={row.id}>
+                    <tr className={STRONG.has(row.id) ? 'strong' : undefined}>
+                      <th scope="row" title={ROW_HELP[row.id]}>
+                        <span className="budget-label">
+                          {hasDetail ? (
+                            <DisclosureButton
+                              label={label}
+                              open={details.isOpen(row.id)}
+                              onToggle={() => details.toggle(row.id)}
+                            />
+                          ) : (
+                            label
+                          )}
+                          {editable && <EditButton line={row.id as BudgetLine} {...cellProps} />}
+                        </span>
+                      </th>
+                      {columns.map((c) => (
+                        <td key={c.key} className={c.className?.(row)}>
+                          {c.key === 'planned' ? (
+                            <PlannedCell row={row} {...cellProps} />
+                          ) : (
+                            c.value(row)
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    {hasDetail && details.isOpen(row.id) && (
+                      <>
+                        <tr className="detail">
+                          <th scope="row">Au {dayMonth}</th>
+                          <td>{eur0(row.previousToDate ?? 0)}</td>
+                          <td />
+                          <td>{eur0(row.paidToDate ?? 0)}</td>
+                          <td />
+                        </tr>
+                        <tr className="detail">
+                          <th scope="row" colSpan={columns.length + 1}>
+                            <a href={operationsHref(row.id as BudgetLine)}>
+                              Voir les opérations {year} ›
+                            </a>
+                          </th>
+                        </tr>
+                      </>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          ))}
         </table>
       </div>
 
-      {/* Téléphone : une carte par ligne, « À sortir de ta poche » en premier. */}
+      {/*
+       * Téléphone : « À sortir de ta poche » et « Total des sorties » en premier, puis les
+       * entrées, puis une carte par ligne de sortie.
+       */}
       <div className="synthesis-narrow stack">
-        {[budget.rows.at(-1)!, ...budget.rows.slice(0, -1)].map((row) => {
-          const label = BUDGET_ROW_LABELS[row.id];
-          return (
-            <section
-              key={row.id}
-              className={`card year-card budget-card${row.id === 'outOfPocket' ? ' strong' : ''}`}
-              aria-label={label}
-            >
-              <div className="card-head">
-                <h3>{label}</h3>
-                {isEditable(row.id) && <EditButton line={row.id} {...cellProps} />}
-              </div>
-              <dl className="year-lines">
-                {columns.map((c) => (
-                  <div key={c.key}>
-                    <dt>{c.label}</dt>
-                    <dd className={c.className?.(row)}>
-                      {c.key === 'planned' ? (
-                        <PlannedCell row={row} {...cellProps} />
-                      ) : (
-                        c.value(row)
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          );
-        })}
+        {[outOfPocket, totalExpenses].map(card)}
+        <h3 className="section-title">Entrées</h3>
+        {card(income)}
+        <h3 className="section-title">Sorties</h3>
+        {expenses.map(card)}
       </div>
 
       <p className="muted small">

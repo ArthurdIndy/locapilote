@@ -1710,11 +1710,29 @@ ul.warning {
   color: var(--muted);
 }
 
-.budget-card h3 {
+/* Titre d'une carte du budget (téléphone) : pas le style des intertitres des cartes d'année. */
+.budget-card h4 {
+  margin: 0;
   font-size: 1.05rem;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--accent);
 }
 
-.budget-card.strong h3,
+/*
+ * Intertitres « Entrées » et « Sorties » sur téléphone : même style que les intertitres du
+ * tableau (« Trésorerie », « Rentabilité » de la Synthèse sur ordinateur), petites capitales bleues.
+ */
+.section-title {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.budget-card.strong h4,
 .budget-card.strong dd {
   font-weight: 700;
 }

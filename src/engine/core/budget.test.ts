@@ -107,14 +107,14 @@ describe('rattachement des catégories aux lignes du budget', () => {
       'Autres recettes': 'income',
       'Honoraires de gestion': 'management',
       'Honoraires de mise en location': 'management',
-      'Honoraires sur travaux': 'other',
+      'Honoraires sur travaux': 'management',
       'Honoraires comptable': 'management',
       'Charges de copropriété': 'coOwnership',
-      'Assurance PNO': 'insuranceMaintenance',
+      'Assurance PNO': 'insurance',
       'Taxe foncière': 'taxes',
       CFE: 'taxes',
-      'Entretien et réparations': 'insuranceMaintenance',
-      'Petit équipement': 'insuranceMaintenance',
+      'Entretien et réparations': 'maintenance',
+      'Petit équipement': 'maintenance',
       'Frais bancaires': 'management',
       'Autres charges': 'other',
       'Équipement / mobilier (à amortir)': 'other',
@@ -210,8 +210,13 @@ describe('budget de l’année en cours', () => {
     expect(row(b, 'loan').actual).toBe(360_000);
     // Prévu à 0 : le reste prévu est nul même si N−1 avait une dépense sur la même période.
     expect(row(b, 'other').actual).toBe(0);
+    // Total des sorties = dépenses + prêt ; à sortir de ta poche = total des sorties − entrées.
+    const expenses = row(b, 'totalExpenses');
+    expect(expenses.planned).toBe(203_000 + 101_500 + 360_000);
+    expect(expenses.actual).toBe(205_500 + 101_500 + 360_000);
+    expect(expenses.gap).toBe(2_500);
     const total = row(b, 'outOfPocket');
-    expect(total.actual).toBe(205_500 + 101_500 + 360_000 - 1_239_000);
+    expect(total.actual).toBe(expenses.actual! - 1_239_000);
     expect(total.gap).toBe(total.actual! - total.planned);
   });
 
@@ -334,12 +339,16 @@ describe('budget du jeu de test au 25/10/2026', () => {
   it('2025 réel, 2026 prévu, estimé fin d’année, écart', () => {
     expect(values('income')).toEqual([13703.15, 13908.7, 13959.28, 50.58]);
     expect(values('coOwnership')).toEqual([2426.77, 2463.17, 4085.48, 1622.31]);
-    expect(values('management')).toEqual([1552.24, 1575.52, 1562.98, -12.54]);
+    // Gestion et comptable : honoraires sur travaux compris (59,30 € en 2025, 29,96 € en 2026).
+    expect(values('management')).toEqual([1611.54, 1635.71, 1592.94, -42.77]);
     expect(values('taxes')).toEqual([561.72, 570.15, 885.36, 315.21]);
-    expect(values('insuranceMaintenance')).toEqual([500.6, 508.11, 1257.56, 749.45]);
-    expect(values('other')).toEqual([1649.41, 0, 29.96, 29.96]);
+    // Assurance PNO de 2025 payée après le 25/10 : restant à venir en 2026 (saisonnalité).
+    expect(values('insurance')).toEqual([114.18, 115.89, 115.89, 0]);
+    expect(values('maintenance')).toEqual([386.42, 392.22, 1141.67, 749.45]);
+    expect(values('other')).toEqual([1590.11, 0, 0, 0]);
     expect(values('loan')).toEqual([10095.91, 10095.9, 10095.9, 0]);
-    expect(values('outOfPocket')).toEqual([3083.5, 1304.15, 3957.96, 2653.81]);
+    expect(values('totalExpenses')).toEqual([16786.65, 15273.04, 17917.24, 2644.2]);
+    expect(values('outOfPocket')).toEqual([3083.5, 1364.34, 3957.96, 2593.62]);
   });
 
   it('détail « Au 25/10 » : N−1 à la même date et payé à ce jour', () => {
@@ -356,11 +365,14 @@ describe('projection de la vente d’après le budget', () => {
   it('loyer net = (loyers − gestion et comptable) / 12 ; dépenses = copropriété, impôts, assurances', () => {
     const p = budgetProjection(data, property, asOf, GROWTH)!;
     expect(p.years).toEqual([2026]);
-    // (13 908,70 − 1 575,52) / 12 ; 2 463,17 + 570,15 + 508,11.
-    expect(p.netRentMonthly(2026)).toBeCloseTo((1_390_870 - 157_552) / 12, 6);
-    expect(p.annualExpenses(2026)).toBe(246_317 + 57_015 + 50_811);
+    // (13 908,70 − 1 635,71) / 12 ; 2 463,17 + 570,15 + 115,89 + 392,22.
+    expect(p.netRentMonthly(2026)).toBeCloseTo((1_390_870 - 163_571) / 12, 6);
+    expect(p.annualExpenses(2026)).toBe(246_317 + 57_015 + 11_589 + 39_222);
     // Années suivantes : dernier budget × (1 + évolution).
-    expect(p.annualExpenses(2028)).toBeCloseTo((246_317 + 57_015 + 50_811) * 1.015 ** 2, 6);
+    expect(p.annualExpenses(2028)).toBeCloseTo(
+      (246_317 + 57_015 + 11_589 + 39_222) * 1.015 ** 2,
+      6,
+    );
   });
 
   it('un budget enregistré pour l’année suivante prend le relais', () => {
@@ -372,17 +384,19 @@ describe('projection de la vente d’après le budget', () => {
     expect(p.years).toEqual([2026, 2027]);
     const next = yearBudget(withNext, property, 2027, asOf, GROWTH).rows;
     const plan = (id: BudgetRowId) => next.find((r) => r.id === id)!.planned;
-    expect(p.annualExpenses(2027)).toBe(300_000 + plan('taxes') + plan('insuranceMaintenance'));
+    expect(p.annualExpenses(2027)).toBe(
+      300_000 + plan('taxes') + plan('insurance') + plan('maintenance'),
+    );
     expect(p.annualExpenses(2029)).toBeCloseTo(p.annualExpenses(2027) * 1.015 ** 2, 6);
   });
 
   it('Paramètres de vente : budget en calcul automatique, valeur modifiée prioritaire', () => {
     const auto = resolveSaleAssumptions(data, property, defaultAssumptions(property.id), asOf);
     expect(auto.projectionSource).toEqual({ kind: 'budget', years: [2026] });
-    expect(auto.netRentMonthly.value).toBeCloseTo((1_390_870 - 157_552) / 12, 6);
+    expect(auto.netRentMonthly.value).toBeCloseTo((1_390_870 - 163_571) / 12, 6);
     expect(auto.annualExpensesExcludingLoan.value).toBe(354_143);
     expect(auto.projection.monthlyProjectionForYear!(2027)).toBeCloseTo(
-      ((1_390_870 - 157_552) / 12 - 354_143 / 12) * 1.015,
+      ((1_390_870 - 163_571) / 12 - 354_143 / 12) * 1.015,
       6,
     );
     // Le jeu de test garde ses valeurs modifiées : la projection n'utilise pas le budget.

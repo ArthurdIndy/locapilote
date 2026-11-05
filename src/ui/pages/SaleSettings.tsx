@@ -177,7 +177,7 @@ export function SaleSettings({
               resolved={resolved.annualExpensesExcludingLoan}
               help={
                 fromBudget
-                  ? `Budget ${budgetYears[0]} : copropriété, impôts et taxes, assurances et entretien.`
+                  ? `Budget ${budgetYears[0]} : copropriété, impôts et taxes, assurances, entretien.`
                   : 'Dépenses payées sur la même période. Exclues : dépenses immobilisées (« À amortir ») et catégories de travaux, y compris travaux de copropriété.'
               }
               onSave={(v) => saveProjection({ annualExpensesExcludingLoan: v })}

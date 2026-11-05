@@ -140,10 +140,10 @@ Moteur : `src/engine/core/irr.ts` (bilan, gain de l'attente, TRI), `src/engine/s
 **Valeurs calculées automatiquement** (chacune remplaçable par une valeur modifiée ; vide = calcul automatique) :
 
 - loyer net et dépenses projetés, **d'après le budget** (§ 8, itération 4c) quand l'année de la date des données en a un (la location a commencé avant cette année, ou une ligne de son budget est modifiée) :
-  - loyer net projeté par mois = (loyers et charges perçus − gestion et comptable) prévus de l'année / 12 ;
-  - dépenses projetées par an = copropriété + impôts et taxes + assurances et entretien prévus (ni « Autres dépenses », ni le prêt) ;
+  - loyer net projeté par mois = (loyers et charges perçus − gestion et comptable) prévus de l'année / 12 ; la gestion comprend les honoraires sur travaux et les frais bancaires ;
+  - dépenses projetées par an = copropriété + impôts et taxes + assurances + entretien prévus (ni « Autres dépenses », ni le prêt) ;
   - années suivantes : celles du dernier budget × (1 + évolution) par année d'écart ; une année suivante dont le budget a une ligne modifiée devient le « dernier budget » à partir d'elle ;
-  - jeu de test, budget 2026 au 25/10/2026 : (13 908,70 − 1 575,52) / 12 = 1 027,77 €/mois ; 2 463,17 + 570,15 + 508,11 = 3 541,43 €/an.
+  - jeu de test, budget 2026 au 25/10/2026 : (13 908,70 − 1 635,71) / 12 = 1 022,75 €/mois ; 2 463,17 + 570,15 + 115,89 + 392,22 = 3 541,43 €/an.
 - **sinon**, d'après les 12 derniers mois du journal : loyer net projeté par mois = recettes des 12 derniers mois du journal jusqu'à la date de mise à jour / 12 ; dépenses projetées par an = dépenses payées sur ces 12 mois, **hors dépenses immobilisées** (traitement « À amortir ») **et catégories de travaux** (nom contenant « travaux » : travaux de copropriété, honoraires sur travaux…). Aucune autre exclusion : les dépenses à qualifier, les charges de copropriété (régularisations comprises) et les honoraires de gestion comptent (décision d'Arthur du 03/11/2026). Si le bien est loué depuis moins de 12 mois, les montants de la période sont ramenés à un an (× 365 / jours) ;
 - une valeur modifiée dans « Paramètres de vente » reste prioritaire (loyer net et dépenses, chacun séparément) : elle évolue de (1 + évolution) par an à partir de l'année des données ;
 - évolution annuelle des loyers et des charges : 1,5 % ;
@@ -151,7 +151,7 @@ Moteur : `src/engine/core/irr.ts` (bilan, gain de l'attente, TRI), `src/engine/s
 - amortissements déduits des années futures : ceux de la dernière année complète, selon la règle des années passées (§ 5) : dotation + report de début − stock du comptable quand il est saisi (7 307,73 € pour 2025 sur le jeu de test), sinon les amortissements utilisés calculés par l'outil. C'est ce que le comptable a réellement déduit, c'est-à-dire son résultat avant amortissements de l'année (décision d'Arthur du 03/11/2026) ;
 - part du prix réinvestie : ce qui reste du prix de cession après remboursement du prêt (voir § 5).
 
-Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : d'après le budget 2026, loyer net 1 027,77 €/mois et dépenses 3 541,43 €/an (soit une projection nette de 732,65 €/mois) ; d'après les 12 derniers mois (méthode d'avant l'itération 4c, toujours utilisée sans budget), recettes 1 160,06 €/mois et dépenses 7 782,55 €/an ; amortissements 7 307,73 €/an (2025) ; frais 558 €.
+Le jeu de test garde les valeurs de l'Excel comme valeurs modifiées (loyer net 1 056,61 €/mois, dépenses 5 598,60 €/an, évolution 1,5 %, amortissements 4 185 €/an, frais de l'année de vente 558 €), pour que la somme nette et l'impôt retombent sur `expected.json`. Calcul automatique sur le jeu de test (données au 25/10/2026) : d'après le budget 2026, loyer net 1 022,75 €/mois et dépenses 3 541,43 €/an (soit une projection nette de 727,63 €/mois) ; d'après les 12 derniers mois (méthode d'avant l'itération 4c, toujours utilisée sans budget), recettes 1 160,06 €/mois et dépenses 7 782,55 €/an ; amortissements 7 307,73 €/an (2025) ; frais 558 €.
 
 **Mise à jour (version 4 des données)** : les valeurs non nulles déjà saisies sont reprises comme valeurs modifiées ; celles à 0 passent en calcul automatique ; les taux de 19 % et 17,2 % sortent des hypothèses ; les frais d'acquisition réels passent sur la fiche du bien.
 
@@ -212,18 +212,20 @@ Sources :
 
 Moteur : `src/engine/core/budget.ts` (socle commun, indépendant du régime). Écran : Budget, un bien à la fois, une année à la fois (« Budget 2026 ▾ », de l'année de mise en location à l'année suivant celle de la date des données ; par défaut l'année de la date des données). Itération 4c.
 
-**Lignes** : une par groupe de catégories, puis le prêt et le total.
+**Lignes** (retours de recette du 05/11/2026) : intertitre **Entrées** (loyers et charges perçus) ; intertitre **Sorties** (une ligne par groupe de catégories, puis le prêt) ; **Total des sorties** et **À sortir de ta poche**, en gras. Les intertitres ont le style de « Trésorerie » et « Rentabilité » dans la Synthèse (petites capitales bleues), sur ordinateur et sur téléphone. Même structure pour les années en cours, terminées et futures.
 
 | Ligne | Catégories (jeu de test) |
 | --- | --- |
 | Loyers et charges perçus | toutes les recettes : loyer hors charges, provisions sur charges, régularisation de charges, taxe d'ordures ménagères refacturée, autres recettes |
 | Copropriété ✎ | groupe « Copropriété » (charges de copropriété) |
-| Gestion et comptable ✎ | groupe « Frais de gestion » : honoraires de gestion, de mise en location, du comptable ; et les frais bancaires (dépense régulière, décision d'Arthur du 05/11/2026), repérés par leur nom en attendant un marqueur dédié (US02) |
+| Gestion et comptable ✎ | groupe « Frais de gestion » : honoraires de gestion, de mise en location, du comptable, honoraires sur travaux (frais de gestion sur les travaux) ; et les frais bancaires (dépense régulière), repérés par leur nom en attendant un marqueur dédié (US02). Décisions d'Arthur du 05/11/2026 |
 | Impôts et taxes ✎ | groupe « Impôts et taxes » : taxe foncière, CFE |
-| Assurances et entretien ✎ | groupes « Assurances » et « Entretien et petit équipement » : assurance PNO, entretien et réparations, petit équipement |
-| Autres dépenses ✎ | investissements à amortir, dépenses à qualifier, catégories de travaux (honoraires sur travaux), et tout autre groupe de dépense (« Autres charges » : catégorie autres charges ; les frais bancaires vont dans « Gestion et comptable ») |
+| Assurances ✎ | groupe « Assurances » : assurance PNO |
+| Entretien ✎ | groupe « Entretien et petit équipement » : entretien et réparations, petit équipement |
+| Autres dépenses ✎ | investissements à amortir (équipement, travaux d'amélioration), dépenses à qualifier, et tout autre groupe de dépense (« Autres charges » : catégorie autres charges ; les frais bancaires vont dans « Gestion et comptable ») |
 | Prêt (échéances) | échéances de tous les prêts du bien, d'après l'échéancier (pas de ✎) |
-| À sortir de ta poche | dépenses + prêt − loyers (en gras) |
+| Total des sorties | dépenses + prêt (en gras, pas de ✎) |
+| À sortir de ta poche | total des sorties − entrées (en gras, pas de ✎) |
 
 Transferts et dépôt de garantie n'entrent pas dans le budget.
 
@@ -236,10 +238,10 @@ Transferts et dépôt de garantie n'entrent pas dans le budget.
   - reste prévu = opérations de N−1 sur la même période restante (du lendemain de la même date en N−1 au 31/12/N−1) × (N prévu / N−1 réel), pour respecter la saisonnalité (taxe foncière, liasse du comptable) ; si N−1 réel vaut 0 pour la ligne : N prévu × jours restants (après la date des données) / jours de l'année N ;
   - prêt : échéances de l'échéancier (payées à ce jour + à venir dans l'année).
 - **N réel** (année terminée, N < année de la date des données) = opérations de l'année N (bilan définitif).
-- **Écart / prévu** = estimé (ou réel) − prévu. Le signe suit le montant (+ = plus que prévu). Couleur selon l'effet pour le propriétaire : dépense (ou total à sortir) en plus, ou loyer en moins, en rouge ; l'inverse en vert ; 0 € en gris.
+- **Écart / prévu** = estimé (ou réel) − prévu. Le signe suit le montant (+ = plus que prévu). Couleur selon l'effet pour le propriétaire : dépense (ou total des sorties, ou à sortir de ta poche) en plus, ou loyer en moins, en rouge ; l'inverse en vert ; 0 € en gris.
 - **Année future** (N > année de la date des données) : « N−1 réel ou estimé » (l'estimé fin d'année de l'année en cours) et « N prévu » (= estimé × (1 + évolution)) seulement.
 
-Montants arrondis à l'euro dans le tableau. Détail ⊕ d'une ligne modifiable (ordinateur, année en cours) : une ligne « Au JJ/MM » (date des données) avec N−1 à la même date dans la colonne « N−1 réel » et le payé à ce jour dans la colonne « N estimé fin d'année », puis un lien vers les opérations de la ligne et de l'année (liste filtrée `#/operations?annee=2026&budget=copropriete`). Sous le tableau : « Prévu : année précédente + 1,5 %, sauf lignes modifiées. Estimé fin d'année : payé à ce jour + ce qui reste prévu. » Téléphone : une carte par ligne, « À sortir de ta poche » en premier, sans détail ⊕.
+Montants arrondis à l'euro dans le tableau. Détail ⊕ d'une ligne modifiable (ordinateur, année en cours) : une ligne « Au JJ/MM » (date des données) avec N−1 à la même date dans la colonne « N−1 réel » et le payé à ce jour dans la colonne « N estimé fin d'année », puis un lien vers les opérations de la ligne et de l'année (liste filtrée `#/operations?annee=2026&budget=copropriete`). Sous le tableau : « Prévu : année précédente + 1,5 %, sauf lignes modifiées. Estimé fin d'année : payé à ce jour + ce qui reste prévu. » Téléphone : « À sortir de ta poche » puis « Total des sorties » en premier, puis l'intertitre Entrées et sa carte, puis l'intertitre Sorties et une carte par ligne de sortie ; sans détail ⊕.
 
 **Jeu de test, Budget 2026 au 25/10/2026** (testé dans `budget.test.ts` et `e2e/us12-budget.spec.ts`) :
 
@@ -247,12 +249,14 @@ Montants arrondis à l'euro dans le tableau. Détail ⊕ d'une ligne modifiable 
 | --- | ---: | ---: | ---: | ---: |
 | Loyers et charges perçus | 13 703,15 | 13 908,70 | 13 959,28 | +50,58 |
 | Copropriété | 2 426,77 | 2 463,17 | 4 085,48 | +1 622,31 |
-| Gestion et comptable | 1 552,24 | 1 575,52 | 1 562,98 | −12,54 |
+| Gestion et comptable | 1 611,54 | 1 635,71 | 1 592,94 | −42,77 |
 | Impôts et taxes | 561,72 | 570,15 | 885,36 | +315,21 |
-| Assurances et entretien | 500,60 | 508,11 | 1 257,56 | +749,45 |
-| Autres dépenses | 1 649,41 | 0,00 | 29,96 | +29,96 |
+| Assurances | 114,18 | 115,89 | 115,89 | 0,00 |
+| Entretien | 386,42 | 392,22 | 1 141,67 | +749,45 |
+| Autres dépenses | 1 590,11 | 0,00 | 0,00 | 0,00 |
 | Prêt (échéances) | 10 095,91 | 10 095,90 | 10 095,90 | 0,00 |
-| **À sortir de ta poche** | **3 083,50** | **1 304,15** | **3 957,96** | **+2 653,81** |
+| **Total des sorties** | **16 786,65** | **15 273,04** | **17 917,24** | **+2 644,20** |
+| **À sortir de ta poche** | **3 083,50** | **1 364,34** | **3 957,96** | **+2 593,62** |
 
 **Lien avec la simulation de vente** : voir § 6 (loyer net et dépenses projetés d'après le budget).
 
