@@ -189,6 +189,23 @@ async function expectSameStructure(page: Page, phone: boolean, year: number): Pr
   }
 }
 
+test('Synthèse sur téléphone : intertitres des cartes au même style que sur ordinateur', async ({
+  page,
+}, testInfo) => {
+  await startWithTestData(page);
+  await goTo(page, 'Synthèse');
+  const reference = await styleOf(
+    page.locator('.synthesis-table .section-row th', { hasText: 'Trésorerie' }),
+  );
+  const titles = page.locator('.synthesis-narrow .year-card').first().locator('h4');
+  await expect(titles).toHaveText([/^Trésorerie/, /^Rentabilité/, /^Patrimoine/, /^Fiscalité/]);
+  for (const title of await titles.all()) expect(await styleOf(title)).toEqual(reference);
+  if (isPhone(testInfo)) {
+    await expect(titles.first()).toBeVisible();
+    await capture(page, testInfo, 'us12-synthese-intertitres', { fullPage: false });
+  }
+});
+
 test('sélecteur d’année : année terminée et année future', async ({ page }, testInfo) => {
   const phone = isPhone(testInfo);
   await startWithTestData(page);

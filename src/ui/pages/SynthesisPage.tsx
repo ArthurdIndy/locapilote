@@ -389,7 +389,7 @@ export function SynthesisPage({ data, property, today }: Props) {
                 <h3>{y.year}</h3>
                 {sections.map((section) => (
                   <div key={section.title}>
-                    <h4>
+                    <h4 className="section-title">
                       {section.title}
                       {section.link && (
                         <a className="section-link" href={section.link.href}>

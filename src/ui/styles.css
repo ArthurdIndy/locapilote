@@ -1720,16 +1720,22 @@ ul.warning {
 }
 
 /*
- * Intertitres « Entrées » et « Sorties » sur téléphone : même style que les intertitres du
- * tableau (« Trésorerie », « Rentabilité » de la Synthèse sur ordinateur), petites capitales bleues.
+ * Intertitres sur téléphone (« Entrées » et « Sorties » du Budget, « Trésorerie », « Rentabilité »…
+ * des cartes de la Synthèse) : même style que les intertitres des tableaux sur ordinateur,
+ * petites capitales bleues.
  */
-.section-title {
+.section-title,
+.year-card h4.section-title {
   margin: 8px 0 0;
   font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--accent);
+}
+
+.year-card h4.section-title {
+  margin: 12px 0 0;
 }
 
 .budget-card.strong h4,
