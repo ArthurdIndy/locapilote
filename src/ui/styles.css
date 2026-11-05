@@ -1653,3 +1653,68 @@ ul.warning {
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ---------- Budget (US12) ---------- */
+
+/* « Budget 2026 ▾ » : le sélecteur d'année a l'allure d'un titre. */
+.budget-year select {
+  width: auto;
+  min-height: 40px;
+  padding: 4px 28px 4px 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.budget-table th[scope='row'] {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.budget-table thead th {
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+.budget-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.budget-planned {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.budget-planned .button.link {
+  padding: 0;
+  min-height: 0;
+}
+
+.budget-input {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.budget-input input {
+  width: 7em;
+  padding: 2px 6px;
+  text-align: right;
+}
+
+.gap-zero {
+  color: var(--muted);
+}
+
+.budget-card h3 {
+  font-size: 1.05rem;
+}
+
+.budget-card.strong h3,
+.budget-card.strong dd {
+  font-weight: 700;
+}

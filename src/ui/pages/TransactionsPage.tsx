@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { db } from '../../db/database';
-import type { Category, Dataset, Transaction } from '../../engine/types';
+import { budgetLineOf } from '../../engine/core/budget';
+import type { BudgetLine, Category, Dataset, Transaction } from '../../engine/types';
 import { formatDate, formatEuros } from '../format';
-import { sortCategories } from '../labels';
+import { BUDGET_LINE_SLUGS, BUDGET_ROW_LABELS, sortCategories } from '../labels';
 import { propertyHref } from '../router';
 import { TransactionForm } from './TransactionForm';
 import { PropertyTitle } from '../components/PropertyTitle';
@@ -14,7 +15,8 @@ interface Props {
   currentPropertyId: string | null;
   today: string;
   /**
-   * Filtres reçus dans l'adresse : `annee`, `groupe`, `fiscal=a-valider`. Le paramètre `bien`
+   * Filtres reçus dans l'adresse : `annee`, `groupe`, `fiscal=a-valider`, `budget` (une ligne
+   * du budget : `copropriete`…, voir `BUDGET_LINE_SLUGS`). Le paramètre `bien`
    * rend ce bien courant (App.tsx) : la page ne montre que les opérations du bien courant.
    */
   params?: URLSearchParams;
@@ -42,6 +44,13 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
   const [toReviewOnly, setToReviewOnly] = useState(
     () => params?.get('fiscal') === TO_REVIEW_FILTER,
   );
+  // Ligne du budget (lien « Voir les opérations » du détail d'une ligne du budget).
+  const [budgetLine, setBudgetLine] = useState<BudgetLine | null>(() => {
+    const slug = params?.get('budget');
+    const entry = Object.entries(BUDGET_LINE_SLUGS).find(([, s]) => s === slug);
+    return entry ? (entry[0] as BudgetLine) : null;
+  });
+  const property = data.properties.find((p) => p.id === currentPropertyId);
 
   const categories = useMemo(
     () => new Map(data.categories.map((c) => [c.id, c])),
@@ -76,7 +85,11 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
             (!groupFilter || categories.get(t.categoryId)?.group === groupFilter) &&
             (!categoryFilter || t.categoryId === categoryFilter) &&
             (!toReviewOnly ||
-              categories.get(t.categoryId)?.taxTreatment['lmnp-reel'] === 'to-review'),
+              categories.get(t.categoryId)?.taxTreatment['lmnp-reel'] === 'to-review') &&
+            (!budgetLine ||
+              (property !== undefined &&
+                categories.has(t.categoryId) &&
+                budgetLineOf(categories.get(t.categoryId)!, property) === budgetLine)),
         )
         // Du plus récent au plus ancien.
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)),
@@ -88,6 +101,8 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
       groupFilter,
       categoryFilter,
       toReviewOnly,
+      budgetLine,
+      property,
     ],
   );
 
@@ -127,7 +142,9 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
 
   /** Bien sans aucune opération : ni filtres ni totaux, seulement le message et le bouton. */
   const isEmpty = !data.transactions.some((t) => t.propertyId === currentPropertyId);
-  const hasFilter = Boolean(yearFilter || groupFilter || categoryFilter || toReviewOnly);
+  const hasFilter = Boolean(
+    yearFilter || groupFilter || categoryFilter || toReviewOnly || budgetLine,
+  );
 
   return (
     <div className="stack">
@@ -225,6 +242,7 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
                   setGroupFilter('');
                   setCategoryFilter('');
                   setToReviewOnly(false);
+                  setBudgetLine(null);
                 }}
               >
                 Effacer les filtres
@@ -239,6 +257,15 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
               investissement à amortir). Modifie leur catégorie une fois la réponse du comptable
               obtenue.{' '}
               <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
+                Voir toutes les opérations
+              </button>
+            </p>
+          )}
+
+          {budgetLine && (
+            <p className="muted" role="status">
+              Ligne « {BUDGET_ROW_LABELS[budgetLine]} » du budget.{' '}
+              <button type="button" className="button link" onClick={() => setBudgetLine(null)}>
                 Voir toutes les opérations
               </button>
             </p>

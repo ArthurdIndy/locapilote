@@ -108,7 +108,7 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
           />
         )}
         {route === 'synthese' && <SynthesisPage data={data} property={current} today={today} />}
-        {route === 'budget' && <BudgetPage property={current} />}
+        {route === 'budget' && <BudgetPage data={data} property={current} today={today} />}
         {route === 'fiscalite' && <TaxPage data={data} property={current} today={today} />}
         {route === 'simulations' && (
           <SimulationsPage data={data} property={current} today={today} />
