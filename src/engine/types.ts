@@ -261,7 +261,7 @@ export const HOUSEHOLD_SETTINGS_ID = 'household';
 
 /**
  * Lignes du budget qui se corrigent (✎), dans l'ordre de l'écran (US12). Le prêt (d'après
- * l'échéancier), « Total des sorties » et « À sortir de ta poche » sont calculés.
+ * l'échéancier), « Total des sorties » et « Cash-flow (entrées − sorties) » sont calculés.
  */
 export const BUDGET_LINES = [
   'income', // Loyers et charges perçus

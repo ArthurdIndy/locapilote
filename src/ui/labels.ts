@@ -51,7 +51,7 @@ export const BUDGET_ROW_LABELS: Record<BudgetRowId, string> = {
   other: 'Autres dépenses',
   loan: 'Prêt (échéances)',
   totalExpenses: 'Total des sorties',
-  outOfPocket: 'À sortir de ta poche',
+  cashFlow: 'Cash-flow (entrées − sorties)',
 };
 
 /** Ligne du budget dans l'adresse de la liste des opérations (#/operations?budget=copropriete). */

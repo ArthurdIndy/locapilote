@@ -1,6 +1,6 @@
 /**
  * Recette US12 (version légère) : Budget du bien courant, une ligne par groupe, colonnes
- * « N−1 réel | N prévu | N estimé fin d'année | Écart / prévu », ✎ pour corriger un prévu, détail
+ * « N−1 réel | N prévu | N estimé fin d'année | Effet sur ton cash-flow », ✎ pour corriger un prévu, détail
  * ⊕ sur ordinateur, une carte par ligne sur téléphone ; lien avec la simulation de vente.
  * Jeu de test : données au 25/10/2026.
  */
@@ -22,20 +22,26 @@ const euroRounded = new Intl.NumberFormat('fr-FR', {
   currency: 'EUR',
   maximumFractionDigits: 0,
 });
-/** Montant arrondi à l'euro : 13703.15 → « 13 703 € ». */
-const eur0 = (value: number) => euroRounded.format(Math.round(value));
-/** Écart signé : 1622.31 → « +1 622 € », −12.54 → « −13 € », 0 → « 0 € ». */
-const gap0 = (value: number) => {
-  const r = Math.round(value);
-  if (r === 0) return eur0(0);
-  return r > 0 ? `+${eur0(r)}` : `−${eur0(-r)}`;
-};
+const euroSigned = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  maximumFractionDigits: 0,
+  signDisplay: 'exceptZero',
+});
+/** Arrondi à l'euro, le demi-euro en s'éloignant de zéro : −3083.5 → −3084. */
+const round = (value: number) => Math.sign(value) * Math.round(Math.abs(value)) || 0;
+/** Montant arrondi à l'euro : 13703.15 → « 13 703 € » ; −3083.5 → « -3 084 € ». */
+const eur0 = (value: number) => euroRounded.format(round(value));
+/** Effet signé : 42.77 → « +43 € », −1622.31 → « -1 622 € », 0 → « 0 € ». */
+const effect0 = (value: number) => euroSigned.format(round(value));
+
+const EFFECT = 'Effet sur ton cash-flow';
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-const COLUMNS_2026 = ['2025 réel', '2026 prévu', '2026 estimé fin d’année', 'Écart / prévu'];
+const COLUMNS_2026 = ['2025 réel', '2026 prévu', '2026 estimé fin d’année', EFFECT];
 
 /** Valeur d'une ligne : colonne `column` du tableau (ordinateur) ou de la carte (téléphone). */
 function cell(page: Page, phone: boolean, year: number, row: string, column: string): Locator {
@@ -58,10 +64,9 @@ function cell(page: Page, phone: boolean, year: number, row: string, column: str
 }
 
 function columnIndex(year: number, column: string): number {
-  const headers = [`${year - 1} réel`, `${year - 1} estimé`, `${year} prévu`];
-  if (headers.slice(0, 2).includes(column)) return 0;
+  if (column.startsWith(`${year - 1} `)) return 0;
   if (column === `${year} prévu`) return 1;
-  if (column === 'Écart / prévu') return 3;
+  if (column === EFFECT) return 3;
   return 2;
 }
 
@@ -73,15 +78,15 @@ async function goToBudget(page: Page): Promise<void> {
 /** Lignes du Budget 2026 du jeu de test au 25/10/2026 : 2025 réel, prévu, estimé, écart. */
 const BUDGET_2026: [string, number, number, number, number][] = [
   ['Loyers et charges perçus', 13703.15, 13908.7, 13959.28, 50.58],
-  ['Copropriété', 2426.77, 2463.17, 4085.48, 1622.31],
-  ['Gestion et comptable', 1611.54, 1635.71, 1592.94, -42.77],
-  ['Impôts et taxes', 561.72, 570.15, 885.36, 315.21],
+  ['Copropriété', 2426.77, 2463.17, 4085.48, -1622.31],
+  ['Gestion et comptable', 1611.54, 1635.71, 1592.94, 42.77],
+  ['Impôts et taxes', 561.72, 570.15, 885.36, -315.21],
   ['Assurances', 114.18, 115.89, 115.89, 0],
-  ['Entretien', 386.42, 392.22, 1141.67, 749.45],
+  ['Entretien', 386.42, 392.22, 1141.67, -749.45],
   ['Autres dépenses', 1590.11, 0, 0, 0],
   ['Prêt (échéances)', 10095.91, 10095.9, 10095.9, 0],
-  ['Total des sorties', 16786.65, 15273.04, 17917.24, 2644.2],
-  ['À sortir de ta poche', 3083.5, 1364.34, 3957.96, 2593.62],
+  ['Total des sorties', 16786.65, 15273.04, 17917.24, -2644.2],
+  ['Cash-flow (entrées − sorties)', -3083.5, -1364.34, -3957.96, -2593.62],
 ];
 
 /** Style des intertitres : celui de « Trésorerie » dans la Synthèse (petites capitales bleues). */
@@ -107,9 +112,9 @@ test('Budget 2026 du jeu de test : entrées, sorties, totaux, quatre colonnes', 
   await goToBudget(page);
   await expect(page.getByLabel('Année du budget')).toHaveValue('2026');
   if (phone) {
-    // « À sortir de ta poche » et « Total des sorties », puis Entrées, puis Sorties.
+    // « Cash-flow » et « Total des sorties », puis Entrées, puis Sorties.
     await expect(page.locator('.synthesis-narrow > *')).toHaveText([
-      /^À sortir de ta poche/,
+      /^Cash-flow \(entrées − sorties\)/,
       /^Total des sorties/,
       'Entrées',
       /^Loyers et charges perçus/,
@@ -135,36 +140,35 @@ test('Budget 2026 du jeu de test : entrées, sorties, totaux, quatre colonnes', 
     expect(await styleOf(titles.first())).toEqual(reference);
     await expect(table.locator('tr.strong th')).toHaveText([
       'Total des sorties',
-      'À sortir de ta poche',
+      'Cash-flow (entrées − sorties)',
     ]);
   }
   for (const [row, previous, planned, estimate, gap] of BUDGET_2026) {
-    const values = [eur0(previous), eur0(planned), eur0(estimate), gap0(gap)];
+    const values = [eur0(previous), eur0(planned), eur0(estimate), effect0(gap)];
     for (const [i, column] of COLUMNS_2026.entries()) {
       await expect(cell(page, phone, 2026, row, column)).toHaveText(values[i]!);
     }
   }
-  // Couleur selon l'effet : dépense en plus en rouge, en moins en vert, loyer en plus en vert.
-  await expect(cell(page, phone, 2026, 'Copropriété', 'Écart / prévu')).toHaveClass(/negative/);
-  await expect(cell(page, phone, 2026, 'Gestion et comptable', 'Écart / prévu')).toHaveClass(
-    /positive/,
-  );
-  await expect(cell(page, phone, 2026, 'Loyers et charges perçus', 'Écart / prévu')).toHaveClass(
-    /positive/,
-  );
-  await expect(cell(page, phone, 2026, 'Prêt (échéances)', 'Écart / prévu')).toHaveClass(
-    /gap-zero/,
-  );
-  await expect(cell(page, phone, 2026, 'Total des sorties', 'Écart / prévu')).toHaveClass(
-    /negative/,
-  );
+  // Signe et couleur suivent l'effet : dépense en plus et cash-flow en baisse en rouge (−),
+  // dépense en moins et loyer en plus en vert (+).
+  await expect(cell(page, phone, 2026, 'Copropriété', EFFECT)).toHaveClass(/negative/);
+  await expect(cell(page, phone, 2026, 'Gestion et comptable', EFFECT)).toHaveClass(/positive/);
+  await expect(cell(page, phone, 2026, 'Loyers et charges perçus', EFFECT)).toHaveClass(/positive/);
+  await expect(cell(page, phone, 2026, 'Prêt (échéances)', EFFECT)).toHaveClass(/gap-zero/);
+  await expect(cell(page, phone, 2026, 'Total des sorties', EFFECT)).toHaveClass(/negative/);
+  // Cash-flow négatif (argent à remettre) en rouge, comme dans la Synthèse.
+  for (const column of COLUMNS_2026) {
+    await expect(cell(page, phone, 2026, 'Cash-flow (entrées − sorties)', column)).toHaveClass(
+      /negative/,
+    );
+  }
   await expect(
     page.getByText(
       'Prévu : année précédente + 1,5 %, sauf lignes modifiées. Estimé fin d’année : payé à ce jour + ce qui reste prévu.',
     ),
   ).toBeVisible();
   // Prêt et totaux : pas de ✎.
-  for (const label of ['Prêt (échéances)', 'Total des sorties', 'À sortir de ta poche']) {
+  for (const label of ['Prêt (échéances)', 'Total des sorties', 'Cash-flow (entrées − sorties)']) {
     await expect(page.getByRole('button', { name: `Modifier le prévu : ${label}` })).toHaveCount(0);
   }
   await capture(page, testInfo, 'us12-budget-2026');
@@ -177,14 +181,16 @@ async function expectSameStructure(page: Page, phone: boolean, year: number): Pr
       'Entrées',
       'Sorties',
     ]);
-    await expect(page.locator('.budget-card h4').first()).toHaveText('À sortir de ta poche');
+    await expect(page.locator('.budget-card h4').first()).toHaveText(
+      'Cash-flow (entrées − sorties)',
+    );
     await expect(page.locator('.budget-card h4').nth(1)).toHaveText('Total des sorties');
   } else {
     const table = page.locator(`table[aria-label="Budget ${year}"]`);
     await expect(table.locator('tr.section-row th')).toHaveText(['Entrées', 'Sorties']);
     await expect(table.locator('tr.strong th')).toHaveText([
       'Total des sorties',
-      'À sortir de ta poche',
+      'Cash-flow (entrées − sorties)',
     ]);
   }
 }
@@ -220,23 +226,35 @@ test('sélecteur d’année : année terminée et année future', async ({ page 
 
   // 2025, année terminée : bilan définitif ; 2024 ramené à 12 mois (loué depuis le 18/05/2024).
   await select.selectOption('2025');
-  const past = ['2024 réel', '2025 prévu', '2025 réel', 'Écart / prévu'];
+  const past = ['2024 réel (ramené à 12 mois)', '2025 prévu', '2025 réel', EFFECT];
   if (!phone) {
     const head = page.locator(
       'table[aria-label="Budget 2025"] thead th[scope="col"]:not(:first-child)',
     );
     await expect(head).toHaveText(past);
-    await expect(head.filter({ hasText: '2024 réel' })).toHaveAttribute(
-      'title',
-      'Ramené à 12 mois : location commencée le 18/05/2024.',
-    );
   }
   const income = [13394.16, 13595.07, 13703.15, 108.08];
   for (const [i, column] of past.entries()) {
     await expect(cell(page, phone, 2025, 'Loyers et charges perçus', column)).toHaveText(
-      i === 3 ? gap0(income[i]!) : eur0(income[i]!),
+      i === 3 ? effect0(income[i]!) : eur0(income[i]!),
     );
   }
+  // Effet sur le cash-flow de 2025 : signe et couleur favorables au propriétaire.
+  for (const [row, effect] of [
+    ['Loyers et charges perçus', 108.08],
+    ['Copropriété', -513.31],
+    ['Gestion et comptable', 436.07],
+    ['Autres dépenses', -1590.11],
+    ['Total des sorties', -921.18],
+    ['Cash-flow (entrées − sorties)', -813.1],
+  ] as const) {
+    const effectCell = cell(page, phone, 2025, row, EFFECT);
+    await expect(effectCell).toHaveText(effect0(effect));
+    await expect(effectCell).toHaveClass(effect > 0 ? /positive/ : /negative/);
+  }
+  await expect(cell(page, phone, 2025, 'Cash-flow (entrées − sorties)', '2025 réel')).toHaveText(
+    eur0(-3083.5),
+  );
   await expect(page.getByText(/Estimé fin d’année/)).toHaveCount(0);
   await expectSameStructure(page, phone, 2025);
   await capture(page, testInfo, 'us12-budget-2025');
@@ -278,9 +296,10 @@ test('✎ : corriger un prévu, « modifié », enregistré par année, retour a
   // Estimé : 3 791,60 payés + 2025 sur la même période restante (289,54 €) × 3 000 / 2 426,77
   // = 4 149,53 €.
   await expect(copro('2026 estimé fin d’année')).toHaveText(eur0(4149.53));
-  await expect(copro('Écart / prévu')).toHaveText(gap0(1149.53));
-  await expect(cell(page, phone, 2026, 'À sortir de ta poche', '2026 prévu')).toHaveText(
-    eur0(1364.34 - 2463.17 + 3000),
+  // 3 000 prévus, 4 149,53 estimés : 1 149,53 € de plus que prévu, donc −1 150 €.
+  await expect(copro(EFFECT)).toHaveText(effect0(-1149.53));
+  await expect(cell(page, phone, 2026, 'Cash-flow (entrées − sorties)', '2026 prévu')).toHaveText(
+    eur0(-1364.34 + 2463.17 - 3000),
   );
   await capture(page, testInfo, 'us12-budget-modifie');
 
@@ -299,7 +318,7 @@ test('✎ : corriger un prévu, « modifié », enregistré par année, retour a
 
   await page.getByRole('button', { name: /^Revenir au calcul automatique : Copropriété/ }).click();
   await expect(copro('2026 prévu')).toHaveText(eur0(2463.17));
-  await expect(copro('Écart / prévu')).toHaveText(gap0(1622.31));
+  await expect(copro(EFFECT)).toHaveText(effect0(-1622.31));
 });
 
 test('détail ⊕ d’une ligne : « Au 25/10 », puis les opérations de la ligne et de l’année', async ({
@@ -327,6 +346,42 @@ test('détail ⊕ d’une ligne : « Au 25/10 », puis les opérations de la lig
   for (const name of await amounts.allTextContents()) expect(name).toBe('Charges de copropriété');
   await expect(page.getByText(/dépenses 3\s791,60\s€/)).toBeVisible();
   await capture(page, testInfo, 'us12-budget-operations');
+});
+
+test('détail ⊕ d’une année terminée ou future : seulement le lien vers les opérations', async ({
+  page,
+}, testInfo) => {
+  test.skip(isPhone(testInfo), 'Pas de détail ⊕ sur téléphone.');
+  await startWithTestData(page);
+  await goToBudget(page);
+  for (const year of [2025, 2027]) {
+    await page.getByLabel('Année du budget').selectOption(String(year));
+    const table = page.locator(`table[aria-label="Budget ${year}"]`);
+    // ⊕ sur toutes les lignes, sauf le prêt et les totaux.
+    for (const label of ['Loyers et charges perçus', 'Entretien', 'Autres dépenses']) {
+      await expect(table.getByRole('button', { name: label, exact: true })).toBeVisible();
+    }
+    for (const label of [
+      'Prêt (échéances)',
+      'Total des sorties',
+      'Cash-flow (entrées − sorties)',
+    ]) {
+      await expect(table.getByRole('button', { name: label, exact: true })).toHaveCount(0);
+    }
+    const button = table.getByRole('button', { name: 'Entretien', exact: true });
+    if ((await button.getAttribute('aria-expanded')) === 'false') await button.click();
+    const detail = table.locator('tr.detail');
+    await expect(detail).toHaveCount(1);
+    await expect(
+      detail.getByRole('link', { name: `Voir les opérations ${year} ›` }),
+    ).toHaveAttribute('href', `#/operations?bien=APPART-01&annee=${year}&budget=entretien`);
+  }
+  await capture(page, testInfo, 'us12-budget-detail-2027');
+  // 2025 : la liste s'ouvre filtrée sur l'entretien de 2025 (386,42 €).
+  await page.getByLabel('Année du budget').selectOption('2025');
+  await page.getByRole('link', { name: 'Voir les opérations 2025 ›' }).click();
+  await expect(page.getByText('Ligne « Entretien » du budget.')).toBeVisible();
+  await expect(page.getByText(/dépenses 386,42\s€/)).toBeVisible();
 });
 
 test('lien avec la simulation de vente : projection d’après le budget 2026', async ({

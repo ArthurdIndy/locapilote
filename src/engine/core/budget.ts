@@ -5,8 +5,9 @@
  *
  * Entrées : loyers et charges perçus. Sorties : une ligne par groupe de catégories
  * (copropriété, gestion et comptable, impôts et taxes, assurances, entretien, autres dépenses)
- * et le prêt (d'après l'échéancier) ; « Total des sorties » ; « À sortir de ta poche » = total
- * des sorties − entrées.
+ * et le prêt (d'après l'échéancier) ; « Total des sorties » ; « Cash-flow (entrées − sorties) »
+ * = entrées − total des sorties (négatif quand le propriétaire remet de l'argent, comme dans la
+ * Synthèse).
  *
  * Colonnes, pour l'année N :
  * - N−1 réel : opérations de l'année précédente, ramenées à 12 mois au prorata des mois loués
@@ -14,7 +15,9 @@
  * - N prévu : N−1 réel × (1 + évolution), « Autres dépenses » à 0, ou la valeur modifiée (✎) ;
  * - N estimé fin d'année (année en cours) = payé à ce jour + reste prévu ; N réel (année
  *   terminée) ;
- * - écart = estimé (ou réel) − prévu.
+ * - effet sur le cash-flow, de signe favorable au propriétaire : entrées et cash-flow = estimé
+ *   (ou réel) − prévu ; sorties = prévu − estimé (ou réel). La somme des effets des entrées et
+ *   du total des sorties est égale à l'effet sur le cash-flow.
  *
  * Montants en centimes, arrondis au centime.
  */
@@ -32,10 +35,13 @@ import { installmentTotal } from './loan';
 import { rentalMonths } from './synthesis';
 
 /**
- * Ligne du tableau : une ligne modifiable, le prêt, « Total des sorties » ou « À sortir de ta
- * poche ».
+ * Ligne du tableau : une ligne modifiable, le prêt, « Total des sorties » ou « Cash-flow
+ * (entrées − sorties) ».
  */
-export type BudgetRowId = BudgetLine | 'loan' | 'totalExpenses' | 'outOfPocket';
+export type BudgetRowId = BudgetLine | 'loan' | 'totalExpenses' | 'cashFlow';
+
+/** Lignes dont l'effet sur le cash-flow suit le montant (plus = mieux) : entrées et cash-flow. */
+const INFLOWS: ReadonlySet<BudgetRowId> = new Set(['income', 'cashFlow']);
 
 /** Lignes de dépense (tout sauf les loyers). */
 export const BUDGET_EXPENSE_LINES: readonly BudgetLine[] = BUDGET_LINES.filter(
@@ -154,8 +160,12 @@ export interface BudgetRow {
   paidToDate: number | null;
   /** Année en cours : N−1 à la même date. */
   previousToDate: number | null;
-  /** Écart / prévu = estimé (ou réel) − prévu ; `null` pour une année future. */
-  gap: number | null;
+  /**
+   * Effet sur le cash-flow, positif quand il est favorable au propriétaire : entrées et
+   * cash-flow = estimé (ou réel) − prévu ; sorties = prévu − estimé (ou réel). `null` pour une
+   * année future.
+   */
+  effect: number | null;
 }
 
 export interface YearBudget {
@@ -164,7 +174,7 @@ export interface YearBudget {
   dataAsOf: IsoDate;
   /**
    * Dans l'ordre du tableau : loyers (entrées), dépenses et prêt (sorties), « Total des
-   * sorties », puis « À sortir de ta poche ».
+   * sorties », puis « Cash-flow (entrées − sorties) ».
    */
   rows: BudgetRow[];
   /** N−1 ramené à 12 mois (location commencée en cours d'année N−1). */
@@ -213,7 +223,7 @@ export function yearBudget(
     const before = yearBudget(data, property, year - 1, dataAsOf, growth);
     previous = zero();
     for (const row of before.rows) {
-      if (row.id !== 'outOfPocket' && row.id !== 'totalExpenses') {
+      if (row.id !== 'cashFlow' && row.id !== 'totalExpenses') {
         previous[row.id] = row.actual ?? row.planned;
       }
     }
@@ -259,14 +269,14 @@ export function yearBudget(
     });
   }
 
-  const ids: BudgetRowId[] = [...BUDGET_LINES, 'loan', 'totalExpenses', 'outOfPocket'];
+  const ids: BudgetRowId[] = [...BUDGET_LINES, 'loan', 'totalExpenses', 'cashFlow'];
   const value = (a: Amounts | null, id: BudgetRowId) =>
     a === null
       ? null
       : id === 'totalExpenses'
         ? totalExpenses(a)
-        : id === 'outOfPocket'
-          ? totalExpenses(a) - a.income
+        : id === 'cashFlow'
+          ? a.income - totalExpenses(a)
           : a[id];
   const rows = ids.map((id): BudgetRow => {
     const plan = value(planned, id)!;
@@ -280,7 +290,7 @@ export function yearBudget(
       actual: act,
       paidToDate: value(paid, id),
       previousToDate: value(previousToDate, id),
-      gap: act === null ? null : act - plan,
+      effect: act === null ? null : INFLOWS.has(id) ? act - plan : plan - act,
     };
   });
   return { year, kind, dataAsOf, rows, previousProrated };

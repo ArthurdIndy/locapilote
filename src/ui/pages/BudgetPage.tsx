@@ -34,31 +34,46 @@ const euroRounded = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });
 
-/** Montant du tableau, arrondi à l'euro. */
-const eur0 = (cents: number) => euroRounded.format(Math.round(cents / 100) || 0);
-
-/** Écart arrondi à l'euro, avec son signe : « +1 622 € », « −13 € », « 0 € ». */
-function signedEur0(cents: number): string {
-  const euros = Math.round(cents / 100);
-  if (euros === 0) return eur0(0);
-  return euros > 0 ? `+${euroRounded.format(euros)}` : `−${euroRounded.format(-euros)}`;
-}
+const euroSigned = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+  signDisplay: 'exceptZero',
+});
 
 /**
- * Couleur de l'écart selon son effet pour le propriétaire : loyer en plus ou dépense en moins en
- * vert, l'inverse en rouge, 0 € en gris.
+ * Centimes → euros entiers, arrondis au plus proche, le demi-euro en s'éloignant de zéro pour
+ * les négatifs comme pour les positifs (−3 083,50 € → −3 084 €, comme 3 083,50 € → 3 084 €).
  */
-function gapClass(id: BudgetRowId, gap: number): string {
-  const euros = Math.round(gap / 100);
-  if (euros === 0) return 'gap-zero';
-  const good = id === 'income' ? euros > 0 : euros < 0;
-  return good ? 'positive' : 'negative';
+const roundEuros = (cents: number) => Math.sign(cents) * Math.round(Math.abs(cents) / 100) || 0;
+
+/** Montant du tableau, arrondi à l'euro (signe moins comme dans la Synthèse). */
+const eur0 = (cents: number) => euroRounded.format(roundEuros(cents));
+
+/** Effet arrondi à l'euro, avec son signe : « +43 € », « -1 622 € », « 0 € ». */
+const signedEur0 = (cents: number) => euroSigned.format(roundEuros(cents));
+
+/**
+ * Couleur de l'effet sur le cash-flow : le signe suit déjà l'effet pour le propriétaire (loyer
+ * en plus ou dépense en moins : positif). Positif en vert, négatif en rouge, 0 € en gris.
+ */
+function effectClass(effect: number): string {
+  const euros = roundEuros(effect);
+  return euros === 0 ? 'gap-zero' : euros > 0 ? 'positive' : 'negative';
+}
+
+/** Cash-flow : rouge s'il est négatif, vert s'il est positif, comme dans la Synthèse. */
+function cashFlowClass(row: BudgetRow, cents: number | null): string | undefined {
+  if (row.id !== 'cashFlow' || cents === null) return undefined;
+  const euros = roundEuros(cents);
+  return euros < 0 ? 'negative' : euros > 0 ? 'positive' : undefined;
 }
 
 const isEditable = isBudgetLine;
 
 /** Lignes de total, en gras. */
-const STRONG: ReadonlySet<BudgetRowId> = new Set(['totalExpenses', 'outOfPocket']);
+const STRONG: ReadonlySet<BudgetRowId> = new Set(['totalExpenses', 'cashFlow']);
 
 /** Aide au survol de certaines lignes. */
 const ROW_HELP: Partial<Record<BudgetRowId, string>> = {
@@ -66,7 +81,6 @@ const ROW_HELP: Partial<Record<BudgetRowId, string>> = {
     'Travaux, investissements à amortir, dépenses à qualifier. Prévu à 0 par défaut : dépenses exceptionnelles.',
   loan: 'D’après l’échéancier du prêt.',
   totalExpenses: 'Dépenses + prêt.',
-  outOfPocket: 'Total des sorties − entrées.',
 };
 
 /** Budget (US12) : l'année en cours du bien courant, prévu, réalisé et écarts. */
@@ -121,7 +135,7 @@ function BudgetView({
     DEFAULT_ANNUAL_GROWTH,
   ).value;
   const budget = yearBudget(data, property, year, asOf, growth);
-  const columns = columnsOf(budget, property);
+  const columns = columnsOf(budget);
 
   const save = (line: BudgetLine, value: number | null) =>
     db.saveBudgetLine(property.id, year, line, value);
@@ -130,10 +144,10 @@ function BudgetView({
   const byId = (id: BudgetRowId) => budget.rows.find((r) => r.id === id)!;
   const income = byId('income');
   const totalExpenses = byId('totalExpenses');
-  const outOfPocket = byId('outOfPocket');
+  const cashFlow = byId('cashFlow');
   // Sorties : les lignes de dépense, puis le prêt.
   const expenses = budget.rows.filter(
-    (r) => r.id !== 'income' && r.id !== 'totalExpenses' && r.id !== 'outOfPocket',
+    (r) => r.id !== 'income' && r.id !== 'totalExpenses' && r.id !== 'cashFlow',
   );
 
   const card = (row: BudgetRow) => {
@@ -162,7 +176,9 @@ function BudgetView({
     );
   };
   const dayMonth = formatDate(asOf).slice(0, 5);
-  const showDetails = budget.kind === 'current';
+  // ⊕ sur toutes les lignes modifiables, quelle que soit l'année ; « Au JJ/MM » pour l'année
+  // en cours seulement.
+  const showToDate = budget.kind === 'current';
   const operationsHref = (line: BudgetLine) =>
     routeHref('operations', {
       bien: property.id,
@@ -200,7 +216,7 @@ function BudgetView({
                 <span className="visually-hidden">Ligne</span>
               </th>
               {columns.map((c) => (
-                <th key={c.key} scope="col" title={c.title}>
+                <th key={c.key} scope="col">
                   {c.label}
                 </th>
               ))}
@@ -209,7 +225,7 @@ function BudgetView({
           {[
             { title: 'Entrées', rows: [income] },
             { title: 'Sorties', rows: [...expenses, totalExpenses] },
-            { title: null, rows: [outOfPocket] },
+            { title: null, rows: [cashFlow] },
           ].map((section) => (
             <tbody key={section.title ?? 'total'}>
               {section.title && (
@@ -221,7 +237,7 @@ function BudgetView({
               )}
               {section.rows.map((row) => {
                 const editable = isEditable(row.id);
-                const hasDetail = showDetails && editable;
+                const hasDetail = editable;
                 const label = BUDGET_ROW_LABELS[row.id];
                 return (
                   <Fragment key={row.id}>
@@ -252,13 +268,15 @@ function BudgetView({
                     </tr>
                     {hasDetail && details.isOpen(row.id) && (
                       <>
-                        <tr className="detail">
-                          <th scope="row">Au {dayMonth}</th>
-                          <td>{eur0(row.previousToDate ?? 0)}</td>
-                          <td />
-                          <td>{eur0(row.paidToDate ?? 0)}</td>
-                          <td />
-                        </tr>
+                        {showToDate && (
+                          <tr className="detail">
+                            <th scope="row">Au {dayMonth}</th>
+                            <td>{eur0(row.previousToDate ?? 0)}</td>
+                            <td />
+                            <td>{eur0(row.paidToDate ?? 0)}</td>
+                            <td />
+                          </tr>
+                        )}
                         <tr className="detail">
                           <th scope="row" colSpan={columns.length + 1}>
                             <a href={operationsHref(row.id as BudgetLine)}>
@@ -277,11 +295,11 @@ function BudgetView({
       </div>
 
       {/*
-       * Téléphone : « À sortir de ta poche » et « Total des sorties » en premier, puis les
-       * entrées, puis une carte par ligne de sortie.
+       * Téléphone : « Cash-flow » et « Total des sorties » en premier, puis les entrées, puis une
+       * carte par ligne de sortie.
        */}
       <div className="synthesis-narrow stack">
-        {[outOfPocket, totalExpenses].map(card)}
+        {[cashFlow, totalExpenses].map(card)}
         <h3 className="section-title">Entrées</h3>
         {card(income)}
         <h3 className="section-title">Sorties</h3>
@@ -297,33 +315,33 @@ function BudgetView({
 }
 
 interface Column {
-  key: 'previous' | 'planned' | 'actual' | 'gap';
+  key: 'previous' | 'planned' | 'actual' | 'effect';
   label: string;
-  /** Aide au survol de l'en-tête. */
-  title?: string;
   value: (row: BudgetRow) => string;
   className?: (row: BudgetRow) => string | undefined;
 }
 
 /**
- * Colonnes selon l'année : en cours (N−1 réel, N prévu, N estimé fin d'année, écart), terminée
- * (N−1 réel, N prévu, N réel, écart) ou future (N−1 réel ou estimé, N prévu).
+ * Colonnes selon l'année : en cours (N−1 réel, N prévu, N estimé fin d'année, effet sur le
+ * cash-flow), terminée (N−1 réel, N prévu, N réel, effet) ou future (N−1 réel ou estimé,
+ * N prévu). « (ramené à 12 mois) » quand N−1 est une première année de location incomplète.
  */
-function columnsOf(budget: YearBudget, property: Property): Column[] {
+function columnsOf(budget: YearBudget): Column[] {
   const { year, kind } = budget;
   const dataYear = yearOf(budget.dataAsOf);
   const previousKind = year - 1 < dataYear ? 'réel' : year - 1 === dataYear ? 'estimé' : 'prévu';
   const previous: Column = {
     key: 'previous',
-    label: `${year - 1} ${previousKind}`,
-    ...(budget.previousProrated && property.rentalStartDate
-      ? {
-          title: `Ramené à 12 mois : location commencée le ${formatDate(property.rentalStartDate)}.`,
-        }
-      : {}),
+    label: `${year - 1} ${previousKind}${budget.previousProrated ? ' (ramené à 12 mois)' : ''}`,
     value: (r) => eur0(r.previous),
+    className: (r) => cashFlowClass(r, r.previous),
   };
-  const planned: Column = { key: 'planned', label: `${year} prévu`, value: (r) => eur0(r.planned) };
+  const planned: Column = {
+    key: 'planned',
+    label: `${year} prévu`,
+    value: (r) => eur0(r.planned),
+    className: (r) => cashFlowClass(r, r.planned),
+  };
   if (kind === 'future') return [previous, planned];
   return [
     previous,
@@ -332,12 +350,13 @@ function columnsOf(budget: YearBudget, property: Property): Column[] {
       key: 'actual',
       label: kind === 'current' ? `${year} estimé fin d’année` : `${year} réel`,
       value: (r) => eur0(r.actual ?? 0),
+      className: (r) => cashFlowClass(r, r.actual),
     },
     {
-      key: 'gap',
-      label: 'Écart / prévu',
-      value: (r) => signedEur0(r.gap ?? 0),
-      className: (r) => gapClass(r.id, r.gap ?? 0),
+      key: 'effect',
+      label: 'Effet sur ton cash-flow',
+      value: (r) => signedEur0(r.effect ?? 0),
+      className: (r) => effectClass(r.effect ?? 0),
     },
   ];
 }

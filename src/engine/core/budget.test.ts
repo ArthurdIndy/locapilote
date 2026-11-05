@@ -183,8 +183,8 @@ describe('budget de l’année en cours', () => {
     expect(row(b, 'other').planned).toBe(0);
     expect(row(b, 'loan').planned).toBe(360_000);
     expect(row(b, 'income').modified).toBe(false);
-    // À sortir de ta poche = 2 030 + 1 015 + 3 600 − 12 180 = −5 535 € (le bien rapporte).
-    expect(row(b, 'outOfPocket').planned).toBe(203_000 + 101_500 + 360_000 - 1_218_000);
+    // Cash-flow = 12 180 − (2 030 + 1 015 + 3 600) = +5 535 € (le bien rapporte).
+    expect(row(b, 'cashFlow').planned).toBe(1_218_000 - (203_000 + 101_500 + 360_000));
   });
 
   it('estimé fin d’année : payé à ce jour + N−1 sur la période restante × prévu / N−1', () => {
@@ -193,7 +193,8 @@ describe('budget de l’année en cours', () => {
     expect(income.previousToDate).toBe(600_000);
     // 6 300 + 6 000 × 12 180 / 12 000 = 12 390 €.
     expect(income.actual).toBe(1_239_000);
-    expect(income.gap).toBe(21_000);
+    // Entrées : effet = estimé − prévu (210 € de loyers en plus : favorable).
+    expect(income.effect).toBe(21_000);
     // Copropriété : 1 040 + 1 000 × 2 030 / 2 000 = 2 055 €.
     expect(row(b, 'coOwnership').actual).toBe(205_500);
   });
@@ -202,7 +203,7 @@ describe('budget de l’année en cours', () => {
     const taxes = row(b, 'taxes');
     expect(taxes.paidToDate).toBe(0);
     expect(taxes.actual).toBe(101_500);
-    expect(taxes.gap).toBe(0);
+    expect(taxes.effect).toBe(0);
   });
 
   it('prêt : échéances réelles de l’échéancier ; autres dépenses : ce qui est payé', () => {
@@ -210,14 +211,18 @@ describe('budget de l’année en cours', () => {
     expect(row(b, 'loan').actual).toBe(360_000);
     // Prévu à 0 : le reste prévu est nul même si N−1 avait une dépense sur la même période.
     expect(row(b, 'other').actual).toBe(0);
-    // Total des sorties = dépenses + prêt ; à sortir de ta poche = total des sorties − entrées.
+    // Total des sorties = dépenses + prêt ; cash-flow = entrées − total des sorties.
     const expenses = row(b, 'totalExpenses');
     expect(expenses.planned).toBe(203_000 + 101_500 + 360_000);
     expect(expenses.actual).toBe(205_500 + 101_500 + 360_000);
-    expect(expenses.gap).toBe(2_500);
-    const total = row(b, 'outOfPocket');
-    expect(total.actual).toBe(expenses.actual! - 1_239_000);
-    expect(total.gap).toBe(total.actual! - total.planned);
+    // Sorties : effet = prévu − estimé (25 € de copropriété en plus : défavorable).
+    expect(expenses.effect).toBe(-2_500);
+    expect(row(b, 'coOwnership').effect).toBe(-2_500);
+    const cashFlow = row(b, 'cashFlow');
+    expect(cashFlow.actual).toBe(1_239_000 - expenses.actual!);
+    expect(cashFlow.effect).toBe(cashFlow.actual! - cashFlow.planned);
+    // La somme des effets des entrées et du total des sorties est l'effet sur le cash-flow.
+    expect(row(b, 'income').effect! + expenses.effect!).toBe(cashFlow.effect);
   });
 
   it('valeur modifiée : elle remplace le prévu de l’année, le calcul automatique reste connu', () => {
@@ -230,8 +235,9 @@ describe('budget de l’année en cours', () => {
     expect(copro).toMatchObject({ planned: 240_000, automatic: 203_000, modified: true });
     // Reste prévu à la même saisonnalité : 1 040 + 1 000 × 2 400 / 2 000 = 2 240 €.
     expect(copro.actual).toBe(224_000);
-    expect(copro.gap).toBe(-16_000);
-    expect(row(m, 'outOfPocket').planned).toBe(240_000 + 101_500 + 360_000 - 1_218_000);
+    // 160 € de moins que prévu : favorable.
+    expect(copro.effect).toBe(16_000);
+    expect(row(m, 'cashFlow').planned).toBe(1_218_000 - (240_000 + 101_500 + 360_000));
     // Un budget d'une autre année ne change rien.
     const other = dataset(transactions, {
       loan: true,
@@ -270,10 +276,11 @@ describe('budget d’une année terminée ou future', () => {
       previous: 1_000_000,
       planned: 1_015_000,
       actual: 1_100_000,
-      gap: 85_000,
+      effect: 85_000,
       paidToDate: null,
     });
-    expect(row(b, 'taxes')).toMatchObject({ planned: 0, actual: 80_000, gap: 80_000 });
+    // 800 € de taxe foncière non prévus : défavorable.
+    expect(row(b, 'taxes')).toMatchObject({ planned: 0, actual: 80_000, effect: -80_000 });
   });
 
   it('année future : N−1 estimé, N prévu = estimé + 1,5 %, ni réel ni écart', () => {
@@ -285,7 +292,7 @@ describe('budget d’une année terminée ou future', () => {
     expect(row(b, 'income').planned).toBe(Math.round(row(current, 'income').actual! * 1.015));
     expect(row(b, 'taxes').previous).toBe(row(current, 'taxes').actual);
     expect(row(b, 'income').actual).toBeNull();
-    expect(row(b, 'income').gap).toBeNull();
+    expect(row(b, 'income').effect).toBeNull();
   });
 
   it('années proposées : de la mise en location à l’année suivant celle des données', () => {
@@ -333,22 +340,37 @@ describe('budget du jeu de test au 25/10/2026', () => {
   const b = yearBudget(data, property, 2026, '2026-10-25', GROWTH);
   const values = (id: BudgetRowId) => {
     const r = row(b, id);
-    return [r.previous, r.planned, r.actual, r.gap].map((v) => v! / 100);
+    return [r.previous, r.planned, r.actual, r.effect].map((v) => v! / 100);
   };
 
-  it('2025 réel, 2026 prévu, estimé fin d’année, écart', () => {
+  it('2025 réel, 2026 prévu, estimé fin d’année, effet sur le cash-flow', () => {
     expect(values('income')).toEqual([13703.15, 13908.7, 13959.28, 50.58]);
-    expect(values('coOwnership')).toEqual([2426.77, 2463.17, 4085.48, 1622.31]);
+    expect(values('coOwnership')).toEqual([2426.77, 2463.17, 4085.48, -1622.31]);
     // Gestion et comptable : honoraires sur travaux compris (59,30 € en 2025, 29,96 € en 2026).
-    expect(values('management')).toEqual([1611.54, 1635.71, 1592.94, -42.77]);
-    expect(values('taxes')).toEqual([561.72, 570.15, 885.36, 315.21]);
+    expect(values('management')).toEqual([1611.54, 1635.71, 1592.94, 42.77]);
+    expect(values('taxes')).toEqual([561.72, 570.15, 885.36, -315.21]);
     // Assurance PNO de 2025 payée après le 25/10 : restant à venir en 2026 (saisonnalité).
     expect(values('insurance')).toEqual([114.18, 115.89, 115.89, 0]);
-    expect(values('maintenance')).toEqual([386.42, 392.22, 1141.67, 749.45]);
+    expect(values('maintenance')).toEqual([386.42, 392.22, 1141.67, -749.45]);
     expect(values('other')).toEqual([1590.11, 0, 0, 0]);
     expect(values('loan')).toEqual([10095.91, 10095.9, 10095.9, 0]);
-    expect(values('totalExpenses')).toEqual([16786.65, 15273.04, 17917.24, 2644.2]);
-    expect(values('outOfPocket')).toEqual([3083.5, 1364.34, 3957.96, 2593.62]);
+    expect(values('totalExpenses')).toEqual([16786.65, 15273.04, 17917.24, -2644.2]);
+    // Cash-flow négatif : de l'argent à remettre, comme dans la Synthèse.
+    expect(values('cashFlow')).toEqual([-3083.5, -1364.34, -3957.96, -2593.62]);
+  });
+
+  it('Budget 2025 : effet sur le cash-flow de chaque ligne (année terminée)', () => {
+    const past = yearBudget(data, property, 2025, '2026-10-25', GROWTH);
+    const effect = (id: BudgetRowId) => row(past, id).effect! / 100;
+    expect(effect('income')).toBe(108.08);
+    expect(effect('coOwnership')).toBe(-513.31);
+    expect(effect('management')).toBe(436.07);
+    expect(effect('other')).toBe(-1590.11);
+    expect(effect('totalExpenses')).toBe(-921.18);
+    expect(effect('cashFlow')).toBe(-813.1);
+    expect(row(past, 'income').effect! + row(past, 'totalExpenses').effect!).toBe(
+      row(past, 'cashFlow').effect,
+    );
   });
 
   it('détail « Au 25/10 » : N−1 à la même date et payé à ce jour', () => {
