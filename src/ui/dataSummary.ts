@@ -3,11 +3,7 @@
  * Fonctions pures.
  */
 import type { Dataset } from '../engine/types';
-
-/** « 1 opération », « 289 opérations ». */
-export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
-  return `${count} ${count > 1 ? pluralForm : singular}`;
-}
+import { plural } from './format';
 
 /** Ce qui est rattaché à un bien. */
 export interface PropertyFootprint {

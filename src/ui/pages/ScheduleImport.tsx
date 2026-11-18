@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { parseScheduleText, type ParsedSchedule } from '../../engine/core/loanImport';
 import type { Loan } from '../../engine/types';
-import { formatDate, formatEuros } from '../format';
+import { formatDate, formatEuros, plural } from '../format';
 
 interface Props {
   loan: Loan;
@@ -32,7 +32,7 @@ export function ScheduleImport({ loan, existingCount, onImport, onClose }: Props
     if (
       existingCount > 0 &&
       !window.confirm(
-        `Remplacer les ${existingCount} échéances actuelles par les ${parsed.installments.length} du tableau ?`,
+        `Remplacer ${existingCount > 1 ? `les ${existingCount} échéances actuelles` : 'l’échéance actuelle'} par ${parsed.installments.length > 1 ? `les ${parsed.installments.length}` : 'celle'} du tableau ?`,
       )
     ) {
       return;
@@ -82,7 +82,7 @@ export function ScheduleImport({ loan, existingCount, onImport, onClose }: Props
       {rows.length > 0 && (
         <div className="import-preview" role="status">
           <p>
-            <strong>{rows.length} échéances</strong> du {formatDate(rows[0]!.date)} au{' '}
+            <strong>{plural(rows.length, 'échéance')}</strong> du {formatDate(rows[0]!.date)} au{' '}
             {formatDate(rows.at(-1)!.date)} : capital {formatEuros(sum((i) => i.principal))},
             intérêts {formatEuros(sum((i) => i.interest))}, assurance{' '}
             {formatEuros(sum((i) => i.insurance))}.
@@ -111,9 +111,11 @@ export function ScheduleImport({ loan, existingCount, onImport, onClose }: Props
           disabled={busy || rows.length === 0}
           onClick={confirm}
         >
-          {rows.length > 0
+          {rows.length > 1
             ? `Enregistrer les ${rows.length} échéances`
-            : 'Enregistrer les échéances'}
+            : rows.length === 1
+              ? 'Enregistrer l’échéance'
+              : 'Enregistrer les échéances'}
         </button>
         <button type="button" className="button" onClick={onClose}>
           Annuler

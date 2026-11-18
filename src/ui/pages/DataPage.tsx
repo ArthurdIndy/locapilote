@@ -8,13 +8,16 @@ import { Modal } from '../components/Modal';
 import { downloadBackup, loadExample } from '../dataActions';
 import { describeAllData } from '../dataSummary';
 import { downloadText } from '../download';
+import { plural } from '../format';
 
 type Status = { kind: 'success' | 'error'; text: string } | null;
 
 function describe(data: Dataset): string {
-  const p = data.properties.length;
-  const t = data.transactions.length;
-  return `${p} bien${p > 1 ? 's' : ''}, ${t} opération${t > 1 ? 's' : ''}, ${data.loanInstallments.length} échéances de prêt`;
+  return [
+    plural(data.properties.length, 'bien'),
+    plural(data.transactions.length, 'opération'),
+    plural(data.loanInstallments.length, 'échéance de prêt', 'échéances de prêt'),
+  ].join(', ');
 }
 
 export function DataPage({ data, today }: { data: Dataset; today: string }) {

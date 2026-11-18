@@ -53,6 +53,14 @@ export function centsToInput(cents: Cents): string {
   return `${sign}${Math.floor(abs / 100)}${decimals === 0 ? '' : `,${String(decimals).padStart(2, '0')}`}`;
 }
 
+/**
+ * Nombre suivi de son nom, accordé à la française : singulier pour 0 et 1, pluriel au-delà
+ * (« 0 échéance », « 1 opération », « 289 opérations »).
+ */
+export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
+  return `${count} ${count > 1 ? pluralForm : singular}`;
+}
+
 /** Comparaison de textes sans tenir compte des accents ni de la casse (pour la recherche). */
 export function normalizeForSearch(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

@@ -63,7 +63,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 
 ## MVP
 
-Les 9 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18 (US21 est sortie du MVP le 18/11/2026). US22 (import, itération 5b) s'y ajoute pour tenir le critère « importe son historique ». Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
+Les 10 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18, US22 (US21 est sortie du MVP le 18/11/2026, US22 l'a rejointe pour l'import, itération 5b). Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
 
 Le MVP est terminé quand :
 

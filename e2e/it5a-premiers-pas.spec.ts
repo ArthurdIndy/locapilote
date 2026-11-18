@@ -236,6 +236,10 @@ test.describe('charger l’exemple (⚙ Paramètres)', () => {
     await page.goto('/');
     await expect(welcome(page)).toBeVisible();
     await openSettings(page);
+    // Compteurs accordés : singulier pour 0 et 1.
+    await expect(page.getByRole('main')).toContainText(
+      'toutes tes données (0 bien, 0 opération, 0 échéance de prêt)',
+    );
     await page.getByRole('button', { name: 'Charger l’exemple' }).click();
     await expect(page.getByText('Exemple chargé.')).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
