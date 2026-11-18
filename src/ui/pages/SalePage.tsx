@@ -27,6 +27,7 @@ import {
   centsToInput,
   formatDate,
   formatEuros,
+  formatWithoutNegativeZero,
   formatPercent,
   isPlausibleDate,
   parseEurosInput,
@@ -52,7 +53,7 @@ const euroRounded = new Intl.NumberFormat('fr-FR', {
 });
 
 /** Montant du tableau : arrondi à l'euro. */
-const eur0 = (cents: number) => euroRounded.format(Math.round(cents) / 100);
+const eur0 = (cents: number) => formatWithoutNegativeZero(euroRounded, Math.round(cents) / 100);
 /** Montant d'un détail ⊕ : au centime. */
 const eur = (cents: number) => formatEuros(Math.round(cents));
 const minus = (cents: number) => eur(cents === 0 ? 0 : -cents);

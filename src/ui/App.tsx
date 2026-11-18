@@ -4,6 +4,7 @@ import type { Dataset } from '../engine/types';
 import { db } from '../db/database';
 import { useCurrentProperty } from './currentProperty';
 import { CurrentPropertyContext } from './propertyContext';
+import { recordDataPresence } from './backupReminder';
 import { todayIso } from './format';
 import { BudgetPage } from './pages/BudgetPage';
 import { HomePage } from './pages/HomePage';
@@ -14,7 +15,6 @@ import { SimulationsPage } from './pages/SimulationsPage';
 import { SynthesisPage } from './pages/SynthesisPage';
 import { TaxPage } from './pages/TaxPage';
 import { TransactionsPage } from './pages/TransactionsPage';
-import { WelcomePage } from './pages/WelcomePage';
 import {
   goBack,
   MAIN_NAV,
@@ -25,16 +25,14 @@ import {
   type RouteId,
 } from './router';
 
-type LoadState =
-  { status: 'ready'; initialized: boolean; data: Dataset } | { status: 'error'; message: string };
+type LoadState = { status: 'ready'; data: Dataset } | { status: 'error'; message: string };
 
 async function load(): Promise<LoadState> {
   try {
-    const initialized = await db.isInitialized();
     const data = await db.readAll();
     // Biens affichés par ordre alphabétique, partout.
     data.properties.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-    return { status: 'ready', initialized, data };
+    return { status: 'ready', data };
   } catch (error) {
     return { status: 'error', message: error instanceof Error ? error.message : String(error) };
   }
@@ -66,20 +64,42 @@ export function App() {
       </Layout>
     );
   }
-  if (!state.initialized) {
-    return (
-      <Layout>
-        <WelcomePage />
-      </Layout>
-    );
-  }
   return <MainApp data={state.data} location={location} />;
 }
 
+/**
+ * Pages d'un bien : sans aucun bien, elles ramènent à l'Accueil (écran de bienvenue), sauf le
+ * formulaire de création d'un bien (#/mon-bien?nouveau=1).
+ */
+const PROPERTY_ROUTES: ReadonlySet<RouteId> = new Set([
+  'synthese',
+  'budget',
+  'simulations',
+  'fiscalite',
+  'mon-bien',
+  'operations',
+  'nouvelle-operation',
+]);
+
 function MainApp({ data, location }: { data: Dataset; location: Location }) {
-  const { route, params } = location;
+  const { params } = location;
   const { current, setCurrentId } = useCurrentProperty(data.properties);
   const today = todayIso();
+  const noProperty = data.properties.length === 0;
+  const redirectHome =
+    noProperty &&
+    PROPERTY_ROUTES.has(location.route) &&
+    !(location.route === 'mon-bien' && params.get('nouveau') === '1');
+  const route: RouteId = redirectHome ? 'accueil' : location.route;
+
+  useEffect(() => {
+    if (redirectHome) window.location.replace(routeHref('accueil'));
+  }, [redirectHome]);
+
+  // Date d'arrivée des premières données, pour le rappel de sauvegarde.
+  useEffect(() => {
+    recordDataPresence(!noProperty, today);
+  }, [noProperty, today]);
 
   // Un lien vers les opérations d'un bien (#/operations?bien=…) rend ce bien courant.
   // Relu à chaque changement d'adresse, même quand on revient sur le même lien après avoir
@@ -93,8 +113,8 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
 
   return (
     <CurrentPropertyContext.Provider value={{ properties: data.properties, current, setCurrentId }}>
-      <Layout route={route}>
-        {route === 'accueil' && <HomePage data={data} onOpen={setCurrentId} />}
+      <Layout route={route} footer={!(route === 'accueil' && noProperty)}>
+        {route === 'accueil' && <HomePage data={data} today={today} onOpen={setCurrentId} />}
         {route === 'nouvelle-operation' && (
           <NewTransactionPage data={data} currentPropertyId={current?.id ?? null} today={today} />
         )}
@@ -137,6 +157,7 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
             today={today}
             params={params}
             onCreated={setCurrentId}
+            onDeleted={(id) => setCurrentId(data.properties.find((p) => p.id !== id)?.id ?? null)}
           />
         )}
         {route === 'parametres' && <SettingsPage data={data} today={today} />}
@@ -147,6 +168,8 @@ function MainApp({ data, location }: { data: Dataset; location: Location }) {
 
 interface LayoutProps {
   route?: RouteId;
+  /** Faux sur l'écran de bienvenue, qui dit déjà où sont les données. */
+  footer?: boolean;
   children: ReactNode;
 }
 
@@ -187,7 +210,7 @@ function NewTransactionLink({ route, className }: { route: RouteId; className: s
   );
 }
 
-function Layout({ route, children }: LayoutProps) {
+function Layout({ route, footer = true, children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Le menu ☰ se referme avec Échap.
@@ -269,7 +292,7 @@ function Layout({ route, children }: LayoutProps) {
                 className="settings-link"
                 href={routeHref('parametres')}
                 aria-label="Paramètres"
-                title="Paramètres : données (export, import, jeu de test)"
+                title="Paramètres : données (export, import, exemple)"
                 aria-current={route === 'parametres' ? 'page' : undefined}
               >
                 ⚙
@@ -279,10 +302,12 @@ function Layout({ route, children }: LayoutProps) {
         )}
       </header>
       <main>{children}</main>
-      <footer className="footer">
-        Tes données restent dans ce navigateur, sur cet appareil. Pense à les exporter régulièrement
-        depuis <a href={routeHref('parametres')}>⚙ Paramètres</a>.
-      </footer>
+      {footer && (
+        <footer className="footer">
+          Tes données restent dans ce navigateur, sur cet appareil. Pense à les exporter
+          régulièrement depuis <a href={routeHref('parametres')}>⚙ Paramètres</a>.
+        </footer>
+      )}
     </div>
   );
 }

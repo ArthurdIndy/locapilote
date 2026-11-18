@@ -18,7 +18,7 @@ Deux objectifs de même poids :
 Indicateurs de réussite :
 
 1. Le bien de référence est suivi uniquement dans Locapilote.
-2. Un proche crée son bien et saisit son premier mois seul, en moins de 30 minutes.
+2. Un proche crée son bien et importe son historique seul, en moins de 30 minutes.
 3. Le récapitulatif LMNP réel retombe sur les comptes du comptable, ou l'écart est expliqué.
 4. Chaque itération est livrée en une à deux semaines.
 
@@ -49,7 +49,7 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US09 | Fiscalité | Obtenir le récapitulatif LMNP réel | Retombe sur les comptes du comptable, écarts expliqués | Must |
 | US10 | Fiscalité | Obtenir le montant à déclarer en micro-BIC, micro-foncier ou réel foncier | La case de la déclaration est indiquée | Should |
 | US11 | Simulations | Savoir combien je toucherais en vendant, combien d'impôt je paierais, et si j'ai intérêt à attendre | Un scénario à l'ouverture (vente dans 12 mois à la valeur estimée) ; somme nette et impôt sur la plus-value mêmes que l'onglet « Vendre quand » ; comparaison avec d'autres dates et gain de l'attente en euros ; TRI et comparaison à un placement calculés mais pas affichés (backlog) | Must |
-| US12 | Simulations | Construire un budget prévisionnel et suivre l'écart avec le réel | Version légère (itération 4c) : budget annuel par bien, sans saisie au départ (année précédente + évolution, lignes corrigibles ✎ enregistrées par année), entrées (loyers et charges perçus) et sorties (copropriété, gestion et comptable, impôts et taxes, assurances, entretien, autres dépenses, prêt), total des sorties, cash-flow (entrées − sorties), colonnes N−1 réel, N prévu, N estimé fin d'année (saisonnalité de N−1), effet sur ton cash-flow (signe et couleur selon l'effet pour le propriétaire) ; repris par la projection de la vente. Plus tard : mois par mois, par catégorie, alertes | Must |
+| US12 | Simulations | Construire un budget prévisionnel et suivre l'écart avec le réel | Version légère (itération 4c) : budget annuel par bien, sans saisie au départ (année précédente + évolution, lignes corrigibles ✎ enregistrées par année), entrées (loyers et charges perçus) et sorties (copropriété, gestion et honoraires, impôts et taxes, assurances, entretien, autres dépenses, prêt), total des sorties, cash-flow (entrées − sorties), colonnes N−1 réel, N prévu, N estimé fin d'année (saisonnalité de N−1), effet sur ton cash-flow (signe et couleur selon l'effet pour le propriétaire) ; repris par la projection de la vente. Plus tard : mois par mois, par catégorie, alertes | Must |
 | US13 | Simulations | Simuler un achat | Projection sur 10 ans, micro et réel comparés | Should |
 | US14 | Simulations | Comparer micro et réel pour un bien existant | Différence d'impôt par année | Could |
 | US15 | Échéances | Être prévenu des échéances (taxe foncière, CFE, charges, IRL, liasse) | Liste des 30 prochains jours | Should |
@@ -57,19 +57,20 @@ Hors cible : professionnels, SCI, gestion complète du locataire.
 | US17 | Partage | Donner l'outil à un proche sans qu'il voie mes données | Il démarre vide, avec ses propres paramètres | Must |
 | US18 | Partage | Exporter toutes mes données | Rien n'est perdu si j'arrête l'outil | Must |
 | US19 | Locataire | Quittances, révision IRL, régularisation des charges | À préciser | Won't (pour l'instant) |
-| US20 | Assistant | Mettre à jour toutes mes données en langage naturel, à l'oral ou en déposant un document (relevé d'agence, export bancaire, avis d'impôt, nouvel échéancier de prêt…), avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; toujours un récapitulatif à confirmer avant enregistrement, doublons écartés ; la saisie manuelle reste disponible | Should (après le MVP) |
-| US21 | Suivi | Voir sur l'accueil où j'en suis aujourd'hui et ce que j'ai à faire : cash-flow mensuel moyen, enrichissement et somme nette si je vends aujourd'hui, puis les points à traiter, et un accès direct à la synthèse | Trois indicateurs seulement, comparés à l'année précédente ; la somme nette indique la valeur estimée et sa date, et cette valeur se modifie depuis l'accueil ; le détail reste dans la synthèse | Must (itération 5) |
+| US20 | Assistant | Mettre à jour toutes mes données en langage naturel, à l'oral ou en déposant un document (relevé d'agence, export bancaire, avis d'impôt, nouvel échéancier de prêt…), avec l'aide de Claude | Fonctionne pour tout utilisateur, avec n'importe quel compte Claude (gratuit compris), sans dépendre de la conversation de l'auteur ; toujours un récapitulatif à confirmer avant enregistrement, doublons écartés ; la saisie manuelle reste disponible. L'étape 1 (préparer un import avec une IA) est remplacée par US22 | Should (après le MVP) |
+| US21 | Suivi | Voir sur l'accueil où j'en suis aujourd'hui et ce que j'ai à faire : cash-flow mensuel moyen, enrichissement et somme nette si je vends aujourd'hui, puis les points à traiter, et un accès direct à la synthèse | Trois indicateurs seulement, comparés à l'année précédente ; la somme nette indique la valeur estimée et sa date, et cette valeur se modifie depuis l'accueil ; le détail reste dans la synthèse | Won't (pour l'instant) : sortie du MVP le 18/11/2026, l'Accueil est gardé tel quel |
+| US22 | Opérations | Importer mon prêt et mes opérations depuis n'importe quel document (relevé bancaire, grand livre de l'agence, Excel, tableau d'amortissement), en le donnant à une IA avec le guide d'import de Locapilote | Un guide unique (`docs/import.md`) décrit `pret.csv` et `operations.csv` ; aperçu avant enregistrement, doublons écartés, imports répétés possibles ; fonctionne avec au moins deux IA en version gratuite. Remplace l'étape 1 d'US20 | Must (itération 5b) |
 
 ## MVP
 
-Les 10 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18, US21. Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
+Les 9 stories Must : US01, US03, US07, US08, US09, US11, US12, US17, US18 (US21 est sortie du MVP le 18/11/2026). US22 (import, itération 5b) s'y ajoute pour tenir le critère « importe son historique ». Plus la reprise des données de l'Excel et un modèle de données multi-biens et multi-régimes dès le départ.
 
 Le MVP est terminé quand :
 
 - [ ] le jeu de test est entièrement repris (289 opérations, 240 échéances, immobilisations) ;
 - [ ] la synthèse et la simulation de vente retombent sur `data/expected.json` ;
 - [ ] un budget annuel est saisi et comparé au réel (fait en version légère, annuelle, à l'itération 4c ; le mois par mois reste à faire) ;
-- [ ] un proche crée son bien et saisit son premier mois seul en moins de 30 minutes ;
+- [ ] un proche crée son bien et importe son historique seul en moins de 30 minutes ;
 - [ ] l'export complet se rouvre sans perte ;
 - [ ] des tests automatiques vérifient les calculs.
 
@@ -97,12 +98,12 @@ Le menu suit l'ordre « maintenant, puis passé, présent, futur » (itération 
 
 | Écran | Rôle | Fréquence |
 | --- | --- | --- |
-| Accueil | Maintenant : où j'en suis, une carte par bien | À chaque visite |
+| Accueil | Maintenant : où j'en suis, une carte par bien. Sans aucun bien (navigateur vide, ou dernier bien supprimé) : l'écran de bienvenue, une carte centrée avec « Créer mon bien » et « Découvrir avec un exemple » (itération 5a) ; les pages d'un bien ramènent alors à l'Accueil. Au-dessus des cartes, le rappel de sauvegarde quand la dernière sauvegarde a plus de 15 jours (ou, sans sauvegarde, quand les premières données ont plus de 15 jours), avec un bouton « Exporter » | À chaque visite |
 | Synthèse | Les années passées : trésorerie, rentabilité, patrimoine (sur ordinateur, une fenêtre de 3 ans, les 3 dernières par défaut, avec « ‹ 2021–2023 » et « 2024–2026 › » pour passer d'une fenêtre à l'autre ; libellés sur une ligne, de largeur fixe ; la fenêtre affichée est dans l'adresse et retenue pendant la session : le retour du navigateur et le menu y reviennent) | Quand on veut faire le point |
 | Budget | L'année en cours : prévu, réalisé et écarts (US12, itération 4c ; au modèle de la Synthèse : intertitres Entrées et Sorties, une ligne par groupe, total des sorties, cash-flow (entrées − sorties), colonnes N−1 réel, N prévu, N estimé fin d'année, effet sur ton cash-flow ; détail ⊕ des lignes pour toutes les années ; une carte par ligne sur téléphone ; sélecteur « Budget 2026 ▾ » ; l'année affichée est dans l'adresse, `#/budget?annee=2025`, et retenue pendant la session : le retour du navigateur et le menu y reviennent, une nouvelle visite repart de l'année en cours) | Chaque mois |
 | Simulations | Le futur : la vente (au modèle de la Synthèse : une colonne par date de vente, une carte par date sur téléphone, quatre lignes — prix, somme nette, impôt, payé de ta poche d'ici la vente — et les détails repliés ; loyers et dépenses projetés d'après le budget) | Ponctuellement |
-| Fiscalité *(second plan)* | Déclaration et rapprochement avec le comptable | Une fois par an |
-| Mon bien *(second plan)* | Fiche du bien, saisie une fois : informations, prêt, immobilisations | Rarement |
+| Fiscalité *(second plan)* | Déclaration et rapprochement avec le comptable (replié par défaut sous « Si tu as un comptable », itération 5a) | Une fois par an |
+| Mon bien *(second plan)* | Fiche du bien, saisie une fois : informations, prêt, immobilisations. « Supprimer ce bien » (Informations) supprime le bien et tout ce qui le concerne, après confirmation (nom du bien à retaper) | Rarement |
 | + Opération | Saisie d'une recette ou d'une dépense, depuis n'importe quelle page ; lien « Toutes les opérations » vers la liste (filtres, modification, suppression) | Au fil de l'eau |
 
 Sur ordinateur : Accueil · Synthèse · Budget · Simulations à gauche ; à droite, plus petit et plus discret, Fiscalité · Mon bien · bouton « + Opération » · ⚙ Paramètres. Sur téléphone : les 4 écrans de premier plan en onglets en haut, le bouton « + Opération » dans la barre du haut, et le reste dans le menu ☰ (Fiscalité, Mon bien, Toutes les opérations, ⚙ Paramètres) ; chaque carte de l'Accueil mène à la Synthèse de son bien. La liste des opérations n'est plus une entrée du menu principal ; on y arrive par le lien « Toutes les opérations » (à côté du formulaire de saisie, ou dans le menu ☰) et par les liens de la Synthèse et de la Fiscalité, qui l'ouvrent filtrée.
@@ -118,5 +119,7 @@ Sur ordinateur : Accueil · Synthèse · Budget · Simulations à gauche ; à dr
 | 2 · Prêt et synthèse | US07, US08 | 16 au 20 novembre |
 | 3 · Fiscalité LMNP réel | US09, contrôle sur l'Excel | 23 au 27 novembre |
 | 4 · Simulations | US11, US12 | 30 novembre au 4 décembre |
-| 5 · Partage et tableau de bord | US17, US21, MVP livré | 7 et 8 décembre |
+| 5a · Premiers pas | US17 : écran de bienvenue, exemple, suppression d'un bien, rappel de sauvegarde | — |
+| 5b · Import | US22 : import du prêt et des opérations avec une IA, guide d'import | — |
+| 5c · Test avec un proche | Test par un proche, MVP livré | — |
 | Version 2 | Base en ligne et comptes, import CSV, simulateur d'achat | À partir du 9 décembre |

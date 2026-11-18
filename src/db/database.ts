@@ -29,9 +29,10 @@ import type {
   Transaction,
 } from '../engine/types';
 import { defaultAssumptions } from './defaultAssumptions';
-import { upgradeAssumptionsToV4 } from './migrations';
+import { defaultCategories } from './defaultCategories';
+import { upgradeAssumptionsToV4, upgradeCategoryDescriptionToV6 } from './migrations';
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export class LocapiloteDb extends Dexie {
   properties!: Table<Property, string>;
@@ -102,6 +103,17 @@ export class LocapiloteDb extends Dexie {
       });
     // Version 5 (US12) : budgets, par bien et par année (valeurs prévues modifiées).
     this.version(5).stores({ budgets: '[propertyId+year], propertyId' });
+    // Version 6 (itération 5a) : descriptions de catégories sans renvoi à l'Excel ni au
+    // comptable, seulement quand elles n'ont pas été modifiées.
+    this.version(6)
+      .stores({})
+      .upgrade(async (tx) => {
+        const rows = (await tx.table('categories').toArray()) as Record<string, unknown>[];
+        for (const row of rows) {
+          const upgraded = upgradeCategoryDescriptionToV6(row);
+          if (upgraded !== row) await tx.table('categories').put(upgraded);
+        }
+      });
   }
 
   /** Les tables, dans l'ordre du `Dataset`. */
@@ -159,9 +171,39 @@ export class LocapiloteDb extends Dexie {
     });
   }
 
-  /** Vrai si l'utilisateur a déjà fait son choix au premier lancement. */
-  async isInitialized(): Promise<boolean> {
-    return (await this.categories.count()) > 0 || (await this.properties.count()) > 0;
+  /**
+   * Crée un bien. Dans un navigateur vide (premier bien), les catégories par défaut sont
+   * ajoutées dans la même transaction : la saisie des opérations est prête.
+   */
+  async createProperty(property: Property): Promise<void> {
+    await this.transaction('rw', [this.properties, this.categories], async () => {
+      if ((await this.categories.count()) === 0) {
+        await this.categories.bulkAdd(defaultCategories());
+      }
+      await this.properties.add(property);
+    });
+  }
+
+  /**
+   * Supprime un bien et tout ce qui le concerne, d'un seul bloc (tout ou rien) : opérations,
+   * prêts et leurs échéances, immobilisations, hypothèses et scénarios de vente, budgets,
+   * dépenses avant location, comptes déposés et stocks reportés. Les catégories et les
+   * paramètres du foyer, communs à tous les biens, restent.
+   */
+  async deleteProperty(propertyId: string): Promise<void> {
+    await this.transaction('rw', this.allTables, async () => {
+      const loanIds = await this.loans.where('propertyId').equals(propertyId).primaryKeys();
+      await this.loanInstallments.where('loanId').anyOf(loanIds).delete();
+      await this.loans.where('propertyId').equals(propertyId).delete();
+      await this.transactions.where('propertyId').equals(propertyId).delete();
+      await this.assets.where('propertyId').equals(propertyId).delete();
+      await this.accountantCarryforwards.where('propertyId').equals(propertyId).delete();
+      await this.accountantFilings.where('propertyId').equals(propertyId).delete();
+      await this.preRentalExpenses.where('propertyId').equals(propertyId).delete();
+      await this.budgets.where('propertyId').equals(propertyId).delete();
+      await this.assumptions.delete(propertyId);
+      await this.properties.delete(propertyId);
+    });
   }
 
   /** Enregistre une opération : vérifie que son bien et sa catégorie existent. */

@@ -14,7 +14,7 @@ import { DEFAULT_ANNUAL_GROWTH, resolve } from '../../engine/sale-defaults';
 import type { BudgetLine, Dataset, Property } from '../../engine/types';
 import { DisclosureButton } from '../components/DisclosureButton';
 import { PropertyTitle } from '../components/PropertyTitle';
-import { centsToInput, formatDate, parseEurosInput } from '../format';
+import { centsToInput, formatDate, formatWithoutNegativeZero, parseEurosInput } from '../format';
 import { BUDGET_LINE_SLUGS, BUDGET_ROW_LABELS } from '../labels';
 import { useOpenDetails } from '../openDetails';
 import { initialViewValue, rememberViewValue } from '../viewMemory';
@@ -56,7 +56,7 @@ const euroSigned = new Intl.NumberFormat('fr-FR', {
 const roundEuros = (cents: number) => Math.sign(cents) * Math.round(Math.abs(cents) / 100) || 0;
 
 /** Montant du tableau, arrondi à l'euro (signe moins comme dans la Synthèse). */
-const eur0 = (cents: number) => euroRounded.format(roundEuros(cents));
+const eur0 = (cents: number) => formatWithoutNegativeZero(euroRounded, roundEuros(cents));
 
 /** Effet arrondi à l'euro, avec son signe : « +43 € », « -1 622 € », « 0 € ». */
 const signedEur0 = (cents: number) => euroSigned.format(roundEuros(cents));

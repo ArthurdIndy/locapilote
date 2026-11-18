@@ -1,9 +1,12 @@
 import { useRef, useState, type ChangeEvent } from 'react';
-import { BackupError, buildBackup, parseBackup, serializeBackup } from '../../db/backup';
+import { BackupError, parseBackup } from '../../db/backup';
 import { transactionsToCsv } from '../../db/csv';
 import { db } from '../../db/database';
-import { startWithTestDataset } from '../../db/setup';
 import type { Dataset } from '../../engine/types';
+import { recordBackup } from '../backupReminder';
+import { Modal } from '../components/Modal';
+import { downloadBackup, loadExample } from '../dataActions';
+import { describeAllData } from '../dataSummary';
 import { downloadText } from '../download';
 
 type Status = { kind: 'success' | 'error'; text: string } | null;
@@ -16,16 +19,12 @@ function describe(data: Dataset): string {
 
 export function DataPage({ data, today }: { data: Dataset; today: string }) {
   const [status, setStatus] = useState<Status>(null);
+  const [confirmingExample, setConfirmingExample] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const exportJson = async () => {
     // Relecture directe de la base : l'export contient exactement ce qui est stocké.
-    const backup = buildBackup(await db.readAll());
-    downloadText(
-      `locapilote-sauvegarde-${today}.json`,
-      serializeBackup(backup),
-      'application/json',
-    );
+    await downloadBackup(today);
     setStatus({ kind: 'success', text: 'Sauvegarde téléchargée.' });
   };
 
@@ -52,6 +51,7 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
       );
       if (!ok) return;
       await db.replaceAll(backup.data);
+      recordBackup(today);
       setStatus({ kind: 'success', text: `Import terminé : ${describe(backup.data)}.` });
     } catch (e) {
       const text =
@@ -62,15 +62,15 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
     }
   };
 
-  const loadTestData = async () => {
-    const ok = window.confirm(
-      'Remplacer toutes tes données par le jeu de test ?\n\n' +
-        `Tes données actuelles (${describe(data)}) seront effacées.`,
-    );
-    if (!ok) return;
-    await startWithTestDataset(db);
-    setStatus({ kind: 'success', text: 'Jeu de test chargé.' });
+  const replaceWithExample = async () => {
+    await loadExample(today);
+    setConfirmingExample(false);
+    setStatus({ kind: 'success', text: 'Exemple chargé.' });
   };
+
+  // Sans données, l'exemple se charge directement ; sinon, une confirmation.
+  const hasData = data.properties.length > 0 || data.transactions.length > 0;
+  const askExample = () => (hasData ? setConfirmingExample(true) : void replaceWithExample());
 
   return (
     <div className="stack">
@@ -121,12 +121,35 @@ export function DataPage({ data, today }: { data: Dataset; today: string }) {
       </section>
 
       <section className="card">
-        <h3>Jeu de test</h3>
-        <p>Remplace toutes les données par l’appartement fictif du jeu de test.</p>
-        <button type="button" className="button danger" onClick={loadTestData}>
-          Charger le jeu de test
+        <h3>Exemple</h3>
+        <p>Remplace toutes les données par un appartement fictif, pour découvrir l’outil.</p>
+        <button type="button" className="button danger" onClick={askExample}>
+          Charger l’exemple
         </button>
       </section>
+
+      {confirmingExample && (
+        <Modal
+          title="Remplacer tes données par l’exemple ?"
+          onClose={() => setConfirmingExample(false)}
+        >
+          <p>
+            Tes données actuelles ({describeAllData(data)}) seront effacées de ce navigateur. Tu
+            pourras les retrouver seulement avec une sauvegarde.
+          </p>
+          <div className="actions">
+            <button type="button" className="button" onClick={() => setConfirmingExample(false)}>
+              Annuler
+            </button>
+            <button type="button" className="button" onClick={() => void downloadBackup(today)}>
+              Exporter d’abord
+            </button>
+            <button type="button" className="button danger-solid" onClick={replaceWithExample}>
+              Remplacer
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

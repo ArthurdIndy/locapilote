@@ -303,14 +303,14 @@ test('Simulations : la vente (US11)', async ({ page }, testInfo) => {
   await capture(page, testInfo, 'it3bis-simulations');
 });
 
-test('⚙ Paramètres : export, import et jeu de test', async ({ page }) => {
+test('⚙ Paramètres : export, import et exemple', async ({ page }) => {
   await openSettings(page);
   await expect(page).toHaveURL(/#\/parametres$/);
   for (const name of [
     'Exporter toutes mes données (JSON)',
     'Importer une sauvegarde…',
     'Exporter les opérations (CSV)',
-    'Charger le jeu de test',
+    'Charger l’exemple',
   ]) {
     await expect(page.getByRole('button', { name })).toBeVisible();
   }

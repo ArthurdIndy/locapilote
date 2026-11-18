@@ -19,10 +19,12 @@ export function useCurrentProperty(properties: readonly Property[]) {
   const [storedId, setStoredId] = useState(readStored);
   const current = properties.find((p) => p.id === storedId) ?? properties[0] ?? null;
 
-  const setCurrentId = useCallback((id: string) => {
+  /** `null` : aucun bien (le dernier vient d'être supprimé). */
+  const setCurrentId = useCallback((id: string | null) => {
     setStoredId(id);
     try {
-      window.localStorage.setItem(STORAGE_KEY, id);
+      if (id === null) window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, id);
     } catch {
       // Stockage indisponible (navigation privée) : le choix vaut pour la session.
     }
