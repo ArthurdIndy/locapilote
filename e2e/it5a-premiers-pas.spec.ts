@@ -376,6 +376,8 @@ test.describe('finitions sur téléphone', () => {
     await expect(title).toBeVisible();
     expect(await style(title)).toBe(expectedStyle);
     expect(expectedStyle).toContain('uppercase');
+    await page.getByRole('region', { name: 'Fiscalité 2025' }).scrollIntoViewIfNeeded();
+    await capture(page, testInfo, 'it5a-fiscalite-intertitres', { fullPage: false });
   });
 
   test('pas de sous-titre « Piloter un logement en location » sur téléphone', async ({
