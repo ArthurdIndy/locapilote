@@ -266,7 +266,7 @@ export const HOUSEHOLD_SETTINGS_ID = 'household';
 export const BUDGET_LINES = [
   'income', // Loyers et charges perçus
   'coOwnership', // Copropriété
-  'management', // Gestion et comptable
+  'management', // Gestion et honoraires
   'taxes', // Impôts et taxes
   'insurance', // Assurances
   'maintenance', // Entretien

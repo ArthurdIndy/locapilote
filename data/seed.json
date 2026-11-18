@@ -174,7 +174,7 @@
    "traitement_fiscal_lmnp_reel": "À amortir",
    "groupe": "Investissements",
    "signe_tresorerie": -1,
-   "description": "Électroménager, mobilier : à reporter dans l'onglet Amortissements"
+   "description": "Électroménager, mobilier : à reporter dans Mon bien › Immobilisations"
   },
   {
    "nom": "Travaux d'amélioration (à amortir)",
@@ -182,7 +182,7 @@
    "traitement_fiscal_lmnp_reel": "À amortir",
    "groupe": "Investissements",
    "signe_tresorerie": -1,
-   "description": "Travaux immobilisés : à reporter dans l'onglet Amortissements"
+   "description": "Travaux immobilisés : à reporter dans Mon bien › Immobilisations"
   },
   {
    "nom": "À qualifier",
@@ -190,7 +190,7 @@
    "traitement_fiscal_lmnp_reel": "À valider",
    "groupe": "À qualifier",
    "signe_tresorerie": -1,
-   "description": "Dépense dont le traitement fiscal doit être validé avec le comptable"
+   "description": "Dépense dont le traitement fiscal reste à valider"
   },
   {
    "nom": "Transfert entrant",

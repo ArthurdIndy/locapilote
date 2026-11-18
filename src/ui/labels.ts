@@ -44,7 +44,7 @@ export function sortCategories(categories: readonly Category[]): Category[] {
 export const BUDGET_ROW_LABELS: Record<BudgetRowId, string> = {
   income: 'Loyers et charges perçus',
   coOwnership: 'Copropriété',
-  management: 'Gestion et comptable',
+  management: 'Gestion et honoraires',
   taxes: 'Impôts et taxes',
   insurance: 'Assurances',
   maintenance: 'Entretien',

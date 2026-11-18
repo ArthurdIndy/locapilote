@@ -4,7 +4,7 @@
  * Voir docs/regles-de-calcul.md § 8 (Budget).
  *
  * Entrées : loyers et charges perçus. Sorties : une ligne par groupe de catégories
- * (copropriété, gestion et comptable, impôts et taxes, assurances, entretien, autres dépenses)
+ * (copropriété, gestion et honoraires, impôts et taxes, assurances, entretien, autres dépenses)
  * et le prêt (d'après l'échéancier) ; « Total des sorties » ; « Cash-flow (entrées − sorties) »
  * = entrées − total des sorties (négatif quand le propriétaire remet de l'argent, comme dans la
  * Synthèse).
@@ -61,7 +61,7 @@ const GROUP_LINES: Readonly<Record<string, BudgetLine>> = {
 };
 
 /**
- * Frais bancaires : dépense régulière, dans « Gestion et comptable » (décision d'Arthur du
+ * Frais bancaires : dépense régulière, dans « Gestion et honoraires » (décision d'Arthur du
  * 05/11/2026), alors que leur groupe de synthèse est « Autres charges ». Repérés par leur nom
  * en attendant un marqueur dédié (US02).
  */
@@ -74,8 +74,8 @@ function treatmentFor(category: Category, property: Property): TaxTreatment | un
 /**
  * Ligne du budget d'une catégorie : toutes les recettes dans « Loyers et charges perçus » ;
  * investissements à amortir et dépenses à qualifier dans « Autres dépenses » ; frais bancaires
- * dans « Gestion et comptable » ; les autres dépenses selon leur groupe (les honoraires sur
- * travaux, du groupe « Frais de gestion », vont donc dans « Gestion et comptable »). `null` :
+ * dans « Gestion et honoraires » ; les autres dépenses selon leur groupe (les honoraires sur
+ * travaux, du groupe « Frais de gestion », vont donc dans « Gestion et honoraires »). `null` :
  * transfert ou dépôt de garantie (hors budget).
  */
 export function budgetLineOf(category: Category, property: Property): BudgetLine | null {
@@ -325,7 +325,7 @@ export function hasBudget(data: Dataset, property: Property, year: number): bool
 export interface BudgetProjection {
   /** Années dont le budget sert : celle des données, puis les suivantes déjà budgétées. */
   years: number[];
-  /** Loyer net par mois = (loyers et charges perçus − gestion et comptable) prévus / 12. */
+  /** Loyer net par mois = (loyers et charges perçus − gestion et honoraires) prévus / 12. */
   netRentMonthly: (year: number) => number;
   /** Dépenses par an = copropriété + impôts et taxes + assurances + entretien prévus. */
   annualExpenses: (year: number) => number;

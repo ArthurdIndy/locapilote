@@ -4,7 +4,7 @@
  * hypothèses du bien). Voir docs/regles-de-calcul.md § 6.
  *
  * - loyer net et dépenses projetés : d'après le budget quand l'année des données en a un (US12 :
- *   loyers prévus − gestion et comptable ; copropriété + impôts et taxes + assurances et
+ *   loyers prévus − gestion et honoraires ; copropriété + impôts et taxes + assurances et
  *   entretien), sinon 12 derniers mois du journal (jusqu'à la date de mise à jour), annualisés
  *   si le bien est loué depuis moins longtemps, hors dépenses immobilisées et catégories de
  *   travaux ;

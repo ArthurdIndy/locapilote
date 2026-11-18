@@ -63,7 +63,7 @@ export function ScheduleImport({ loan, existingCount, onImport, onClose }: Props
           rows={6}
           value={text}
           onChange={(e) => analyse(e.target.value)}
-          placeholder={'05/12/2017\t170 190,00\t608,51\t196,31\t18,75\n05/01/2018\t169 581,49\t…'}
+          placeholder={'05/01/2025\t150 000,00\t500,00\t180,00\t15,00\n05/02/2025\t149 500,00\t…'}
           spellCheck={false}
         />
       </label>
