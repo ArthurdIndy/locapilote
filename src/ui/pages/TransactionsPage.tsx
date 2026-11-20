@@ -254,8 +254,8 @@ export function TransactionsPage({ data, currentPropertyId, today, params }: Pro
             <p className="warning" role="status">
               Seules les opérations « À valider » sont affichées : elles ne sont pas retenues dans
               le résultat fiscal tant qu’elles ne sont pas qualifiées (charge déductible ou
-              investissement à amortir). Modifie leur catégorie une fois la réponse du comptable
-              obtenue.{' '}
+              investissement à amortir). Modifie leur catégorie une fois le traitement fiscal
+              tranché.{' '}
               <button type="button" className="button link" onClick={() => setToReviewOnly(false)}>
                 Voir toutes les opérations
               </button>

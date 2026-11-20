@@ -4,7 +4,7 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 
 | Sujet | Description | Origine |
 | --- | --- | --- |
-| Supprimer un bien | Pouvoir supprimer un bien, avec confirmation. À décider : que faire de ses mouvements, de son prêt et de ses immobilisations (suppression en cascade, ou refus tant qu'il en reste) | Recette de l'itération 1 |
+| Supprimer un bien | Pouvoir supprimer un bien, avec confirmation : suppression en cascade (opérations, prêts et échéances, immobilisations, hypothèses et scénarios de vente, budgets, données fiscales), nom du bien à retaper | Recette de l'itération 1 · **fait à l'itération 5a** |
 | Rentabilité réelle : TRI, gain total et comparaison à un placement | Voir le détail ci-dessous. **Moteur prêt et testé à l'itération 4a ; affichage reporté** (retiré de Simulations › Vente et de la Synthèse à la recette du 03/11/2026), par exemple sur l'Accueil ou dans un « mode investisseur » | Demande d'Arthur, 01/11/2026 |
 | Export CSV filtré | Exporter en CSV uniquement les opérations affichées (filtres année, groupe, catégorie) depuis la liste « Toutes les opérations » | Recette de l'itération 1 |
 | Navigation : 6 entrées | Voir le détail ci-dessous | Recette de l'itération 3, décision du 01/11/2026 · **fait à l'itération 3 bis, remplacé à l'itération 4b** |
@@ -14,8 +14,26 @@ Idées et demandes à traiter plus tard, hors des user stories du cadrage (`docs
 | Synthèse : détail des recettes et des dépenses | Voir le détail ci-dessous | Recette de l'itération 2, demande d'Arthur · **fait à l'itération 3 bis** |
 | Mois de location : décimales | Le nombre de décimales des mois de location varie dans la synthèse (« 7,5 » mais « 9,99 »). Toujours afficher deux décimales | Recette de l'itération 2 · **fait à l'itération 3 bis** |
 | Impôt estimé et cash-flow après impôt | Voir le détail ci-dessous | Demande d'Arthur, 01/11/2026 |
-| Catégories : marqueurs dédiés (honoraires du comptable, travaux) | La simulation de vente repère les honoraires du comptable (frais de l'année de la vente) et les catégories de travaux (exclues de la projection) par le nom de la catégorie (« comptab », « travaux »). Ajouter à la catégorie un marqueur dédié, réglable à l'écran, pour ne plus dépendre du nom. À faire avec US02 (catégories paramétrables) | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
+| Catégories et groupes : identifiants et rôles indépendants du nom | Voir le détail ci-dessous. À faire avec US02 (catégories paramétrables) | Recette de l'itération 4a (03/11/2026), audit de l'itération 5a (18/11/2026) |
+| Autres régimes : catégories et écrans propres à chaque régime | Voir le détail ci-dessous. À faire avec les autres régimes (US10) | Audit de l'itération 5a (18/11/2026) |
 | Plus-value : amortissements du logement seul | Aujourd'hui, la plus-value réintègre le total des amortissements déduits (tous composants), comme l'Excel. Selon la notice 2048-IMM (ligne 25), seuls ceux du logement sont à réintégrer, pas ceux du mobilier, des équipements ni des travaux. Répartir les amortissements utilisés entre composants et ne réintégrer que la part du logement ; `expected.json` serait à revoir. PR séparée | Recette de l'itération 4a, décision d'Arthur du 03/11/2026 |
+
+## Catégories et groupes : identifiants et rôles indépendants du nom (avec US02)
+
+Audit « rien de personnel en dur » de l'itération 5a, points C1 à C3, regroupés (décision d'Arthur du 18/11/2026). Aujourd'hui, renommer une catégorie ou un groupe casserait des liens ou des règles :
+
+- **Identifiant = nom** : l'identifiant d'une catégorie est son nom ; le renommer casserait le lien avec ses opérations et avec les règles ci-dessous. Donner à chaque catégorie un identifiant stable, indépendant du nom (avec une migration de la base et des sauvegardes).
+- **Règles repérées par le nom d'une catégorie** : « comptab » (honoraires du comptable : frais de l'année de la vente, `sale-defaults.ts`), « travaux » (exclus de la projection de la vente, `sale-defaults.ts`), « frais bancaires » (rangés dans « Gestion et honoraires » au budget, `budget.ts`). Remplacer par des marqueurs dédiés sur la catégorie, réglables à l'écran.
+- **Règles repérées par le nom d'un groupe** : « Loyers » (rendements, récapitulatif LMNP), « Copropriété » et « Charges refacturées » (charges de copropriété restant à ma charge, `synthesis.ts`), et la correspondance groupe → ligne du budget (Copropriété, Frais de gestion, Impôts et taxes, Assurances, Entretien et petit équipement, `budget.ts`). Remplacer par un rôle dédié sur le groupe ou la catégorie.
+
+Critère : renommer une catégorie ou un groupe ne change aucun chiffre (test automatique sur le jeu de test).
+
+## Autres régimes : catégories et écrans propres à chaque régime (avec US10)
+
+Audit de l'itération 5a, points C4 et B4 :
+
+- les catégories ne portent que le traitement fiscal du LMNP réel ; les autres régimes reprennent celui-là. Un bien en location nue voit donc « CFE » et des catégories « à amortir » qui ne le concernent pas (en réel foncier, les travaux d'amélioration se déduisent, ils ne s'amortissent pas). Donner un traitement par régime, et ne proposer que les catégories utiles au type de location ;
+- Mon bien › Immobilisations s'affiche aussi pour un bien en micro-BIC ou en location nue, où les amortissements ne servent pas : la masquer, ou l'expliquer, selon le régime.
 
 ## Synthèse : détail des recettes et des dépenses
 
@@ -110,7 +128,9 @@ Un connecteur Locapilote pour Claude (serveur MCP) : chaque utilisateur l'ajoute
 
 À vérifier au moment de la construire : les offres Claude qui permettent d'ajouter un connecteur personnalisé.
 
-## US21 : tableau de bord d'accueil (itération 5)
+## US21 : tableau de bord d'accueil (sortie du MVP)
+
+**Sortie du MVP le 18/11/2026 (Accueil gardé tel quel), à reprendre si le besoin revient.** Le rappel de sauvegarde, prévu ici, est fait à l'itération 5a sous une forme simplifiée (bandeau au-dessus des cartes, au-delà de 15 jours).
 
 « En tant que propriétaire, je veux voir d'un coup d'œil, sur l'accueil, où j'en suis aujourd'hui et ce que j'ai à faire. »
 

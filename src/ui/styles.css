@@ -12,6 +12,11 @@
   --success-soft: #e6f4ea;
   --danger-soft: #fdecea;
   --warning-soft: #fff4d6;
+  --danger-strong: #b42318;
+  --reminder-bg: #fff4e5;
+  --reminder-border: #d97706;
+  --reminder-text: #7a3e00;
+  --reminder-button-text: #fff;
   font-family:
     system-ui,
     -apple-system,
@@ -38,6 +43,11 @@
     --success-soft: #16301f;
     --danger-soft: #3a1d1d;
     --warning-soft: #3a3016;
+    --danger-strong: #d92d20;
+    --reminder-bg: #33240f;
+    --reminder-border: #f59e0b;
+    --reminder-text: #fcd9a4;
+    --reminder-button-text: #1c1206;
   }
 }
 
@@ -453,34 +463,97 @@ p.error-text {
 
 /* ---------- Accueil ---------- */
 
-.welcome .choices {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 16px 0;
+/* Écran de bienvenue (Accueil sans aucun bien) : une carte centrée. */
+.welcome {
+  max-width: 640px;
+  margin: 24px auto 0;
+  text-align: center;
 }
 
-.choice {
+.welcome h2 {
+  margin-top: 0;
+}
+
+.welcome-actions {
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.welcome-notes {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.welcome-notes p {
+  margin: 4px 0;
+}
+
+/* Rappel de sauvegarde, au-dessus de « Mes biens ». */
+.backup-reminder {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  font: inherit;
-  color: var(--text);
-  background: var(--accent-soft);
-  border: 2px solid transparent;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--reminder-border);
+  border-radius: 8px;
+  background: var(--reminder-bg);
+  color: var(--reminder-text);
+}
+
+.backup-reminder p {
+  margin: 0;
+}
+
+.button.reminder {
+  background: var(--reminder-border);
+  border-color: var(--reminder-border);
+  color: var(--reminder-button-text);
+  font-weight: 600;
+}
+
+/* Bouton d'une action destructrice : contour rouge, texte rouge. */
+.button.danger-outline {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+
+.button.danger-solid {
+  background: var(--danger-strong);
+  border-color: var(--danger-strong);
+  color: #fff;
+}
+
+/* Fenêtre de confirmation. */
+.modal {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 20px;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
 }
 
-.choice:hover,
-.choice:focus-visible {
-  border-color: var(--accent);
+.modal::backdrop {
+  background: rgb(0 0 0 / 0.5);
 }
 
-.choice strong {
-  color: var(--accent);
+.modal h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.modal .actions {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.phone-only-inline {
+  display: none;
 }
 
 /* ---------- Formulaires ---------- */
@@ -717,8 +790,21 @@ details summary {
 
 @media (max-width: 600px) {
   .row,
-  .welcome .choices {
-    grid-template-columns: 1fr;
+  .welcome {
+    margin-top: 8px;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .phone-only-inline {
+    display: inline;
+  }
+
+  .modal .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
   }
 
   .property-row {
@@ -793,9 +879,9 @@ details summary {
     white-space: nowrap;
   }
 
+  /* Téléphone : pas de sous-titre, la place va au menu (itération 5a). */
   .tagline {
-    margin-bottom: 8px;
-    font-size: 0.85rem;
+    display: none;
   }
 
   .menu-button {

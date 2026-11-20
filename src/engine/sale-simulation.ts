@@ -121,7 +121,8 @@ export function simulateSale(
     reinvestedAmount: Math.round(resolved.reinvestedShare.value * proceeds.netSalePrice),
     netWithReinvestment: netProceeds + reinvestment.avoidedTax,
     balance,
-    paidFromPocketUntilSale: -balance.cashFlowUntilSale,
+    // 0 − x plutôt que −x : pas de zéro négatif quand le cash-flow est nul (bien sans prêt).
+    paidFromPocketUntilSale: 0 - balance.cashFlowUntilSale,
     netAfterCashFlow: netProceeds + balance.cashFlowUntilSale,
     gainOverReference: reference
       ? gainOverReference(balance.flows, reference.rate, scenario.date)

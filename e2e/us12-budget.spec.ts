@@ -79,7 +79,7 @@ async function goToBudget(page: Page): Promise<void> {
 const BUDGET_2026: [string, number, number, number, number][] = [
   ['Loyers et charges perçus', 13703.15, 13908.7, 13959.28, 50.58],
   ['Copropriété', 2426.77, 2463.17, 4085.48, -1622.31],
-  ['Gestion et comptable', 1611.54, 1635.71, 1592.94, 42.77],
+  ['Gestion et honoraires', 1611.54, 1635.71, 1592.94, 42.77],
   ['Impôts et taxes', 561.72, 570.15, 885.36, -315.21],
   ['Assurances', 114.18, 115.89, 115.89, 0],
   ['Entretien', 386.42, 392.22, 1141.67, -749.45],
@@ -152,7 +152,7 @@ test('Budget 2026 du jeu de test : entrées, sorties, totaux, quatre colonnes', 
   // Signe et couleur suivent l'effet : dépense en plus et cash-flow en baisse en rouge (−),
   // dépense en moins et loyer en plus en vert (+).
   await expect(cell(page, phone, 2026, 'Copropriété', EFFECT)).toHaveClass(/negative/);
-  await expect(cell(page, phone, 2026, 'Gestion et comptable', EFFECT)).toHaveClass(/positive/);
+  await expect(cell(page, phone, 2026, 'Gestion et honoraires', EFFECT)).toHaveClass(/positive/);
   await expect(cell(page, phone, 2026, 'Loyers et charges perçus', EFFECT)).toHaveClass(/positive/);
   await expect(cell(page, phone, 2026, 'Prêt (échéances)', EFFECT)).toHaveClass(/gap-zero/);
   await expect(cell(page, phone, 2026, 'Total des sorties', EFFECT)).toHaveClass(/negative/);
@@ -243,7 +243,7 @@ test('sélecteur d’année : année terminée et année future', async ({ page 
   for (const [row, effect] of [
     ['Loyers et charges perçus', 108.08],
     ['Copropriété', -513.31],
-    ['Gestion et comptable', 436.07],
+    ['Gestion et honoraires', 436.07],
     ['Autres dépenses', -1590.11],
     ['Total des sorties', -921.18],
     ['Cash-flow (entrées − sorties)', -813.1],

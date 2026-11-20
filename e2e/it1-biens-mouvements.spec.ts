@@ -16,12 +16,12 @@ import {
 } from './helpers';
 
 test.describe('Premier lancement', () => {
-  test('propose de commencer avec le jeu de test ou vide', async ({ page }, testInfo) => {
+  test('propose de créer son bien ou de découvrir avec un exemple', async ({ page }) => {
+    // Écran de bienvenue détaillé : e2e/it5a-premiers-pas.spec.ts.
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Bienvenue' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Commencer avec le jeu de test/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Démarrer vide/ })).toBeVisible();
-    await capture(page, testInfo, 'it1-bienvenue');
+    await expect(page.getByRole('heading', { name: 'Bienvenue sur Locapilote' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Créer mon bien' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Découvrir avec un exemple' })).toBeVisible();
   });
 
   test('avec le jeu de test, l’accueil affiche la carte du bien', async ({ page }) => {

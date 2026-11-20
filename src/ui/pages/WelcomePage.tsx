@@ -1,18 +1,21 @@
 import { useState } from 'react';
-import { db } from '../../db/database';
-import { startEmpty, startWithTestDataset } from '../../db/setup';
+import { loadExample } from '../dataActions';
+import { propertyHref } from '../router';
 
-/** Premier lancement : la base est vide, l'utilisateur choisit comment démarrer. */
-export function WelcomePage() {
+/**
+ * Écran de bienvenue : l'Accueil quand il n'y a aucun bien (navigateur vide, ou dernier bien
+ * supprimé). Deux choix : créer son bien, ou découvrir l'outil avec l'exemple (sans
+ * confirmation : il n'y a pas de données à perdre).
+ */
+export function WelcomePage({ today }: { today: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const start = async (action: () => Promise<void>, route: string) => {
+  const discover = async () => {
     setBusy(true);
     setError(null);
     try {
-      await action();
-      window.location.hash = route;
+      await loadExample(today);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setBusy(false);
@@ -20,42 +23,29 @@ export function WelcomePage() {
   };
 
   return (
-    <section className="card welcome">
-      <h2>Bienvenue</h2>
-      <p>
-        Locapilote t’aide à suivre un logement que tu loues : loyers, dépenses, puis cash-flow,
-        rentabilité et fiscalité. Tes données restent dans ce navigateur.
-      </p>
-      <p>Comment veux-tu commencer ?</p>
-      <div className="choices">
-        <button
-          type="button"
-          className="choice"
-          disabled={busy}
-          onClick={() => start(() => startWithTestDataset(db), '#/accueil')}
-        >
-          <strong>Commencer avec le jeu de test</strong>
-          <span>
-            Un appartement fictif avec 289 opérations et son prêt, pour découvrir l’outil.
-          </span>
-        </button>
-        <button
-          type="button"
-          className="choice"
-          disabled={busy}
-          onClick={() => start(() => startEmpty(db), '#/mon-bien')}
-        >
-          <strong>Démarrer vide</strong>
-          <span>
-            Tu crées ton bien et tu saisis tes opérations. Les catégories usuelles sont prêtes.
-          </span>
+    <section className="card welcome" aria-labelledby="bienvenue">
+      <h2 id="bienvenue">Bienvenue sur Locapilote</h2>
+      <p>Suis les loyers, les dépenses, la fiscalité et la vente de ton logement en location.</p>
+      <div className="actions welcome-actions">
+        <a className="button primary" href={propertyHref('informations', true)}>
+          Créer mon bien
+        </a>
+        <button type="button" className="button" disabled={busy} onClick={discover}>
+          Découvrir avec un exemple
         </button>
       </div>
-      <p className="muted small">
-        Tu pourras changer d’avis plus tard depuis ⚙ Paramètres (import d’une sauvegarde ou du jeu
-        de test).
-      </p>
       {error && <p className="error-text">Erreur : {error}</p>}
+      <div className="welcome-notes muted small">
+        <p>
+          L’exemple est un appartement fictif. Pour repartir de zéro ensuite, supprime-le dans Mon
+          bien.
+        </p>
+        <p>
+          Tes données restent dans ce navigateur. Pense à les exporter (
+          <span className="desktop-only">⚙ Paramètres</span>
+          <span className="phone-only-inline">☰ › Paramètres</span>).
+        </p>
+      </div>
     </section>
   );
 }

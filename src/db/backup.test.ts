@@ -270,7 +270,7 @@ describe('migration de la base vers la version 5 (US12)', () => {
 
     const upgraded = new LocapiloteDb(name);
     const after = await upgraded.readAll();
-    expect(upgraded.verno).toBe(5);
+    expect(upgraded.verno).toBe(6);
     expect(after.budgets).toEqual([]);
     expect(after.transactions).toHaveLength(289);
     expect(after.assumptions).toEqual(data.assumptions);
@@ -333,5 +333,62 @@ describe('migration de la base vers la version 4 (US11 recentrée)', () => {
     expect(a.projection.netRentMonthly).toBeNull();
     expect((await upgraded.properties.get(property.id))!.actualAcquisitionCosts).toBe(2790000);
     await upgraded.delete();
+  });
+});
+
+describe('migration vers la version 6 (itération 5a) : descriptions des catégories', () => {
+  const OLD = "Électroménager, mobilier : à reporter dans l'onglet Amortissements";
+  const NEW = 'Électroménager, mobilier : à reporter dans Mon bien › Immobilisations';
+  const ID = 'Équipement / mobilier (à amortir)';
+
+  it('met à jour les descriptions d’origine de la base, garde celles modifiées', async () => {
+    const name = `test-${n}-v5`;
+    const old = new Dexie(name);
+    old.version(5).stores({
+      properties: 'id',
+      categories: 'id',
+      transactions: 'id, propertyId, date, categoryId',
+      loans: 'id, propertyId',
+      loanInstallments: '[loanId+number], loanId',
+      assets: '++, propertyId, id',
+      accountantCarryforwards: '[propertyId+year], propertyId',
+      accountantFilings: '[propertyId+year], propertyId',
+      preRentalExpenses: '++, propertyId',
+      assumptions: 'propertyId',
+      householdSettings: 'id',
+      budgets: '[propertyId+year], propertyId',
+    });
+    const categories = loadTestDataset().categories.map((c) =>
+      c.id === ID
+        ? { ...c, description: OLD }
+        : c.id === 'À qualifier'
+          ? { ...c, description: 'Ma description à moi' }
+          : c,
+    );
+    await old.table('categories').bulkAdd(categories);
+    old.close();
+
+    const upgraded = new LocapiloteDb(name);
+    const after = await upgraded.categories.toArray();
+    expect(upgraded.verno).toBe(6);
+    expect(after.find((c) => c.id === ID)?.description).toBe(NEW);
+    expect(after.find((c) => c.id === 'À qualifier')?.description).toBe('Ma description à moi');
+    expect(after).toHaveLength(categories.length);
+    await upgraded.delete();
+  });
+
+  it('met à jour une sauvegarde en version 5', () => {
+    const backup = buildBackup(loadTestDataset());
+    const v5 = JSON.parse(serializeBackup(backup));
+    v5.formatVersion = 5;
+    for (const c of v5.data.categories) if (c.id === ID) c.description = OLD;
+    const { data } = parseBackup(JSON.stringify(v5));
+    expect(data.categories.find((c) => c.id === ID)?.description).toBe(NEW);
+  });
+
+  it('les catégories de l’exemple ne renvoient plus à l’Excel ni au comptable', () => {
+    for (const c of loadTestDataset().categories) {
+      expect(c.description).not.toMatch(/onglet|avec le comptable/i);
+    }
   });
 });

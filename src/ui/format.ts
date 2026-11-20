@@ -3,9 +3,18 @@ import type { Cents, IsoDate } from '../engine/types';
 
 const euroFormat = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 
+/**
+ * Formate un nombre sans jamais afficher « -0 € » ni « -0,00 € » (zéro négatif issu d'un calcul,
+ * ou petit montant négatif arrondi à zéro) : un résultat sans aucun chiffre non nul est un zéro.
+ */
+export function formatWithoutNegativeZero(format: Intl.NumberFormat, value: number): string {
+  const text = format.format(value);
+  return /[1-9]/.test(text) ? text : format.format(0);
+}
+
 /** 10057100 → « 100 571,00 € » */
 export function formatEuros(cents: Cents): string {
-  return euroFormat.format(centsToEuros(cents));
+  return formatWithoutNegativeZero(euroFormat, centsToEuros(cents));
 }
 
 /** « 2026-10-31 » → « 31/10/2026 » (sans passer par Date, donc sans fuseau horaire). */
@@ -42,6 +51,14 @@ export function centsToInput(cents: Cents): string {
   const abs = Math.abs(cents);
   const decimals = abs % 100;
   return `${sign}${Math.floor(abs / 100)}${decimals === 0 ? '' : `,${String(decimals).padStart(2, '0')}`}`;
+}
+
+/**
+ * Nombre suivi de son nom, accordé à la française : singulier pour 0 et 1, pluriel au-delà
+ * (« 0 échéance », « 1 opération », « 289 opérations »).
+ */
+export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
+  return `${count} ${count > 1 ? pluralForm : singular}`;
 }
 
 /** Comparaison de textes sans tenir compte des accents ni de la casse (pour la recherche). */

@@ -71,6 +71,10 @@ const taxRegion = (page: Page) =>
   page.getByRole('region', { name: 'Résultat fiscal LMNP au réel' });
 const reconciliation = (page: Page) =>
   page.getByRole('region', { name: 'Rapprochement avec le comptable' });
+/** Le rapprochement est replié par défaut (« Si tu as un comptable », itération 5a). */
+async function openReconciliation(page: Page) {
+  await reconciliation(page).getByRole('button', { name: 'Si tu as un comptable' }).click();
+}
 const reconciliationLine = (page: Page, label: string) =>
   reconciliation(page).getByRole('listitem', { name: label, exact: true });
 
@@ -257,10 +261,27 @@ test('immobilisation : la saisie est vérifiée', async ({ page }) => {
   await expect(alert).toContainText('La durée doit être un nombre d’années');
 });
 
+test('rapprochement : replié par défaut sous « Si tu as un comptable », état mémorisé', async ({
+  page,
+}) => {
+  await openTax(page);
+  const toggle = reconciliation(page).getByRole('button', { name: 'Si tu as un comptable' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(reconciliationLine(page, 'Recettes')).toHaveCount(0);
+  await toggle.click();
+  await expect(reconciliationLine(page, 'Recettes')).toBeVisible();
+  await page.reload();
+  await expect(
+    reconciliation(page).getByRole('button', { name: 'Si tu as un comptable' }),
+  ).toHaveAttribute('aria-expanded', 'true');
+  await expect(reconciliationLine(page, 'Recettes')).toBeVisible();
+});
+
 test('rapprochement : les écarts expliqués du jeu de test (contrôles de expected.json)', async ({
   page,
 }, testInfo) => {
   await openTax(page);
+  await openReconciliation(page);
   const controls = expected.controles.filter((c) => c.statut === 'Écart expliqué');
   for (const control of controls) {
     const year = control.controle.slice(-4);
@@ -298,6 +319,7 @@ test('rapprochement : saisir les comptes, un écart sans explication est « à e
   page,
 }) => {
   await openTax(page);
+  await openReconciliation(page);
   await reconciliation(page).getByRole('button', { name: '2026', exact: true }).click();
   await expect(reconciliationLine(page, 'Recettes').locator('.rl-status')).toHaveText('Non saisi');
   await reconciliation(page).getByRole('button', { name: 'Saisir les comptes 2026' }).click();
@@ -322,6 +344,7 @@ test('le stock reporté du comptable se saisit depuis le récapitulatif et fait 
 }, testInfo) => {
   const phone = isPhone(testInfo);
   await openTax(page);
+  await openReconciliation(page);
   await reconciliation(page).getByRole('button', { name: '2025', exact: true }).click();
   await reconciliation(page).getByRole('button', { name: 'Modifier les comptes 2025' }).click();
   const stock = page

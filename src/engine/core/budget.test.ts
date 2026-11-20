@@ -129,7 +129,7 @@ describe('rattachement des catégories aux lignes du budget', () => {
 });
 
 describe('frais bancaires (dépense régulière)', () => {
-  it('comptent dans « Gestion et comptable », prévus à l’année précédente + 1,5 %', () => {
+  it('comptent dans « Gestion et honoraires », prévus à l’année précédente + 1,5 %', () => {
     // 2025 : 12 × 10 € de frais bancaires et 50 € d'autres charges.
     const transactions = [
       ...Array.from({ length: 12 }, (_, m) =>
@@ -346,7 +346,7 @@ describe('budget du jeu de test au 25/10/2026', () => {
   it('2025 réel, 2026 prévu, estimé fin d’année, effet sur le cash-flow', () => {
     expect(values('income')).toEqual([13703.15, 13908.7, 13959.28, 50.58]);
     expect(values('coOwnership')).toEqual([2426.77, 2463.17, 4085.48, -1622.31]);
-    // Gestion et comptable : honoraires sur travaux compris (59,30 € en 2025, 29,96 € en 2026).
+    // Gestion et honoraires : honoraires sur travaux compris (59,30 € en 2025, 29,96 € en 2026).
     expect(values('management')).toEqual([1611.54, 1635.71, 1592.94, 42.77]);
     expect(values('taxes')).toEqual([561.72, 570.15, 885.36, -315.21]);
     // Assurance PNO de 2025 payée après le 25/10 : restant à venir en 2026 (saisonnalité).
@@ -384,7 +384,7 @@ describe('projection de la vente d’après le budget', () => {
   const property = data.properties[0]!;
   const asOf = '2026-10-25';
 
-  it('loyer net = (loyers − gestion et comptable) / 12 ; dépenses = copropriété, impôts, assurances', () => {
+  it('loyer net = (loyers − gestion et honoraires) / 12 ; dépenses = copropriété, impôts, assurances', () => {
     const p = budgetProjection(data, property, asOf, GROWTH)!;
     expect(p.years).toEqual([2026]);
     // (13 908,70 − 1 635,71) / 12 ; 2 463,17 + 570,15 + 115,89 + 392,22.

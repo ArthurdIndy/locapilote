@@ -181,7 +181,8 @@ export function parseScheduleText(text: string, loan: Loan): ParsedSchedule {
     );
   }
   if (rows.length > 0 && rows.length !== loan.durationMonths) {
-    warnings.push(`${rows.length} échéances lues pour un prêt de ${loan.durationMonths} mois.`);
+    const read = rows.length > 1 ? `${rows.length} échéances lues` : `${rows.length} échéance lue`;
+    warnings.push(`${read} pour un prêt de ${loan.durationMonths} mois.`);
   }
 
   return { installments: errors.length > 0 ? [] : installments, skippedLines, errors, warnings };

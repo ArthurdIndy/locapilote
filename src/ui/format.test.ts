@@ -5,6 +5,8 @@ import {
   centsToInput,
   formatDate,
   formatEuros,
+  formatWithoutNegativeZero,
+  plural,
   formatPercent,
   isPlausibleDate,
   normalizeForSearch,
@@ -16,6 +18,27 @@ import {
 } from './format';
 
 describe('formatage', () => {
+  it('accorde les compteurs : singulier pour 0 et 1, pluriel au-delà', () => {
+    expect(plural(0, 'échéance de prêt', 'échéances de prêt')).toBe('0 échéance de prêt');
+    expect(plural(1, 'échéance de prêt', 'échéances de prêt')).toBe('1 échéance de prêt');
+    expect(plural(240, 'échéance de prêt', 'échéances de prêt')).toBe('240 échéances de prêt');
+    expect(plural(0, 'bien')).toBe('0 bien');
+    expect(plural(2, 'immobilisation')).toBe('2 immobilisations');
+  });
+
+  it('n’affiche jamais de zéro négatif', () => {
+    expect(formatEuros(-0)).toBe(formatEuros(0));
+    expect(formatEuros(-0.3)).toBe(formatEuros(0));
+    expect(formatEuros(-1).replace(/\s/g, ' ')).toBe('-0,01 €');
+    const whole = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    });
+    expect(formatWithoutNegativeZero(whole, -0.3)).toBe(whole.format(0));
+    expect(formatWithoutNegativeZero(whole, -12).replace(/\s/g, ' ')).toBe('-12 €');
+  });
+
   it('affiche les euros à la française', () => {
     expect(formatEuros(10057100).replace(/\s/g, ' ')).toBe('100 571,00 €');
   });

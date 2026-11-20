@@ -29,17 +29,17 @@ export function isPhone(testInfo: TestInfo): boolean {
   return testInfo.project.name === 'telephone';
 }
 
-/** Premier lancement avec le jeu de test. */
+/** Premier lancement avec le jeu de test (« Découvrir avec un exemple »). */
 export async function startWithTestData(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: /Commencer avec le jeu de test/ }).click();
+  await page.getByRole('button', { name: 'Découvrir avec un exemple' }).click();
   await expect(page.getByRole('heading', { name: 'Appartement exemple' })).toBeVisible();
 }
 
-/** Premier lancement à vide : on arrive sur la création d'un bien. */
+/** Premier lancement à vide : « Créer mon bien » ouvre la création d'un bien. */
 export async function startEmpty(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: /Démarrer vide/ }).click();
+  await page.getByRole('link', { name: 'Créer mon bien' }).click();
   await expect(page.getByRole('heading', { name: 'Nouveau bien' })).toBeVisible();
 }
 

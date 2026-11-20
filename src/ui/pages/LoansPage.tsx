@@ -7,7 +7,7 @@ import {
   outstandingPrincipal,
 } from '../../engine/core/loan';
 import type { Dataset, Loan, Property } from '../../engine/types';
-import { formatDate, formatEuros, formatMonthYear, formatPercent } from '../format';
+import { formatDate, formatEuros, formatMonthYear, formatPercent, plural } from '../format';
 import { loanInsurance } from '../loanInsurance';
 import { propertyHref } from '../router';
 import { LoanForm } from './LoanForm';
@@ -133,7 +133,7 @@ function LoanCard({
     if (
       installments.length > 0 &&
       !window.confirm(
-        `Remplacer les ${installments.length} échéances actuelles par un échéancier estimé ?` +
+        `Remplacer ${installments.length > 1 ? `les ${installments.length} échéances actuelles` : 'l’échéance actuelle'} par un échéancier estimé ?` +
           (estimated ? '' : '\n\nLe tableau de la banque sera effacé.'),
       )
     ) {
@@ -141,13 +141,19 @@ function LoanCard({
     }
     const schedule = generateEstimatedSchedule(loan);
     await db.replaceLoanSchedule(loan.id, schedule, 'estimated');
-    onMessage(`Échéancier estimé généré : ${schedule.length} échéances.`);
+    onMessage(`Échéancier estimé généré : ${plural(schedule.length, 'échéance')}.`);
   };
 
   const remove = async () => {
     if (
       !window.confirm(
-        `Supprimer le prêt « ${loan.label || loan.bank} » et ses ${installments.length} échéances ?\n\nCette action est définitive.`,
+        `Supprimer le prêt « ${loan.label || loan.bank} »${
+          installments.length > 1
+            ? ` et ses ${installments.length} échéances`
+            : installments.length === 1
+              ? ' et son échéance'
+              : ''
+        } ?\n\nCette action est définitive.`,
       )
     ) {
       return;
@@ -227,7 +233,9 @@ function LoanCard({
           onImport={async (parsed) => {
             await db.replaceLoanSchedule(loan.id, parsed.installments, 'bank');
             setImporting(false);
-            onMessage(`Tableau de la banque enregistré : ${parsed.installments.length} échéances.`);
+            onMessage(
+              `Tableau de la banque enregistré : ${plural(parsed.installments.length, 'échéance')}.`,
+            );
           }}
         />
       )}

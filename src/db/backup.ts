@@ -3,7 +3,7 @@
  *
  * {
  *   "application": "locapilote",
- *   "formatVersion": 5,          // = version du schéma de la base au moment de l'export
+ *   "formatVersion": 6,          // = version du schéma de la base au moment de l'export
  *   "exportedAt": "2026-10-31T17:00:00.000Z",
  *   "data": { properties: [...], categories: [...], transactions: [...], ... }
  * }
@@ -21,6 +21,9 @@
  * Version 4 → 5 (US12) : la liste `budgets` (valeurs prévues modifiées, par bien et par année)
  * apparaît ; vide à la lecture d'une sauvegarde plus ancienne.
  *
+ * Version 5 → 6 (itération 5a) : descriptions de trois catégories mises à jour (renvoi à
+ * Mon bien › Immobilisations au lieu de l'Excel), seulement si elles n'ont pas été modifiées.
+ *
  * Fonctions pures : aucune dépendance au navigateur ni à la base.
  */
 import {
@@ -32,7 +35,7 @@ import {
   type Dataset,
 } from '../engine/types';
 import { SCHEMA_VERSION } from './database';
-import { upgradeDataToV4 } from './migrations';
+import { upgradeDataToV4, upgradeDataToV6 } from './migrations';
 
 export const BACKUP_APPLICATION = 'locapilote';
 
@@ -108,7 +111,8 @@ export function parseBackup(text: string): Backup {
   const v2 = version < 2 ? upgradeFromV1(json.data) : json.data;
   const v3 = version < 3 ? { ...v2, householdSettings: v2.householdSettings ?? [] } : v2;
   const v4 = version < 4 ? upgradeDataToV4(v3) : v3;
-  const data = version < 5 ? { ...v4, budgets: v4.budgets ?? [] } : v4;
+  const v5 = version < 5 ? { ...v4, budgets: v4.budgets ?? [] } : v4;
+  const data = version < 6 ? upgradeDataToV6(v5) : v5;
   for (const key of DATASET_KEYS) {
     const table = data[key];
     if (!Array.isArray(table) || !table.every(isRow)) {

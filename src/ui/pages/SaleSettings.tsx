@@ -164,7 +164,7 @@ export function SaleSettings({
               resolved={resolved.netRentMonthly}
               help={
                 fromBudget
-                  ? `Budget ${budgetYears[0]} : loyers et charges perçus − gestion et comptable, / 12.`
+                  ? `Budget ${budgetYears[0]} : loyers et charges perçus − gestion et honoraires, / 12.`
                   : resolved.journalWindow
                     ? `Recettes du ${formatDate(resolved.journalWindow.from)} au ${formatDate(resolved.journalWindow.to)} / 12.`
                     : 'Bien pas encore loué.'

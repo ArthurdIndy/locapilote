@@ -103,9 +103,9 @@ export function AssetsPage({ data, property, today }: Props) {
 
       <p className="muted small">
         Une ligne par composant : terrain, bâtiment, mobilier, gros équipement, travaux… Tu choisis
-        toi-même la valeur et la durée de chacun (en général celles retenues par ton comptable) ;
-        Locapilote n’impose aucune clé de répartition. Durée 0 = non amorti (terrain, ou élément que
-        le comptable n’amortit pas). Dotation linéaire au prorata des jours, base 365.
+        toi-même la valeur et la durée de chacun (si tu as un comptable, celles qu’il retient) ;
+        Locapilote n’impose aucune clé de répartition. Durée 0 = non amorti (terrain, ou élément non
+        amorti). Dotation linéaire au prorata des jours, base 365.
       </p>
 
       {message && (

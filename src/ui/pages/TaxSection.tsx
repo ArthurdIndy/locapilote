@@ -15,8 +15,10 @@ import type {
   IsoDate,
   Property,
 } from '../../engine/types';
+import { DisclosureButton } from '../components/DisclosureButton';
 import { downloadText } from '../download';
 import { centsToInput, formatDate, formatEuros, parseEurosInput } from '../format';
+import { useOpenDetails } from '../openDetails';
 import { REGIME_LABELS } from '../labels';
 import { propertyHref, routeHref } from '../router';
 import { recapRows, recapToCsv, type RecapRow } from '../taxRecap';
@@ -182,7 +184,7 @@ function LmnpReelSection({ data, property, dataAsOf }: Props) {
                 <h3>{y.year}</h3>
                 {splitSections(rows).map(({ title, lines }) => (
                   <div key={title}>
-                    <h4>{title}</h4>
+                    <h4 className="section-title">{title}</h4>
                     <dl className="year-lines">
                       {lines.map((row) => (
                         <div key={row.label} className={rowClass(row)}>
@@ -274,91 +276,109 @@ function Reconciliation({
     (f) => f.propertyId === property.id && f.year === year.year,
   );
   const lines = reconcile(year, filing);
+  // Replié par défaut : tout le monde n'a pas de comptable (état mémorisé dans le navigateur).
+  const details = useOpenDetails('locapilote.fiscalite.detailsOuverts');
+  const open = details.isOpen('rapprochement');
 
   return (
     <section className="card stack reconciliation" aria-label="Rapprochement avec le comptable">
-      <h3>Rapprochement avec le comptable</h3>
-      <p className="muted small no-print">
-        Saisis les montants des comptes déposés par ton comptable : Locapilote affiche l’écart avec
-        son calcul, que tu peux expliquer en quelques mots. Le stock d’amortissements reporté qu’il
-        a retenu fait foi pour l’année suivante.
-      </p>
-      <div className="year-tabs no-print" role="group" aria-label="Année">
-        {years.map((y) => (
-          <button
-            key={y.year}
-            type="button"
-            className={`button small${y.year === year.year ? ' primary' : ''}`}
-            aria-pressed={y.year === year.year}
-            onClick={() => {
-              setSelected(y.year);
-              setEditing(false);
-              setMessage(null);
-            }}
-          >
-            {y.year}
-          </button>
-        ))}
-      </div>
-
-      {message && (
-        <p className="success" role="status">
-          {message}
-        </p>
-      )}
-
-      {editing ? (
-        <FilingForm
-          key={year.year}
-          property={property}
-          year={year}
-          filing={filing}
-          onCancel={() => setEditing(false)}
-          onSaved={() => {
-            setEditing(false);
-            setMessage(`Comptes ${year.year} enregistrés.`);
-          }}
+      <h3>
+        <DisclosureButton
+          label="Si tu as un comptable"
+          open={open}
+          onToggle={() => details.toggle('rapprochement')}
         />
-      ) : (
-        <>
-          <ul className="reconciliation-lines" aria-label={`Comptes ${year.year}`}>
-            <li className="reconciliation-head" aria-hidden="true">
-              <span>{year.year}</span>
-              <span>Locapilote</span>
-              <span>Comptable</span>
-              <span>Écart</span>
-              <span />
-            </li>
-            {lines.map((l) => (
-              <li key={l.line} className="reconciliation-line" aria-label={LINE_LABELS[l.line]}>
-                <strong className="rl-label">{LINE_LABELS[l.line]}</strong>
-                <span className="rl-tool" data-label="Locapilote">
-                  {formatEuros(l.tool)}
-                </span>
-                <span className="rl-accountant" data-label="Comptable">
-                  {l.accountant === null ? '—' : formatEuros(l.accountant)}
-                </span>
-                <span className="rl-gap" data-label="Écart">
-                  {gapText(l.gap)}
-                </span>
-                <span className={`rl-status badge status-${l.status}`}>
-                  {STATUS_LABELS[l.status]}
-                </span>
-                {l.comment && <span className="rl-comment muted small">{l.comment}</span>}
-              </li>
-            ))}
-          </ul>
-          <div className="actions no-print">
-            <button type="button" className="button" onClick={() => setEditing(true)}>
-              {filing || year.accountantCarryforward !== null
-                ? `Modifier les comptes ${year.year}`
-                : `Saisir les comptes ${year.year}`}
-            </button>
-          </div>
-        </>
-      )}
+      </h3>
+      {open && renderBody()}
     </section>
   );
+
+  // Appelée comme une fonction (pas un composant) : le formulaire garde son état.
+  function renderBody() {
+    return (
+      <>
+        <p className="muted small no-print">
+          Saisis les montants des comptes déposés par ton comptable : Locapilote affiche l’écart
+          avec son calcul, que tu peux expliquer en quelques mots. Le stock d’amortissements reporté
+          qu’il a retenu fait foi pour l’année suivante.
+        </p>
+        <div className="year-tabs no-print" role="group" aria-label="Année">
+          {years.map((y) => (
+            <button
+              key={y.year}
+              type="button"
+              className={`button small${y.year === year.year ? ' primary' : ''}`}
+              aria-pressed={y.year === year.year}
+              onClick={() => {
+                setSelected(y.year);
+                setEditing(false);
+                setMessage(null);
+              }}
+            >
+              {y.year}
+            </button>
+          ))}
+        </div>
+
+        {message && (
+          <p className="success" role="status">
+            {message}
+          </p>
+        )}
+
+        {editing ? (
+          <FilingForm
+            key={year.year}
+            property={property}
+            year={year}
+            filing={filing}
+            onCancel={() => setEditing(false)}
+            onSaved={() => {
+              setEditing(false);
+              setMessage(`Comptes ${year.year} enregistrés.`);
+            }}
+          />
+        ) : (
+          <>
+            <ul className="reconciliation-lines" aria-label={`Comptes ${year.year}`}>
+              <li className="reconciliation-head" aria-hidden="true">
+                <span>{year.year}</span>
+                <span>Locapilote</span>
+                <span>Comptable</span>
+                <span>Écart</span>
+                <span />
+              </li>
+              {lines.map((l) => (
+                <li key={l.line} className="reconciliation-line" aria-label={LINE_LABELS[l.line]}>
+                  <strong className="rl-label">{LINE_LABELS[l.line]}</strong>
+                  <span className="rl-tool" data-label="Locapilote">
+                    {formatEuros(l.tool)}
+                  </span>
+                  <span className="rl-accountant" data-label="Comptable">
+                    {l.accountant === null ? '—' : formatEuros(l.accountant)}
+                  </span>
+                  <span className="rl-gap" data-label="Écart">
+                    {gapText(l.gap)}
+                  </span>
+                  <span className={`rl-status badge status-${l.status}`}>
+                    {STATUS_LABELS[l.status]}
+                  </span>
+                  {l.comment && <span className="rl-comment muted small">{l.comment}</span>}
+                </li>
+              ))}
+            </ul>
+            <div className="actions no-print">
+              <button type="button" className="button" onClick={() => setEditing(true)}>
+                {filing || year.accountantCarryforward !== null
+                  ? `Modifier les comptes ${year.year}`
+                  : `Saisir les comptes ${year.year}`}
+              </button>
+            </div>
+          </>
+        )}
+      </>
+    );
+  }
 }
 
 const FILING_FIELDS: { line: FilingLine | 'carryforward'; label: string }[] = [

@@ -72,3 +72,43 @@ export function upgradeDataToV4(data: Row): Row {
   );
   return { ...data, assumptions, properties };
 }
+
+/**
+ * Version 6 (itération 5a) : descriptions de catégories qui renvoyaient à l'Excel d'origine
+ * (« l'onglet Amortissements ») ou supposaient un comptable. Une description est mise à jour
+ * seulement si elle n'a pas été modifiée (texte d'origine à l'identique).
+ */
+export const CATEGORY_DESCRIPTIONS_V6: Readonly<Record<string, { from: string; to: string }>> = {
+  'Équipement / mobilier (à amortir)': {
+    from: "Électroménager, mobilier : à reporter dans l'onglet Amortissements",
+    to: 'Électroménager, mobilier : à reporter dans Mon bien › Immobilisations',
+  },
+  "Travaux d'amélioration (à amortir)": {
+    from: "Travaux immobilisés : à reporter dans l'onglet Amortissements",
+    to: 'Travaux immobilisés : à reporter dans Mon bien › Immobilisations',
+  },
+  'À qualifier': {
+    from: 'Dépense dont le traitement fiscal doit être validé avec le comptable',
+    to: 'Dépense dont le traitement fiscal reste à valider',
+  },
+};
+
+/** Description d'une catégorie au format 6 (inchangée si elle a été modifiée). */
+export function upgradeCategoryDescriptionToV6(category: Row): Row {
+  const change =
+    typeof category.id === 'string' ? CATEGORY_DESCRIPTIONS_V6[category.id] : undefined;
+  return change && category.description === change.from
+    ? { ...category, description: change.to }
+    : category;
+}
+
+/** Données d'une sauvegarde antérieure à la version 6 : descriptions de catégories à jour. */
+export function upgradeDataToV6(data: Row): Row {
+  if (!Array.isArray(data.categories)) return data;
+  return {
+    ...data,
+    categories: data.categories.map((c: unknown) =>
+      isRow(c) ? upgradeCategoryDescriptionToV6(c) : c,
+    ),
+  };
+}
